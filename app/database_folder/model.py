@@ -13,8 +13,8 @@ class Owner(Base):
     owner_id_permission_id = Column(BigInteger, default=0)
 
 
-class Cats(Base):
-    __tablename__ = 'cats'
+class Cat(Base):
+    __tablename__ = 'cat'
     cat_id = Column(BigInteger, primary_key=True, autoincrement=True)
     owner_id = Column(BigInteger, ForeignKey('owner.owner_id'))
     cat_firstname = Column(String)
@@ -37,8 +37,8 @@ class History(Base):
     history_action = Column(String)
 
 
-class CatConnections(Base):
-    __tablename__ = 'cat_connections'
+class CatConnection(Base):
+    __tablename__ = 'cat_connection'
     connection_id = Column(BigInteger, primary_key=True, autoincrement=True)
     cat_father_id = Column(BigInteger)
     cat_mother_id = Column(BigInteger)
