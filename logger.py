@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+import asyncio
 
 
 class DailyRotatingFileHandler(logging.Handler):
@@ -68,3 +69,34 @@ daily_file_handler.setFormatter(formatter)
 
 # logger.addHandler(stream_handler)
 logger.addHandler(daily_file_handler)
+
+
+def log_function_call(func):
+    if asyncio.iscoroutinefunction(func):
+        async def wrapper(*args, **kwargs):
+            try:
+                logger.info(
+                    f"""Calling function '{func.__name__}'
+                        with args: {args}, kwargs: {kwargs}""")
+                result = await func(*args, **kwargs)
+                logger.info(
+                    f"Function '{func.__name__}' executed successfully")
+                return result
+            except Exception as ex:
+                logger.error(f"Error in function '{func.__name__}': {ex}")
+                return None
+        return wrapper
+    else:
+        def wrapper(*args, **kwargs):
+            try:
+                logger.info(
+                    f"""Calling function '{func.__name__}'
+                        with args: {args}, kwargs: {kwargs}""")
+                result = func(*args, **kwargs)
+                logger.info(
+                    f"Function '{func.__name__}' executed successfully")
+                return result
+            except Exception as ex:
+                logger.error(f"Error in function '{func.__name__}': {ex}")
+                return None
+        return wrapper
