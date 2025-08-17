@@ -1,16 +1,19 @@
-from database_folder.postgres import Base
+from app.database_folder.postgres import Base
 from sqlalchemy import (BigInteger, Column, DateTime, ForeignKey,
                         String, UniqueConstraint, func)
 from sqlalchemy.orm import relationship
 
 
+import_model = "Models"
+
+
 class Owner(Base):
     __tablename__ = 'owner'
     owner_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    owner_id_firstname = Column(String, default=None)
-    owner_id_surname = Column(String, default=None)
-    owner_id_mail = Column(String, default=None)
-    owner_id_permission_id = Column(BigInteger, default=0)
+    owner_firstname = Column(String, default=None)
+    owner_surname = Column(String, default=None)
+    owner_mail = Column(String, default=None)
+    owner_permission = Column(BigInteger, default=0)
 
 
 class Cat(Base):
