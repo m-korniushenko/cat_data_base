@@ -6,7 +6,7 @@ from app.database_folder.model import (Cat, Owner, History, CatConnection,
 from app.database_folder.postgres import async_engine, async_session
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (BigInteger, MetaData, Table, and_, asc, cast, delete,
-                        desc, text, update, func)
+                        desc, text, update, func, or_)
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
@@ -130,7 +130,7 @@ class AsyncOrm:
     @staticmethod
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
                       cat_birthday: datetime, cat_microchip_number: str, cat_breed: str,
-                      cat_colour: str, cat_litter: str, cat_ifc: str, cat_id: int=None):
+                      cat_colour: str, cat_litter: str, cat_ifc: str, cat_id: int = None):
         async with async_session() as session:
             new_cat = Cat(
                 owner_id=owner_id,
@@ -580,4 +580,53 @@ class AsyncOrm:
 
         if cat_id is not None:
             return (len(rows), rows[0] if rows else None)
+        return (len(rows), rows)
+
+    @log_function_call
+    @staticmethod
+    async def get_cat_info_like(search: str | None = None):
+        query = (
+            select(Cat, Owner)
+            .join(Owner, Cat.owner_id == Owner.owner_id)
+        )
+
+        if search:
+            pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    Cat.cat_firstname.ilike(pattern),
+                    Cat.cat_surname.ilike(pattern),
+                    Cat.cat_gender.ilike(pattern),
+                    Cat.cat_microchip_number.ilike(pattern),
+                    Cat.cat_breed.ilike(pattern),
+                    Cat.cat_colour.ilike(pattern),
+                    Cat.cat_litter.ilike(pattern),
+                    Cat.cat_ifc.ilike(pattern),
+                    Owner.owner_firstname.ilike(pattern),
+                    Owner.owner_surname.ilike(pattern),
+                    Owner.owner_mail.ilike(pattern),
+                )
+            )
+
+        async with async_session() as session:
+            result = await session.execute(query)
+            rows = []
+            for c, o in result.all():
+                rows.append({
+                    'id': c.cat_id,
+                    'firstname': c.cat_firstname,
+                    'surname': c.cat_surname,
+                    'gender': c.cat_gender,
+                    'birthday': c.cat_birthday,
+                    'microchip': c.cat_microchip_number,
+                    'breed': c.cat_breed,
+                    'colour': c.cat_colour,
+                    'litter': c.cat_litter,
+                    'ifc': c.cat_ifc,
+                    'owner_id': c.owner_id,
+                    'owner_firstname': o.owner_firstname,
+                    'owner_surname': o.owner_surname,
+                    'owner_mail': o.owner_mail,
+                })
+
         return (len(rows), rows)

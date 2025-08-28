@@ -13,12 +13,20 @@ columns = [
 
 
 def owner_to_row(o):
+    if isinstance(o, dict):
+        return {
+            'id': o.get('owner_id'),
+            'firstname': o.get('owner_firstname'),
+            'surname': o.get('owner_surname'),
+            'mail': o.get('owner_mail'),
+            'permission': o.get('owner_permission'),
+        }
     return {
-        'id': o.owner_id,
-        'firstname': o.owner_firstname,
-        'surname': o.owner_surname,
-        'mail': o.owner_mail,
-        'permission': o.owner_permission,
+        'id': getattr(o, 'owner_id', None),
+        'firstname': getattr(o, 'owner_firstname', None),
+        'surname': getattr(o, 'owner_surname', None),
+        'mail': getattr(o, 'owner_mail', None),
+        'permission': getattr(o, 'owner_permission', None),
     }
 
 
