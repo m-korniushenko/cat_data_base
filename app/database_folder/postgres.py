@@ -11,8 +11,12 @@ class Base(DeclarativeBase):
 
 
 async_engine = create_async_engine(
-    url=settings.DATABASE_URL_asyncpg,
+    settings.DATABASE_URL_asyncpg,
     echo=False,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+    future=True,
 )
 
 async_session = async_sessionmaker(async_engine)

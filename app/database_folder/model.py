@@ -1,6 +1,6 @@
 from app.database_folder.postgres import Base
 from sqlalchemy import (BigInteger, Column, DateTime, ForeignKey,
-                        String, UniqueConstraint, func)
+                        String, UniqueConstraint, func, Date)
 from sqlalchemy.orm import relationship
 
 
@@ -13,17 +13,18 @@ class Owner(Base):
     owner_firstname = Column(String, default=None)
     owner_surname = Column(String, default=None)
     owner_mail = Column(String, default=None)
+    owner_hashed_password = Column(String, nullable=False)
     owner_permission = Column(BigInteger, default=0)
 
 
 class Cat(Base):
     __tablename__ = 'cat'
     cat_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    owner_id = Column(BigInteger, ForeignKey('owner.owner_id'))
+    owner_id = Column(BigInteger)
     cat_firstname = Column(String)
     cat_surname = Column(String, default="ordinary")
     cat_gender = Column(String)
-    cat_birthday = Column(DateTime)
+    cat_birthday = Column(Date)
     cat_microchip_number = Column(String)
     cat_breed = Column(String)
     cat_colour = Column(String)
@@ -54,15 +55,15 @@ class CatType(Base):
     cat_type_description = Column(String, default=None)
 
 
-class UserPermission(Base):
-    __tablename__ = 'user_permission'
-    user_permission_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    user_permission_name = Column(String, unique=True)
-    user_permission_description = Column(String, default=None)
+class OwnerPermission(Base):
+    __tablename__ = 'owner_permission'
+    owner_permission_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    owner_permission_name = Column(String, unique=True)
+    owner_permission_description = Column(String, default=None)
 
 
 class CountryCity(Base):
     __tablename__ = 'country_city'
-    country_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    country_name = Column(String, unique=True)
-    country_description = Column(String, default=None)
+    country_city_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    country_city_name = Column(String, unique=True)
+    country_city_description = Column(String, default=None)
