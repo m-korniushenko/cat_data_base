@@ -9,8 +9,13 @@ columns = [
     {'name': 'surname',    'label': 'Surname',    'field': 'surname',    'align': 'left'},
     {'name': 'email',      'label': 'Email',      'field': 'email',      'align': 'left'},
     {'name': 'phone',      'label': 'Phone',      'field': 'phone',      'align': 'left'},
-    {'name': 'city',       'label': 'City',       'field': 'city',       'align': 'left'},
     {'name': 'gender',     'label': 'Gender',     'field': 'gender',     'align': 'left'},
+    {'name': 'birthday',   'label': 'Birthday',   'field': 'birthday',   'align': 'left'},
+    {'name': 'address',    'label': 'Address',    'field': 'address',    'align': 'left'},
+    {'name': 'city',       'label': 'City',       'field': 'city',       'align': 'left'},
+    {'name': 'country',    'label': 'Country',    'field': 'country',    'align': 'left'},
+    {'name': 'zip',        'label': 'ZIP',        'field': 'zip',        'align': 'left'},
+    {'name': 'description', 'label': 'Description', 'field': 'description', 'align': 'left'},
 ]
 
 
@@ -22,8 +27,13 @@ def breed_to_row(b):
             'surname': b.get('breed_surname'),
             'email': b.get('breed_email'),
             'phone': b.get('breed_phone'),
-            'city': b.get('breed_city'),
             'gender': b.get('breed_gender'),
+            'birthday': b.get('breed_birthday'),
+            'address': b.get('breed_address'),
+            'city': b.get('breed_city'),
+            'country': b.get('breed_country'),
+            'zip': b.get('breed_zip'),
+            'description': b.get('breed_description'),
         }
     return {
         'id': getattr(b, 'breed_id', None),
@@ -31,8 +41,13 @@ def breed_to_row(b):
         'surname': getattr(b, 'breed_surname', None),
         'email': getattr(b, 'breed_email', None),
         'phone': getattr(b, 'breed_phone', None),
-        'city': getattr(b, 'breed_city', None),
         'gender': getattr(b, 'breed_gender', None),
+        'birthday': getattr(b, 'breed_birthday', None),
+        'address': getattr(b, 'breed_address', None),
+        'city': getattr(b, 'breed_city', None),
+        'country': getattr(b, 'breed_country', None),
+        'zip': getattr(b, 'breed_zip', None),
+        'description': getattr(b, 'breed_description', None),
     }
 
 
@@ -45,3 +60,5 @@ async def breeds_page_render():
 
     with ui.row().classes('q-pa-md'):
         ui.button('Add Breed', on_click=lambda: ui.navigate.to('/add_breed')).classes('q-mr-sm')
+        ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')
+        ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')

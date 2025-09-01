@@ -9,7 +9,11 @@ columns = [
     {'name': 'surname',    'label': 'Surname',    'field': 'surname',    'align': 'left'},
     {'name': 'email',      'label': 'Email',      'field': 'email',      'align': 'left'},
     {'name': 'phone',      'label': 'Phone',      'field': 'phone',      'align': 'left'},
+    {'name': 'address',    'label': 'Address',    'field': 'address',    'align': 'left'},
     {'name': 'city',       'label': 'City',       'field': 'city',       'align': 'left'},
+    {'name': 'country',    'label': 'Country',    'field': 'country',    'align': 'left'},
+    {'name': 'zip',        'label': 'ZIP',        'field': 'zip',        'align': 'left'},
+    {'name': 'birthday',   'label': 'Birthday',   'field': 'birthday',   'align': 'left'},
     {'name': 'permission', 'label': 'Permission', 'field': 'permission', 'align': 'left'},
 ]
 
@@ -22,7 +26,11 @@ def owner_to_row(o):
             'surname': o.get('owner_surname'),
             'email': o.get('owner_email'),
             'phone': o.get('owner_phone'),
+            'address': o.get('owner_address'),
             'city': o.get('owner_city'),
+            'country': o.get('owner_country'),
+            'zip': o.get('owner_zip'),
+            'birthday': o.get('owner_birthday'),
             'permission': o.get('owner_permission'),
         }
     return {
@@ -31,7 +39,11 @@ def owner_to_row(o):
         'surname': getattr(o, 'owner_surname', None),
         'email': getattr(o, 'owner_email', None),
         'phone': getattr(o, 'owner_phone', None),
+        'address': getattr(o, 'owner_address', None),
         'city': getattr(o, 'owner_city', None),
+        'country': getattr(o, 'owner_country', None),
+        'zip': getattr(o, 'owner_zip', None),
+        'birthday': getattr(o, 'owner_birthday', None),
         'permission': getattr(o, 'owner_permission', None),
     }
 
@@ -45,3 +57,5 @@ async def owners_page_render():
 
     with ui.row().classes('q-pa-md'):
         ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')
+        ui.button('Add Breed', on_click=lambda: ui.navigate.to('/add_breed')).classes('q-mr-sm')
+        ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')
