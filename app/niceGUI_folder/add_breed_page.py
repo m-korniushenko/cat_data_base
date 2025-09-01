@@ -23,7 +23,7 @@ async def add_breed_page_render():
                 gender = ui.select(['Male', 'Female'], label='Gender').props('outlined dense').classes('w-full')
                 birthday = ui.input(label='Birthday').props('type=date outlined dense').classes('w-full')
                 
-                # Адрес
+                # Адрес (по аналогии с Owner)
                 address = ui.input(label='Address').props('outlined dense').classes('w-full md:col-span-2')
                 city = ui.input(label='City').props('outlined dense').classes('w-full')
                 country = ui.input(label='Country').props('outlined dense').classes('w-full')
@@ -51,6 +51,11 @@ async def add_breed_page_render():
                             ui.notify('Invalid birthday format. Use YYYY-MM-DD', color='negative', position='top')
                             return
 
+                    # Валидация email
+                    if '@' not in email.value:
+                        ui.notify('Please enter a valid email address', color='negative', position='top')
+                        return
+
                     await AsyncOrm.add_breed(
                         breed_firstname=firstname.value,
                         breed_surname=surname.value,
@@ -64,7 +69,7 @@ async def add_breed_page_render():
                         breed_email=email.value,
                         breed_description=description.value if description.value else None
                     )
-                    ui.notify('Breed added successfully!', color='positive')
+                    ui.notify('Breed added successfully!', color='positive', position='top')
                     ui.navigate.to('/breeds')
                 except ValidationError as e:
                     msg = '; '.join(f"{'.'.join(map(str, err['loc']))}: {err['msg']}" for err in e.errors())

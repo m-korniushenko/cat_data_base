@@ -1,18 +1,18 @@
 from nicegui import ui
 from pydantic import ValidationError
-from app.niceGUI_folder.pydentic_models import CatCreate
+# from app.niceGUI_folder.pydentic_models import CatCreate
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from datetime import datetime
-import geonamescache
+# import geonamescache
 
 
 async def add_cat_page_render():
     get_header('Add Cat Page')
 
-    gc = geonamescache.GeonamesCache()
-    cities = gc.get_cities()
-    city_list = [c['name'] for c in cities.values() if c['countrycode'] == 'DE'] 
+    # gc = geonamescache.GeonamesCache()
+    # cities = gc.get_cities()
+    # city_list = [c['name'] for c in cities.values() if c['countrycode'] == 'DE'] 
 
     _, owners = await AsyncOrm.get_owner()
     owner_map = {
@@ -20,10 +20,15 @@ async def add_cat_page_render():
          for o in owners
     }
     _, cats_female = await AsyncOrm.get_cat(cat_gender="Female")
-    cats_female = [f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' for cat in cats_female]
+    cats_female = [
+        f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' 
+        for cat in cats_female
+    ]
     _, cats_male = await AsyncOrm.get_cat(cat_gender="Male")
-    cats_male = [f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' for cat in cats_male]
-
+    cats_male = [
+        f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' 
+        for cat in cats_male
+    ]
 
     with ui.column().classes('w-full items-center q-py-xl'):
         with ui.card().classes('w-full max-w-2xl q-pa-lg'):
@@ -46,8 +51,7 @@ async def add_cat_page_render():
                 colour = ui.input(label='Cat Colour').props('outlined dense').classes('w-full')
 
                 litter = ui.input(label='Cat Litter').props('outlined dense').classes('w-full')
-                ifc = ui.input(label='Cat IFC').props('outlined dense').classes('w-full')
-                country_city = ui.select(city_list, label='Country, City').props('outlined dense').classes('w-full')
+                haritage_number = ui.input(label='Cat Haritage Number').props('outlined dense').classes('w-full')
                 owner = ui.select(dict(owner_map), label='Owner').props('outlined dense').classes('w-full')
 
             with ui.row().classes('justify-end q-pt-md'):
@@ -55,6 +59,16 @@ async def add_cat_page_render():
 
             async def handle_submit():
                 try:
+                    # Проверяем, что все обязательные поля заполнены
+                    if not firstname.value or not surname.value or not microchip.value or not owner.value:
+                        ui.notify('Please fill in all required fields', color='negative', position='top')
+                        return
+
+                    # Проверяем формат даты
+                    if not birthday.value:
+                        ui.notify('Please select a birthday', color='negative', position='top')
+                        return
+
                     await AsyncOrm.add_cat(cat_firstname=firstname.value,
                                            cat_surname=surname.value,
                                            cat_gender=gender.value,
@@ -63,12 +77,15 @@ async def add_cat_page_render():
                                            cat_breed_id=breed.value,
                                            cat_EMS_colour=colour.value,
                                            cat_litter=litter.value,
+                                           cat_haritage_number=haritage_number.value,
                                            owner_id=owner.value
                                            )
-                    ui.notify('Cat added')
+                    ui.notify('Cat added successfully!', color='positive', position='top')
                     ui.navigate.to('/cats')
                 except ValidationError as e:
                     msg = '; '.join(f"{'.'.join(map(str, err['loc']))}: {err['msg']}" for err in e.errors())
                     ui.notify(msg, color='negative', position='top')
+                except Exception as e:
+                    ui.notify(f'Error adding cat: {str(e)}', color='negative', position='top')
 
             submit_btn.on('click', handle_submit)

@@ -123,7 +123,8 @@ class AsyncOrm:
     @staticmethod
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
                       cat_birthday: datetime, cat_microchip_number: str,
-                      cat_EMS_colour: str, cat_litter: str, cat_id: int = None, cat_breed_id: int = None):
+                      cat_EMS_colour: str, cat_litter: str, cat_id: int = None, cat_breed_id: int = None,
+                      cat_haritage_number: str = None):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         async with async_session() as session:
             new_cat = Cat(
@@ -135,7 +136,8 @@ class AsyncOrm:
                 cat_microchip_number=cat_microchip_number,
                 cat_breed_id=cat_breed_id,
                 cat_EMS_colour=cat_EMS_colour,
-                cat_litter=cat_litter
+                cat_litter=cat_litter,
+                cat_haritage_number=cat_haritage_number
             )
             if cat_id:
                 new_cat.cat_id = cat_id
