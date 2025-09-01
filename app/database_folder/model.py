@@ -1,8 +1,7 @@
 from app.database_folder.postgres import Base
 from sqlalchemy import (BigInteger, Column, DateTime, ForeignKey,
-                        String, UniqueConstraint, func, Date)
+                        String, UniqueConstraint, func, Date, ARRAY)
 from sqlalchemy.orm import relationship
-
 
 import_model = "Models"
 
@@ -21,15 +20,21 @@ class Cat(Base):
     __tablename__ = 'cat'
     cat_id = Column(BigInteger, primary_key=True, autoincrement=True)
     owner_id = Column(BigInteger)
+    cat_breed_id = Column(BigInteger) #breed - это развадитель котов
+    cat_title = Column(ARRAY(String))
     cat_firstname = Column(String)
-    cat_surname = Column(String, default="ordinary")
+    cat_surname = Column(String)
     cat_gender = Column(String)
     cat_birthday = Column(Date)
+    cat_dam_id = Column(BigInteger, nullable=True)
+    cat_sire_id = Column(BigInteger, nullable=True)
     cat_microchip_number = Column(String)
-    cat_breed = Column(String)
-    cat_colour = Column(String)
+    cat_EMS_colour = Column(String)
     cat_litter = Column(String)
-    cat_ifc = Column(String)
+    cat_haritage_number = Column(String)
+    cat_description = Column(String)
+    cat_photos = Column(ARRAY(String))
+    cat_files = Column(ARRAY(String))
 
 
 class History(Base):
@@ -41,20 +46,6 @@ class History(Base):
     history_action = Column(String)
 
 
-class CatConnection(Base):
-    __tablename__ = 'cat_connection'
-    connection_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    cat_father_id = Column(BigInteger)
-    cat_mother_id = Column(BigInteger)
-
-
-class CatType(Base):
-    __tablename__ = 'cat_type'
-    cat_type_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    cat_type_name = Column(String, unique=True)
-    cat_type_description = Column(String, default=None)
-
-
 class OwnerPermission(Base):
     __tablename__ = 'owner_permission'
     owner_permission_id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -62,8 +53,10 @@ class OwnerPermission(Base):
     owner_permission_description = Column(String, default=None)
 
 
-class CountryCity(Base):
-    __tablename__ = 'country_city'
-    country_city_id = Column(BigInteger, primary_key=True, autoincrement=True)
-    country_city_name = Column(String, unique=True)
-    country_city_description = Column(String, default=None)
+class Breed(Base):
+    __tablename__ = 'breed'
+    breed_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    breed_firstname = Column(String)
+    breed_surname = Column(String)
+    breed_email = Column(String)
+    breed_description = Column(String, default=None)

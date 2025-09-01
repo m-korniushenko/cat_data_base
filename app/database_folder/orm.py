@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
 import pandas as pd
-from app.database_folder.model import (Cat, Owner, History, CatConnection,
-                                       CatType, OwnerPermission, CountryCity)
+from app.database_folder.model import (Cat, Owner, History, OwnerPermission)
 from app.database_folder.postgres import async_engine, async_session
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (BigInteger, MetaData, Table, and_, asc, cast, delete,
@@ -23,11 +22,10 @@ class AsyncOrm:
                       cat_surname: str = None,
                       cat_birthday: datetime = None,
                       cat_microchip_number: str = None,
-                      cat_breed: str = None,
-                      cat_colour: str = None,
+                      cat_breed_id: str = None,
+                      cat_EMS_colour: str = None,
                       cat_gender: str = None,
                       cat_litter: str = None,
-                      cat_ifc: str = None,
                       cat_connection=None,
                       country_city=None):
         query = select(Cat)
@@ -43,16 +41,14 @@ class AsyncOrm:
             query = query.filter_by(cat_birthday=cat_birthday)
         if cat_microchip_number:
             query = query.filter_by(cat_microchip_number=cat_microchip_number)
-        if cat_breed:
-            query = query.filter_by(cat_breed=cat_breed)
-        if cat_colour:
-            query = query.filter_by(cat_colour=cat_colour)
+        if cat_breed_id:
+            query = query.filter_by(cat_breed_id=cat_breed_id)
+        if cat_EMS_colour:
+            query = query.filter_by(cat_EMS_colour=cat_EMS_colour)
         if cat_gender:
             query = query.filter_by(cat_gender=cat_gender)
         if cat_litter:
             query = query.filter_by(cat_litter=cat_litter)
-        if cat_ifc:
-            query = query.filter_by(cat_ifc=cat_ifc)
         if cat_connection:
             query = query.filter_by(cat_connection=cat_connection)
         if country_city:
@@ -77,11 +73,10 @@ class AsyncOrm:
                          cat_surname: str = None,
                          cat_birthday: datetime = None,
                          cat_microchip_number: str = None,
-                         cat_breed: str = None,
-                         cat_colour: str = None,
+                         cat_breed_id: str = None,
+                         cat_EMS_colour: str = None,
                          cat_gender: str = None,
                          cat_litter: str = None,
-                         cat_ifc: str = None,
                          cat_connection=None,
                          country_city=None):
         async with async_session() as session:
@@ -96,16 +91,14 @@ class AsyncOrm:
                 cat.cat_birthday = cat_birthday
             if cat_microchip_number:
                 cat.cat_microchip_number = cat_microchip_number
-            if cat_breed:
-                cat.cat_breed = cat_breed
-            if cat_colour:
-                cat.cat_colour = cat_colour
+            if cat_breed_id:
+                cat.cat_breed_id = cat_breed_id
+            if cat_EMS_colour:
+                cat.cat_EMS_colour = cat_EMS_colour
             if cat_gender:
                 cat.cat_gender = cat_gender
             if cat_litter:
                 cat.cat_litter = cat_litter
-            if cat_ifc:
-                cat.cat_ifc = cat_ifc
             if cat_connection:
                 cat.cat_connection = cat_connection
             if country_city:
@@ -129,8 +122,9 @@ class AsyncOrm:
     # @log_function_call
     @staticmethod
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
-                      cat_birthday: datetime, cat_microchip_number: str, cat_breed: str,
-                      cat_colour: str, cat_litter: str, cat_ifc: str, cat_id: int = None):
+                      cat_birthday: datetime, cat_microchip_number: str,
+                      cat_EMS_colour: str, cat_litter: str, cat_id: int = None, cat_breed_id: int = None):
+        cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         async with async_session() as session:
             new_cat = Cat(
                 owner_id=owner_id,
@@ -139,10 +133,9 @@ class AsyncOrm:
                 cat_gender=cat_gender,
                 cat_birthday=cat_birthday,
                 cat_microchip_number=cat_microchip_number,
-                cat_breed=cat_breed,
-                cat_colour=cat_colour,
-                cat_litter=cat_litter,
-                cat_ifc=cat_ifc
+                cat_breed_id=cat_breed_id,
+                cat_EMS_colour=cat_EMS_colour,
+                cat_litter=cat_litter
             )
             if cat_id:
                 new_cat.cat_id = cat_id
@@ -410,31 +403,6 @@ class AsyncOrm:
 
     @log_function_call
     @staticmethod
-    async def add_country_city(country_city_name: str,
-                               country_city_description: str):
-        async with async_session() as session:
-            new_country_city = CountryCity(
-                country_city_name=country_city_name,
-                country_city_description=country_city_description)
-            session.add(new_country_city)
-            await session.commit()
-            return new_country_city
-
-    @log_function_call
-    @staticmethod
-    async def delete_country_city(country_id: int):
-        async with async_session() as session:
-            query = select(CountryCity).filter_by(country_id=country_id)
-            result = await session.execute(query)
-            country_city = result.scalars().first()
-            if country_city:
-                await session.delete(country_city)
-                await session.commit()
-                return True
-            return False
-
-    @log_function_call
-    @staticmethod
     async def get_user(user_id: int = None,
                        user_firstname: str = None,
                        user_surname: str = None,
@@ -514,11 +482,10 @@ class AsyncOrm:
         cat_surname: str | None = None,
         cat_birthday: datetime | None = None,
         cat_microchip_number: str | None = None,
-        cat_breed: str | None = None,
-        cat_colour: str | None = None,
+        cat_breed_id: str | None = None,
+        cat_EMS_colour: str | None = None,
         cat_gender: str | None = None,
         cat_litter: str | None = None,
-        cat_ifc: str | None = None,
         owner_id: int | None = None,
         owner_firstname: str | None = None,
         owner_surname: str | None = None,
@@ -538,16 +505,14 @@ class AsyncOrm:
             query = query.where(Cat.cat_birthday == cat_birthday)
         if cat_microchip_number:
             query = query.where(Cat.cat_microchip_number == cat_microchip_number)
-        if cat_breed:
-            query = query.where(Cat.cat_breed == cat_breed)
-        if cat_colour:
-            query = query.where(Cat.cat_colour == cat_colour)
+        if cat_breed_id:
+            query = query.where(Cat.cat_breed_id == cat_breed_id)
+        if cat_EMS_colour:
+            query = query.where(Cat.cat_EMS_colour == cat_EMS_colour)
         if cat_gender:
             query = query.where(Cat.cat_gender == cat_gender)
         if cat_litter:
             query = query.where(Cat.cat_litter == cat_litter)
-        if cat_ifc:
-            query = query.where(Cat.cat_ifc == cat_ifc)
         if owner_id is not None:
             query = query.where(Owner.owner_id == owner_id)
         if owner_firstname:
@@ -568,10 +533,9 @@ class AsyncOrm:
                     'gender': c.cat_gender,
                     'birthday': c.cat_birthday,
                     'microchip': c.cat_microchip_number,
-                    'breed': c.cat_breed,
-                    'colour': c.cat_colour,
+                    'breed': c.cat_breed_id,
+                    'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
-                    'ifc': c.cat_ifc,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
@@ -598,10 +562,9 @@ class AsyncOrm:
                     Cat.cat_surname.ilike(pattern),
                     Cat.cat_gender.ilike(pattern),
                     Cat.cat_microchip_number.ilike(pattern),
-                    Cat.cat_breed.ilike(pattern),
-                    Cat.cat_colour.ilike(pattern),
+                    Cat.cat_breed_id.ilike(pattern),
+                    Cat.cat_EMS_colour.ilike(pattern),
                     Cat.cat_litter.ilike(pattern),
-                    Cat.cat_ifc.ilike(pattern),
                     Owner.owner_firstname.ilike(pattern),
                     Owner.owner_surname.ilike(pattern),
                     Owner.owner_mail.ilike(pattern),
@@ -619,10 +582,9 @@ class AsyncOrm:
                     'gender': c.cat_gender,
                     'birthday': c.cat_birthday,
                     'microchip': c.cat_microchip_number,
-                    'breed': c.cat_breed,
-                    'colour': c.cat_colour,
+                    'breed': c.cat_breed_id,
+                    'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
-                    'ifc': c.cat_ifc,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,

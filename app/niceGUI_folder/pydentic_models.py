@@ -10,10 +10,9 @@ class CatCreate(BaseModel):
     cat_gender: str
     cat_birthday: datetime
     cat_microchip_number: str
-    cat_breed: str
-    cat_colour: str
+    cat_breed_id: str
+    cat_EMS_colour: str
     cat_litter: str
-    cat_ifc: str
 
     class Config:
         orm_mode = True
@@ -26,10 +25,9 @@ class CatUpdate(BaseModel):
     cat_gender: Optional[str] = None
     cat_birthday: Optional[datetime] = None
     cat_microchip_number: Optional[str] = None
-    cat_breed: Optional[str] = None
-    cat_colour: Optional[str] = None
+    cat_breed_id: Optional[str] = None
+    cat_EMS_colour: Optional[str] = None
     cat_litter: Optional[str] = None
-    cat_ifc: Optional[str] = None
 
     class Config:
         orm_mode = True

@@ -29,17 +29,8 @@ async def add_cat(owner_id, idx, gender):
         cat_gender=gender,
         cat_birthday=date(2020, 5, 17), 
         cat_microchip_number=f"{idx}",
-        cat_breed="admin cat", 
-        cat_colour="black",
-        cat_litter="123213",
-        cat_ifc="12345"
-    )
-
-
-async def add_country_city():
-    return await AsyncOrm.add_country_city(
-        country_city_name="Germany, Berlin", 
-        country_city_description="Fun"
+        cat_EMS_colour="black",
+        cat_litter="123213"
     )
 
 
@@ -50,7 +41,6 @@ async def main_add_workflow():
         await add_owner()
         await add_cat(1, 2, "Male")
         await add_cat(2, 4, "Female")
-        await add_country_city()
         print("✅ Database initialization completed successfully!")
     except Exception as e:
         print(f"❌ Error during database initialization: {e}")

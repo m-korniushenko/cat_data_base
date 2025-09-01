@@ -69,7 +69,7 @@ def start_db():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    # start_db()
+    start_db()
     ui.run(
         port=8080,
         title='Cat Database Management System',

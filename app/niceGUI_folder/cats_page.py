@@ -13,10 +13,15 @@ cats_column = [
     {'name': 'breed',      'label': 'Breed',      'field': 'breed',      'align': 'left'},
     {'name': 'colour',     'label': 'Colour',     'field': 'colour',     'align': 'left'},
     {'name': 'litter',     'label': 'Litter',     'field': 'litter',     'align': 'left'},
-    {'name': 'ifc',        'label': 'IFC',        'field': 'ifc',        'align': 'left'},
+    {'name': 'haritage_number', 'label': 'Haritage Number', 'field': 'haritage_number', 'align': 'left'},
     {'name': 'owner_firstname', 'label': 'Owner First Name', 'field': 'owner_firstname', 'align': 'left'},
     {'name': 'owner_surname',   'label': 'Owner Surname',   'field': 'owner_surname',   'align': 'left'},
     {'name': 'owner_mail',      'label': 'Owner Mail',      'field': 'owner_mail',      'align': 'left'},
+    {'name': 'breed_firstname', 'label': 'Breed First Name', 'field': 'breed_firstname', 'align': 'left'},
+    {'name': 'breed_surname',   'label': 'Breed Surname',   'field': 'breed_surname',   'align': 'left'},
+    {'name': 'breed_email',     'label': 'Breed Email',     'field': 'breed_email',     'align': 'left'},
+    {'name': 'dam',          'label': 'Dam',          'field': 'dam',          'align': 'left'},
+    {'name': 'sire',         'label': 'Sire',         'field': 'sire',         'align': 'left'},
     {'name': 'actions',    'label': 'Actions',    'field': 'actions',    'align': 'center'},
 ]
 

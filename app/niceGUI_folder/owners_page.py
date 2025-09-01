@@ -36,3 +36,4 @@ async def owners_page_render():
     get_header('👤 Owners')
     rows = [owner_to_row(o) for o in (owners if isinstance(owners, list) else [owners])]
     ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
+    ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')

@@ -108,7 +108,7 @@ python server.py
 -   `cat_firstname`, `cat_surname`
 -   `cat_gender`, `cat_birthday`, `cat_date_of_death`
 -   `cat_microchip_number`, `cat_studbook_number`
--   `cat_breed`, `cat_EMS_colour`
+-   `cat_breed_id`, `cat_EMS_colour`
 -   `cat_inbreeding_coefficient`
 -   `litter_id`, `breeder_id`, `owner_id` (Foreign Keys)
 -   `cat_show_results`, `cat_title`
