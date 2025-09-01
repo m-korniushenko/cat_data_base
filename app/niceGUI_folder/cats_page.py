@@ -16,7 +16,7 @@ cats_column = [
     {'name': 'haritage_number', 'label': 'Haritage Number', 'field': 'haritage_number', 'align': 'left'},
     {'name': 'owner_firstname', 'label': 'Owner First Name', 'field': 'owner_firstname', 'align': 'left'},
     {'name': 'owner_surname',   'label': 'Owner Surname',   'field': 'owner_surname',   'align': 'left'},
-    {'name': 'owner_mail',      'label': 'Owner Mail',      'field': 'owner_mail',      'align': 'left'},
+    {'name': 'owner_email',      'label': 'Owner Mail',      'field': 'owner_email',      'align': 'left'},
     {'name': 'breed_firstname', 'label': 'Breed First Name', 'field': 'breed_firstname', 'align': 'left'},
     {'name': 'breed_surname',   'label': 'Breed Surname',   'field': 'breed_surname',   'align': 'left'},
     {'name': 'breed_email',     'label': 'Breed Email',     'field': 'breed_email',     'align': 'left'},
@@ -71,4 +71,6 @@ async def cats_page_render():
     table = ui.table(columns=cats_column, rows=safe_rows, row_key='id').classes('q-pa-md')
     table.add_slot('body', get_edit_button_vue())
     search_bar.on_value_change(lambda e: update_table(e.value, table))
-    ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')
+    
+    with ui.row().classes('q-pa-md'):
+        ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')

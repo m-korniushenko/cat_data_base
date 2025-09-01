@@ -49,8 +49,6 @@ async def add_cat_page_render():
                 ifc = ui.input(label='Cat IFC').props('outlined dense').classes('w-full')
                 country_city = ui.select(city_list, label='Country, City').props('outlined dense').classes('w-full')
                 owner = ui.select(dict(owner_map), label='Owner').props('outlined dense').classes('w-full')
-                # cat_female = ui.select(cats_female, label='Cat Female').props('outlined dense').classes('w-full')
-                # cat_male = ui.select(cats_male, label='Cat Male').props('outlined dense').classes('w-full')
 
             with ui.row().classes('justify-end q-pt-md'):
                 submit_btn = ui.button('SUBMIT', color='primary').props('unelevated')

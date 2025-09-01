@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import pandas as pd
-from app.database_folder.model import (Cat, Owner, History, OwnerPermission)
+from app.database_folder.model import (Cat, Owner, History, OwnerPermission, Breed)
 from app.database_folder.postgres import async_engine, async_session
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (BigInteger, MetaData, Table, and_, asc, cast, delete,
@@ -145,11 +145,24 @@ class AsyncOrm:
 
     # @log_function_call
     @staticmethod
-    async def add_owner(owner_firstname: str, owner_surname: str, owner_mail: str, owner_hashed_password: str,
-                        owner_permission: str):
+    async def add_owner(owner_firstname: str, owner_surname: str, owner_email: str, owner_hashed_password: str,
+                        owner_permission: int, owner_address: str = None, owner_city: str = None, 
+                        owner_country: str = None, owner_zip: str = None, owner_birthday: date = None, 
+                        owner_phone: str = None):
         async with async_session() as session:
-            new_owner = Owner(owner_firstname=owner_firstname, owner_surname=owner_surname, owner_mail=owner_mail,
-                              owner_permission=owner_permission, owner_hashed_password=owner_hashed_password)
+            new_owner = Owner(
+                owner_firstname=owner_firstname, 
+                owner_surname=owner_surname, 
+                owner_email=owner_email,
+                owner_address=owner_address,
+                owner_city=owner_city,
+                owner_country=owner_country,
+                owner_zip=owner_zip,
+                owner_birthday=owner_birthday,
+                owner_phone=owner_phone,
+                owner_permission=owner_permission, 
+                owner_hashed_password=owner_hashed_password
+            )
             session.add(new_owner)
             await session.commit()
             return new_owner
@@ -159,7 +172,7 @@ class AsyncOrm:
     async def get_owner(owner_id: int | None = None,
                         owner_firstname: str | None = None,
                         owner_surname: str | None = None,
-                        owner_mail: str | None = None,
+                        owner_email: str | None = None,
                         owner_permission: str | None = None):
         query = select(Owner)
         if owner_id is not None:
@@ -168,8 +181,8 @@ class AsyncOrm:
             query = query.filter_by(owner_firstname=owner_firstname)
         if owner_surname is not None:
             query = query.filter_by(owner_surname=owner_surname)
-        if owner_mail is not None:
-            query = query.filter_by(owner_mail=owner_mail)
+        if owner_email is not None:
+            query = query.filter_by(owner_email=owner_email)
         if owner_permission is not None:
             query = query.filter_by(owner_permission=owner_permission)
 
@@ -180,7 +193,13 @@ class AsyncOrm:
                 rows.append({"owner_id": row.owner_id,
                              "owner_firstname": row.owner_firstname,
                              "owner_surname": row.owner_surname,
-                             "owner_mail": row.owner_mail,
+                             "owner_email": row.owner_email,
+                             "owner_address": row.owner_address,
+                             "owner_city": row.owner_city,
+                             "owner_country": row.owner_country,
+                             "owner_zip": row.owner_zip,
+                             "owner_birthday": row.owner_birthday,
+                             "owner_phone": row.owner_phone,
                              "owner_permission": row.owner_permission})
             if owner_id:
                 return (len(rows), rows[0] if rows else None)
@@ -192,8 +211,14 @@ class AsyncOrm:
     async def update_owner(owner_id: int = None,
                            owner_firstname: str = None,
                            owner_surname: str = None,
-                           owner_mail: str = None,
-                           owner_permission: str = None):
+                           owner_email: str = None,
+                           owner_address: str = None,
+                           owner_city: str = None,
+                           owner_country: str = None,
+                           owner_zip: str = None,
+                           owner_birthday: date = None,
+                           owner_phone: str = None,
+                           owner_permission: int = None):
         async with async_session() as session:
             query = select(Owner).filter_by(owner_id=owner_id)
             result = await session.execute(query)
@@ -202,8 +227,20 @@ class AsyncOrm:
                 owner.owner_firstname = owner_firstname
             if owner_surname:
                 owner.owner_surname = owner_surname
-            if owner_mail:
-                owner.owner_mail = owner_mail
+            if owner_email:
+                owner.owner_email = owner_email
+            if owner_address:
+                owner.owner_address = owner_address
+            if owner_city:
+                owner.owner_city = owner_city
+            if owner_country:
+                owner.owner_country = owner_country
+            if owner_zip:
+                owner.owner_zip = owner_zip
+            if owner_birthday:
+                owner.owner_birthday = owner_birthday
+            if owner_phone:
+                owner.owner_phone = owner_phone
             if owner_permission:
                 owner.owner_permission = owner_permission
             await session.commit()
@@ -335,23 +372,6 @@ class AsyncOrm:
                 return True
             return False
 
-    @log_function_call
-    @staticmethod
-    async def get_user_permission(user_permission_id: int = None,
-                                  user_permission_name: str = None,
-                                  user_permission_description: str = None):
-        query = select(OwnerPermission)
-        if user_permission_id:
-            query = query.filter_by(user_permission_id=user_permission_id)
-        if user_permission_name:
-            query = query.filter_by(user_permission_name=user_permission_name)
-        if user_permission_description:
-            query = query.filter_by(user_permission_description=user_permission_description)
-        async with async_session() as session:
-            result = await session.execute(query)
-            if len(result.scalars().all()) == 1:
-                return result.scalars().first()
-            return result.scalars().all()
         
     # @log_function_call
     @staticmethod
@@ -363,6 +383,30 @@ class AsyncOrm:
             session.add(new_owner_permission)
             await session.commit()
             return new_owner_permission
+
+    @log_function_call
+    @staticmethod
+    async def get_owner_permission(owner_permission_id: int = None,
+                                   owner_permission_name: str = None,
+                                   owner_permission_description: str = None):
+        query = select(OwnerPermission)
+        if owner_permission_id is not None:
+            query = query.filter_by(owner_permission_id=owner_permission_id)
+        if owner_permission_name is not None:
+            query = query.filter_by(owner_permission_name=owner_permission_name)
+        if owner_permission_description is not None:
+            query = query.filter_by(owner_permission_description=owner_permission_description)
+
+        async with async_session() as session:
+            result = await session.execute(query)
+            rows = []
+            for row in result.scalars().all():
+                rows.append({"owner_permission_id": row.owner_permission_id,
+                             "owner_permission_name": row.owner_permission_name,
+                             "owner_permission_description": row.owner_permission_description})
+            if owner_permission_id:
+                return (len(rows), rows[0] if rows else None)
+            return (len(rows), rows)
         
     @log_function_call
     @staticmethod
@@ -377,29 +421,6 @@ class AsyncOrm:
                 await session.commit()
                 return True
             return False
-
-    @log_function_call
-    @staticmethod
-    async def get_country_city(country_id: int = None,
-                               country_city_name: str = None,
-                               country_city_description: str = None):
-        query = select(CountryCity)
-        if country_id:
-            query = query.filter_by(country_id=country_id)
-        if country_city_name:
-            query = query.filter_by(country_city_name=country_city_name)
-        if country_city_description:
-            query = query.filter_by(country_description=country_city_description)
-        async with async_session() as session:
-            result = await session.execute(query)
-            rows = []
-            for row in result.scalars().all():
-                rows.append({"country_city_id": row.country_city_id,
-                             "country_city_name": row.country_city_name,
-                             "country_city_description": row.country_city_description})
-            if country_id:
-                return (len(rows), rows[0] if rows else None)
-            return (len(rows), rows)
 
     @log_function_call
     @staticmethod
@@ -457,25 +478,6 @@ class AsyncOrm:
 
     @log_function_call
     @staticmethod
-    async def get_user_permission(user_permission_id: int = None,
-                                  user_permission_name: str = None,
-                                  user_permission_description: str = None):
-        query = select(OwnerPermission)
-        if user_permission_id:
-            query = query.filter_by(user_permission_id=user_permission_id)
-        if user_permission_name:
-            query = query.filter_by(user_permission_name=user_permission_name)
-        if user_permission_description:
-            query = query.filter_by(
-                user_permission_description=user_permission_description)
-        async with async_session() as session:
-            result = await session.execute(query)
-            if len(result.scalars().all()) == 1:
-                return result.first()
-            return result.all()
-
-    @log_function_call
-    @staticmethod
     async def get_cat_info(
         cat_id: int | None = None,
         cat_firstname: str | None = None,
@@ -489,7 +491,7 @@ class AsyncOrm:
         owner_id: int | None = None,
         owner_firstname: str | None = None,
         owner_surname: str | None = None,
-        owner_mail: str | None = None,
+        owner_email: str | None = None,
     ):
         query = (
             select(Cat, Owner)
@@ -519,8 +521,8 @@ class AsyncOrm:
             query = query.where(Owner.owner_firstname == owner_firstname)
         if owner_surname:
             query = query.where(Owner.owner_surname == owner_surname)
-        if owner_mail:
-            query = query.where(Owner.owner_mail == owner_mail)
+        if owner_email:
+            query = query.where(Owner.owner_email == owner_email)
 
         async with async_session() as session:
             result = await session.execute(query)
@@ -539,7 +541,7 @@ class AsyncOrm:
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
-                    'owner_mail': o.owner_mail,
+                    'owner_email': o.owner_email,
                 })
 
         if cat_id is not None:
@@ -567,7 +569,7 @@ class AsyncOrm:
                     Cat.cat_litter.ilike(pattern),
                     Owner.owner_firstname.ilike(pattern),
                     Owner.owner_surname.ilike(pattern),
-                    Owner.owner_mail.ilike(pattern),
+                    Owner.owner_email.ilike(pattern),
                 )
             )
 
@@ -588,7 +590,75 @@ class AsyncOrm:
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
-                    'owner_mail': o.owner_mail,
+                    'owner_email': o.owner_email,
                 })
 
         return (len(rows), rows)
+
+    @log_function_call
+    @staticmethod
+    async def get_breed_count():
+        """Get total count of breeds"""
+        async with async_session() as session:
+            result = await session.execute(select(func.count(Breed.breed_id)))
+            return result.scalar()
+
+    @log_function_call
+    @staticmethod
+    async def add_breed(breed_firstname: str, breed_surname: str, breed_email: str,
+                        breed_gender: str = None, breed_birthday: date = None, breed_address: str = None,
+                        breed_city: str = None, breed_country: str = None, breed_zip: str = None,
+                        breed_phone: str = None, breed_description: str = None):
+        async with async_session() as session:
+            new_breed = Breed(
+                breed_firstname=breed_firstname,
+                breed_surname=breed_surname,
+                breed_gender=breed_gender,
+                breed_birthday=breed_birthday,
+                breed_address=breed_address,
+                breed_city=breed_city,
+                breed_country=breed_country,
+                breed_zip=breed_zip,
+                breed_phone=breed_phone,
+                breed_email=breed_email,
+                breed_description=breed_description
+            )
+            session.add(new_breed)
+            await session.commit()
+            return new_breed
+
+    @log_function_call
+    @staticmethod
+    async def get_breed(breed_id: int = None,
+                        breed_firstname: str = None,
+                        breed_surname: str = None,
+                        breed_email: str = None):
+        query = select(Breed)
+        if breed_id is not None:
+            query = query.filter_by(breed_id=breed_id)
+        if breed_firstname is not None:
+            query = query.filter_by(breed_firstname=breed_firstname)
+        if breed_surname is not None:
+            query = query.filter_by(breed_surname=breed_surname)
+        if breed_email is not None:
+            query = query.filter_by(breed_email=breed_email)
+
+        async with async_session() as session:
+            result = await session.execute(query)
+            rows = []
+            for row in result.scalars().all():
+                rows.append({"breed_id": row.breed_id,
+                             "breed_firstname": row.breed_firstname,
+                             "breed_surname": row.breed_surname,
+                             "breed_gender": row.breed_gender,
+                             "breed_birthday": row.breed_birthday,
+                             "breed_address": row.breed_address,
+                             "breed_city": row.breed_city,
+                             "breed_country": row.breed_country,
+                             "breed_zip": row.breed_zip,
+                             "breed_phone": row.breed_phone,
+                             "breed_email": row.breed_email,
+                             "breed_description": row.breed_description})
+            if breed_id:
+                return (len(rows), rows[0] if rows else None)
+            return (len(rows), rows)

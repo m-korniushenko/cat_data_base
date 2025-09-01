@@ -12,6 +12,8 @@ from nicegui.events import ValueChangeEventArguments
 import json
 from app.niceGUI_folder.pydentic_models import CatCreate, CatUpdate, OwnerCreate, OwnerUpdate
 from app.niceGUI_folder.add_cat_page import add_cat_page_render
+from app.niceGUI_folder.add_owner_page import add_owner_page_render
+from app.niceGUI_folder.add_breed_page import add_breed_page_render
 from app.database_folder.orm import AsyncOrm
 from app.database_folder.postgres import (check_db_connection,
                                           postgres_check_and_create_database,
@@ -22,6 +24,7 @@ from system_functions_folder.check_cread import check_creds
 from app.niceGUI_folder.main_page import main_page_render
 from app.niceGUI_folder.cats_page import cats_page_render
 from app.niceGUI_folder.owners_page import owners_page_render
+from app.niceGUI_folder.breeds_page import breeds_page_render
 
 
 
@@ -31,11 +34,6 @@ async def swallow_disconnects(request: Request, exc: Exception):
     if name in ('ClientDisconnect', 'CancelledError', 'WebSocketDisconnect', 'RuntimeError'):
         return Response(status_code=499)
     raise exc
-
-
-# @app.get('/api/test')
-# async def test():
-#     return {"message": "Hello, World!"}
 
 
 @ui.page('/')
@@ -53,9 +51,24 @@ async def owners_page():
     await owners_page_render()
 
 
+@ui.page('/breeds')
+async def breeds_page():
+    await breeds_page_render()
+
+
 @ui.page('/add_cat')
 async def add_cat_page():
     await add_cat_page_render()
+
+
+@ui.page('/add_owner')
+async def add_owner_page():
+    await add_owner_page_render()
+
+
+@ui.page('/add_breed')
+async def add_breed_page():
+    await add_breed_page_render()
 
 
 def start_db():

@@ -14,7 +14,7 @@ async def add_owner():
     return await AsyncOrm.add_owner(
         owner_firstname="admin",
         owner_surname="admin",
-        owner_mail="admin@admin.com",
+        owner_email="admin@admin.com",
         owner_hashed_password="admin",
         owner_permission=1
     )
