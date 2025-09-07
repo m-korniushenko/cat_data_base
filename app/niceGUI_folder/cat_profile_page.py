@@ -1,7 +1,6 @@
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
-from datetime import datetime
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -9,65 +8,127 @@ def render_family_tree_node(cat_data, depth=0):
     if not cat_data:
         return None
     
-    with ui.card().classes(f'q-pa-md m-2 max-w-xs'):
-        ui.label(f'{cat_data["firstname"]} {cat_data["surname"]}').classes('text-h6')
-        ui.label(f'Gender: {cat_data["gender"]}').classes('text-caption')
+    with ui.card().classes('q-pa-sm m-1 max-w-40 min-h-32'):
+        ui.label(f'{cat_data["firstname"]} {cat_data["surname"]}').classes('text-subtitle2 text-center q-mb-xs')
+        ui.label(f'{cat_data["gender"]}').classes('text-caption text-center q-mb-xs')
         if cat_data["birthday"]:
-            ui.label(f'Born: {cat_data["birthday"]}').classes('text-caption')
+            ui.label(f'{cat_data["birthday"]}').classes('text-caption text-center q-mb-xs')
         if cat_data["microchip"]:
-            ui.label(f'Chip: {cat_data["microchip"]}').classes('text-caption')
+            ui.label(f'{cat_data["microchip"]}').classes('text-caption text-center q-mb-xs')
         
         # Add click handler to navigate to this cat's profile
         def navigate_to_cat():
             ui.navigate.to(f'/cat_profile/{cat_data["id"]}')
         
-        ui.button('View Profile', on_click=navigate_to_cat).props('size=sm flat')
+        ui.button('View', on_click=navigate_to_cat).props('size=sm flat').classes('w-full')
 
 
-def render_family_tree(family_tree, depth=0):
-    """Render the complete family tree"""
+def render_family_tree(family_tree, depth=0, max_depth=3, line_type="both"):
+    """Render the family tree with configurable depth and line type"""
     if not family_tree:
         return
     
-    with ui.row().classes('items-start justify-center'):
-        # Render dam (mother) if exists
-        if family_tree.get('dam'):
-            with ui.column().classes('items-center'):
-                ui.label('Mother').classes('text-caption text-weight-bold')
-                render_family_tree_node(family_tree['dam'], depth + 1)
-                # Render grandparents under mother
-                if depth < 2 and (family_tree['dam'].get('dam') or family_tree['dam'].get('sire')):
-                    with ui.row().classes('items-start justify-center q-mt-sm'):
-                        if family_tree['dam'].get('dam'):
-                            with ui.column().classes('items-center'):
-                                ui.label('Grandmother').classes('text-caption text-weight-bold')
-                                render_family_tree_node(family_tree['dam']['dam'], depth + 2)
-                        if family_tree['dam'].get('sire'):
-                            with ui.column().classes('items-center'):
-                                ui.label('Grandfather').classes('text-caption text-weight-bold')
-                                render_family_tree_node(family_tree['dam']['sire'], depth + 2)
-        
-        # Render the main cat
-        with ui.column().classes('items-center mx-4'):
-            ui.label('Cat').classes('text-caption text-weight-bold')
-            render_family_tree_node(family_tree, depth)
-        
-        # Render sire (father) if exists
-        if family_tree.get('sire'):
-            with ui.column().classes('items-center'):
-                ui.label('Father').classes('text-caption text-weight-bold')
-                render_family_tree_node(family_tree['sire'], depth + 1)
-                # Render grandparents under father
-                if depth < 2 and (family_tree['sire'].get('dam') or family_tree['sire'].get('sire')):
-                    with ui.row().classes('items-start justify-center q-mt-sm'):
-                        if family_tree['sire'].get('dam'):
-                            with ui.column().classes('items-center'):
-                                ui.label('Grandmother').classes('text-caption text-weight-bold')
-                                render_family_tree_node(family_tree['sire']['dam'], depth + 2)
-                        if family_tree['sire'].get('sire'):
-                            with ui.column().classes('items-center'):
-                                ui.label('Grandfather').classes('text-caption text-weight-bold')
-                                render_family_tree_node(family_tree['sire']['sire'], depth + 2)
+    # Create a container with proper alignment
+    with ui.column().classes('w-full items-center'):
+        with ui.row().classes('items-start justify-center w-full'):
+            # Render maternal line
+            if line_type in ["both", "maternal"] and family_tree.get('dam'):
+                with ui.column().classes('items-center min-w-48'):
+                    ui.label('Mother').classes('text-caption text-weight-bold q-mb-sm')
+                    render_family_tree_node(family_tree['dam'], depth + 1)
+                    
+                    # Render maternal ancestors (grandparents)
+                    if depth < max_depth and (family_tree['dam'].get('dam') or family_tree['dam'].get('sire')):
+                        with ui.row().classes('items-start justify-center q-mt-sm gap-4'):
+                            if family_tree['dam'].get('dam'):
+                                with ui.column().classes('items-center min-w-32'):
+                                    ui.label('Grandmother').classes('text-caption text-weight-bold q-mb-sm')
+                                    render_family_tree_node(family_tree['dam']['dam'], depth + 2)
+                                    
+                                    # Render great-grandmother (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['dam']['dam'].get('dam'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandmother') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['dam']['dam']['dam'], depth + 3)
+                                    
+                                    # Render great-grandfather (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['dam']['dam'].get('sire'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandfather') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['dam']['dam']['sire'], depth + 3)
+                            
+                            if family_tree['dam'].get('sire'):
+                                with ui.column().classes('items-center min-w-32'):
+                                    ui.label('Grandfather').classes('text-caption text-weight-bold q-mb-sm')
+                                    render_family_tree_node(family_tree['dam']['sire'], depth + 2)
+                                    
+                                    # Render great-grandmother (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['dam']['sire'].get('dam'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandmother') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['dam']['sire']['dam'], depth + 3)
+                                    
+                                    # Render great-grandfather (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['dam']['sire'].get('sire'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandfather') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['dam']['sire']['sire'], depth + 3)
+            
+            # Render the main cat
+            with ui.column().classes('items-center mx-8 min-w-48'):
+                ui.label('Cat').classes('text-caption text-weight-bold q-mb-sm')
+                render_family_tree_node(family_tree, depth)
+            
+            # Render paternal line
+            if line_type in ["both", "paternal"] and family_tree.get('sire'):
+                with ui.column().classes('items-center min-w-48'):
+                    ui.label('Father').classes('text-caption text-weight-bold q-mb-sm')
+                    render_family_tree_node(family_tree['sire'], depth + 1)
+                    
+                    # Render paternal ancestors (grandparents)
+                    if depth < max_depth and (family_tree['sire'].get('dam') or family_tree['sire'].get('sire')):
+                        with ui.row().classes('items-start justify-center q-mt-sm gap-4'):
+                            if family_tree['sire'].get('dam'):
+                                with ui.column().classes('items-center min-w-32'):
+                                    ui.label('Grandmother').classes('text-caption text-weight-bold q-mb-sm')
+                                    render_family_tree_node(family_tree['sire']['dam'], depth + 2)
+                                    
+                                    # Render great-grandmother (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['sire']['dam'].get('dam'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandmother') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['sire']['dam']['dam'], depth + 3)
+                                    
+                                    # Render great-grandfather (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['sire']['dam'].get('sire'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandfather') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['sire']['dam']['sire'], depth + 3)
+                            
+                            if family_tree['sire'].get('sire'):
+                                with ui.column().classes('items-center min-w-32'):
+                                    ui.label('Grandfather').classes('text-caption text-weight-bold q-mb-sm')
+                                    render_family_tree_node(family_tree['sire']['sire'], depth + 2)
+                                    
+                                    # Render great-grandmother (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['sire']['sire'].get('dam'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandmother') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['sire']['sire']['dam'], depth + 3)
+                                    
+                                    # Render great-grandfather (3rd generation)
+                                    if depth < max_depth - 1 and family_tree['sire']['sire'].get('sire'):
+                                        with ui.column().classes('items-center min-w-24 q-mt-sm'):
+                                            ui.label('Great-Grandfather') \
+                                                .classes('text-caption text-weight-bold q-mb-sm')
+                                            render_family_tree_node(family_tree['sire']['sire']['sire'], depth + 3)
 
 
 async def cat_profile_page_render(cat_id: int):
@@ -158,13 +219,108 @@ async def cat_profile_page_render(cat_id: int):
         with ui.card().classes('w-full max-w-6xl q-pa-lg q-mt-md'):
             ui.label('Family Tree').classes('text-h6 q-mb-md')
             
-            # Get family tree data
-            family_tree = await AsyncOrm.get_cat_family_tree(cat_id, max_depth=2)
+            # Family tree controls
+            with ui.row().classes('q-mb-md'):
+                # Depth selector
+                depth_selector = ui.select(
+                    {1: '1 Generation', 2: '2 Generations', 3: '3 Generations', 
+                     4: '4 Generations', 5: '5 Generations'},
+                    value=3,
+                    label='Tree Depth'
+                ).props('outlined dense').classes('q-mr-md')
+                
+                # Line type selector
+                line_selector = ui.select(
+                    {'both': 'Both Lines', 'maternal': 'Maternal Line Only', 'paternal': 'Paternal Line Only'},
+                    value='both',
+                    label='Family Line'
+                ).props('outlined dense').classes('q-mr-md')
+                
+                # Refresh button
+                refresh_btn = ui.button('Refresh Tree', color='primary').props('outlined')
             
-            if family_tree:
-                render_family_tree(family_tree)
+            # Family tree container
+            tree_container = ui.column().classes('w-full')
+            
+            async def update_family_tree():
+                tree_container.clear()
+                with tree_container:
+                    # Get family tree data with selected depth
+                    max_depth = depth_selector.value
+                    line_type = line_selector.value
+                    family_tree = await AsyncOrm.get_cat_family_tree(cat_id, max_depth=max_depth)
+                    
+                    if family_tree:
+                        render_family_tree(family_tree, max_depth=max_depth, line_type=line_type)
+                    else:
+                        ui.label('No family tree data available').classes('text-grey')
+            
+            # Set up event handlers
+            depth_selector.on('change', update_family_tree)
+            line_selector.on('change', update_family_tree)
+            refresh_btn.on('click', update_family_tree)
+            
+            # Initial load
+            await update_family_tree()
+        
+        # Ancestors list
+        with ui.card().classes('w-full max-w-4xl q-pa-lg q-mt-md'):
+            ui.label('Complete Ancestors List').classes('text-h6 q-mb-md')
+            
+            # Get full family tree for list view
+            full_tree = await AsyncOrm.get_cat_family_tree(cat_id, max_depth=10)
+            
+            if full_tree:
+                ancestors_dict = {}  # Use dict to avoid duplicates
+                
+                def collect_ancestors(node, generation=0):
+                    if not node:
+                        return
+                    
+                    # Only add if not already in dict (avoid duplicates)
+                    if node['id'] not in ancestors_dict:
+                        ancestors_dict[node['id']] = {
+                            'generation': generation,
+                            'name': f"{node['firstname']} {node['surname']}",
+                            'gender': node['gender'],
+                            'birthday': node['birthday'],
+                            'microchip': node['microchip'],
+                            'id': node['id']
+                        }
+                    
+                    if node.get('dam'):
+                        collect_ancestors(node['dam'], generation + 1)
+                    if node.get('sire'):
+                        collect_ancestors(node['sire'], generation + 1)
+                
+                collect_ancestors(full_tree)
+                
+                # Convert to list and sort by generation
+                ancestors_list = list(ancestors_dict.values())
+                ancestors_list.sort(key=lambda x: x['generation'])
+                
+                # Display ancestors by generation
+                current_generation = -1
+                for ancestor in ancestors_list:
+                    if ancestor['generation'] != current_generation:
+                        current_generation = ancestor['generation']
+                        if current_generation == 0:
+                            ui.label(f'Generation {current_generation + 1}: Main Cat') \
+                                .classes('text-subtitle1 q-mt-md q-mb-sm')
+                        else:
+                            ui.label(f'Generation {current_generation + 1}: Ancestors') \
+                                .classes('text-subtitle1 q-mt-md q-mb-sm')
+                    
+                    with ui.row().classes('q-mb-xs'):
+                        def navigate_to_ancestor(ancestor_id=ancestor['id']):
+                            ui.navigate.to(f'/cat_profile/{ancestor_id}')
+                        
+                        ui.button(
+                            f"{ancestor['name']} ({ancestor['gender']}) - {ancestor['birthday']}",
+                            on_click=navigate_to_ancestor
+                        ).props('flat size=sm')
             else:
-                ui.label('No family tree data available').classes('text-grey')
+                ui.label('No ancestors data available').classes('text-grey')
         
         # Navigation buttons
         with ui.row().classes('q-mt-md'):
