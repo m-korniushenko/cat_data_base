@@ -32,8 +32,16 @@ def get_edit_button_vue():
         <q-td v-for="col in props.cols" :key="col.name" :props="props">
           <template v-if="col.name === 'actions'">
             <q-btn size="sm" color="primary" flat
+                   :href="'/cat_profile/' + props.row.id"
+                   label="View" class="q-mr-xs" />
+            <q-btn size="sm" color="secondary" flat
                    :href="'/edit_cat/' + props.row.id"
                    label="Edit" />
+          </template>
+          <template v-else-if="col.name === 'firstname'">
+            <q-btn flat no-caps color="primary"
+                   :href="'/cat_profile/' + props.row.id"
+                   :label="col.value" />
           </template>
           <template v-else>
             {{ col.value }}

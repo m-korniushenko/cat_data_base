@@ -25,16 +25,19 @@ async def add_cat_page_render():
          b['breed_id']: f'{b["breed_firstname"]} {b["breed_surname"]}'
          for b in breeds
     } if breeds else {}
+    # Get female cats for dam selection
     _, cats_female = await AsyncOrm.get_cat(cat_gender="Female")
-    cats_female = [
-        f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' 
+    dam_map = {
+        cat["cat_id"]: f'{cat["cat_firstname"]} {cat["cat_surname"]} ({cat["cat_microchip_number"]})'
         for cat in cats_female
-    ]
+    } if cats_female else {}
+    
+    # Get male cats for sire selection
     _, cats_male = await AsyncOrm.get_cat(cat_gender="Male")
-    cats_male = [
-        f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' 
+    sire_map = {
+        cat["cat_id"]: f'{cat["cat_firstname"]} {cat["cat_surname"]} ({cat["cat_microchip_number"]})'
         for cat in cats_male
-    ]
+    } if cats_male else {}
 
     with ui.column().classes('w-full items-center q-py-xl'):
         with ui.card().classes('w-full max-w-2xl q-pa-lg'):
@@ -63,6 +66,12 @@ async def add_cat_page_render():
                 owner = ui.select(dict(owner_map), label='Owner').props('outlined dense').classes('w-full')
                 add_owner_btn = ui.button('Add New Owner', on_click=lambda: ui.navigate.to('/add_owner'))
                 add_owner_btn.props('flat size=sm').classes('q-mt-xs')
+                
+                # Parent selection fields
+                dam = ui.select(dict(dam_map), label='Dam (Mother)') \
+                    .props('outlined dense clearable').classes('w-full')
+                sire = ui.select(dict(sire_map), label='Sire (Father)') \
+                    .props('outlined dense clearable').classes('w-full')
 
             with ui.row().classes('justify-end q-pt-md'):
                 submit_btn = ui.button('SUBMIT', color='primary').props('unelevated')
@@ -92,7 +101,9 @@ async def add_cat_page_render():
                                            cat_EMS_colour=colour.value,
                                            cat_litter=litter.value,
                                            cat_haritage_number=haritage_number.value,
-                                           owner_id=owner.value
+                                           owner_id=owner.value,
+                                           cat_dam_id=dam.value,
+                                           cat_sire_id=sire.value
                                            )
                     ui.notify('Cat added successfully!', color='positive', position='top')
                     ui.navigate.to('/cats')

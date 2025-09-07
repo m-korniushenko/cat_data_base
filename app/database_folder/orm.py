@@ -124,8 +124,10 @@ class AsyncOrm:
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
                       cat_birthday: datetime, cat_microchip_number: str,
                       cat_EMS_colour: str, cat_litter: str, cat_id: int = None, cat_breed_id: int = None,
-                      cat_haritage_number: str = None):
+                      cat_haritage_number: str = None, cat_dam_id: int = None, cat_sire_id: int = None):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
+        cat_dam_id = int(cat_dam_id) if cat_dam_id else None
+        cat_sire_id = int(cat_sire_id) if cat_sire_id else None
         async with async_session() as session:
             new_cat = Cat(
                 owner_id=owner_id,
@@ -137,7 +139,9 @@ class AsyncOrm:
                 cat_breed_id=cat_breed_id,
                 cat_EMS_colour=cat_EMS_colour,
                 cat_litter=cat_litter,
-                cat_haritage_number=cat_haritage_number
+                cat_haritage_number=cat_haritage_number,
+                cat_dam_id=cat_dam_id,
+                cat_sire_id=cat_sire_id
             )
             if cat_id:
                 new_cat.cat_id = cat_id
@@ -495,9 +499,17 @@ class AsyncOrm:
         owner_surname: str | None = None,
         owner_email: str | None = None,
     ):
+        # Create aliases for parent cats
+        Dam = aliased(Cat)
+        Sire = aliased(Cat)
+        BreedAlias = aliased(Breed)
+        
         query = (
-            select(Cat, Owner)
+            select(Cat, Owner, Dam, Sire, BreedAlias)
             .join(Owner, Cat.owner_id == Owner.owner_id)
+            .outerjoin(Dam, Cat.cat_dam_id == Dam.cat_id)
+            .outerjoin(Sire, Cat.cat_sire_id == Sire.cat_id)
+            .outerjoin(BreedAlias, Cat.cat_breed_id == BreedAlias.breed_id)
         )
         if cat_id is not None:
             query = query.where(Cat.cat_id == cat_id)
@@ -529,7 +541,7 @@ class AsyncOrm:
         async with async_session() as session:
             result = await session.execute(query)
             rows = []
-            for c, o in result.all():
+            for c, o, d, s, b in result.all():
                 rows.append({
                     'id': c.cat_id,
                     'firstname': c.cat_firstname,
@@ -540,10 +552,16 @@ class AsyncOrm:
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
+                    'haritage_number': c.cat_haritage_number,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
                     'owner_email': o.owner_email,
+                    'breed_firstname': b.breed_firstname if b else None,
+                    'breed_surname': b.breed_surname if b else None,
+                    'breed_email': b.breed_email if b else None,
+                    'dam': f'{d.cat_firstname} {d.cat_surname}' if d else None,
+                    'sire': f'{s.cat_firstname} {s.cat_surname}' if s else None,
                 })
 
         if cat_id is not None:
@@ -553,9 +571,17 @@ class AsyncOrm:
     @log_function_call
     @staticmethod
     async def get_cat_info_like(search: str | None = None):
+        # Create aliases for parent cats
+        Dam = aliased(Cat)
+        Sire = aliased(Cat)
+        BreedAlias = aliased(Breed)
+        
         query = (
-            select(Cat, Owner)
+            select(Cat, Owner, Dam, Sire, BreedAlias)
             .join(Owner, Cat.owner_id == Owner.owner_id)
+            .outerjoin(Dam, Cat.cat_dam_id == Dam.cat_id)
+            .outerjoin(Sire, Cat.cat_sire_id == Sire.cat_id)
+            .outerjoin(BreedAlias, Cat.cat_breed_id == BreedAlias.breed_id)
         )
 
         if search:
@@ -578,7 +604,7 @@ class AsyncOrm:
         async with async_session() as session:
             result = await session.execute(query)
             rows = []
-            for c, o in result.all():
+            for c, o, d, s, b in result.all():
                 rows.append({
                     'id': c.cat_id,
                     'firstname': c.cat_firstname,
@@ -589,10 +615,16 @@ class AsyncOrm:
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
+                    'haritage_number': c.cat_haritage_number,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
                     'owner_email': o.owner_email,
+                    'breed_firstname': b.breed_firstname if b else None,
+                    'breed_surname': b.breed_surname if b else None,
+                    'breed_email': b.breed_email if b else None,
+                    'dam': f'{d.cat_firstname} {d.cat_surname}' if d else None,
+                    'sire': f'{s.cat_firstname} {s.cat_surname}' if s else None,
                 })
 
         return (len(rows), rows)
@@ -664,3 +696,84 @@ class AsyncOrm:
             if breed_id:
                 return (len(rows), rows[0] if rows else None)
             return (len(rows), rows)
+
+    @log_function_call
+    @staticmethod
+    async def get_cat_with_parents(cat_id: int):
+        """Get cat information with parent details"""
+        async with async_session() as session:
+            # Get the main cat
+            cat_query = select(Cat).where(Cat.cat_id == cat_id)
+            cat_result = await session.execute(cat_query)
+            cat = cat_result.scalars().first()
+            
+            if not cat:
+                return None
+                
+            # Get owner information
+            owner_query = select(Owner).where(Owner.owner_id == cat.owner_id)
+            owner_result = await session.execute(owner_query)
+            owner = owner_result.scalars().first()
+            
+            # Get breed information
+            breed_query = select(Breed).where(Breed.breed_id == cat.cat_breed_id)
+            breed_result = await session.execute(breed_query)
+            breed = breed_result.scalars().first()
+            
+            # Get dam (mother) information
+            dam = None
+            if cat.cat_dam_id:
+                dam_query = select(Cat).where(Cat.cat_id == cat.cat_dam_id)
+                dam_result = await session.execute(dam_query)
+                dam = dam_result.scalars().first()
+            
+            # Get sire (father) information
+            sire = None
+            if cat.cat_sire_id:
+                sire_query = select(Cat).where(Cat.cat_id == cat.cat_sire_id)
+                sire_result = await session.execute(sire_query)
+                sire = sire_result.scalars().first()
+            
+            return {
+                'cat': cat,
+                'owner': owner,
+                'breed': breed,
+                'dam': dam,
+                'sire': sire
+            }
+
+    @log_function_call
+    @staticmethod
+    async def get_cat_family_tree(cat_id: int, max_depth: int = 3):
+        """Get family tree for a cat up to specified depth"""
+        async with async_session() as session:
+            def get_cat_info(cat):
+                if not cat:
+                    return None
+                return {
+                    'id': cat.cat_id,
+                    'firstname': cat.cat_firstname,
+                    'surname': cat.cat_surname,
+                    'gender': cat.cat_gender,
+                    'birthday': cat.cat_birthday,
+                    'microchip': cat.cat_microchip_number
+                }
+            
+            async def build_tree(current_cat_id, depth):
+                if depth > max_depth or not current_cat_id:
+                    return None
+                    
+                cat_query = select(Cat).where(Cat.cat_id == current_cat_id)
+                cat_result = await session.execute(cat_query)
+                cat = cat_result.scalars().first()
+                
+                if not cat:
+                    return None
+                
+                tree_node = get_cat_info(cat)
+                tree_node['dam'] = await build_tree(cat.cat_dam_id, depth + 1)
+                tree_node['sire'] = await build_tree(cat.cat_sire_id, depth + 1)
+                
+                return tree_node
+            
+            return await build_tree(cat_id, 0)

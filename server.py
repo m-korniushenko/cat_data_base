@@ -25,6 +25,7 @@ from app.niceGUI_folder.main_page import main_page_render
 from app.niceGUI_folder.cats_page import cats_page_render
 from app.niceGUI_folder.owners_page import owners_page_render
 from app.niceGUI_folder.breeds_page import breeds_page_render
+from app.niceGUI_folder.cat_profile_page import cat_profile_page_render
 
 
 
@@ -69,6 +70,11 @@ async def add_owner_page():
 @ui.page('/add_breed')
 async def add_breed_page():
     await add_breed_page_render()
+
+
+@ui.page('/cat_profile/{cat_id}')
+async def cat_profile_page(cat_id: int):
+    await cat_profile_page_render(cat_id)
 
 
 def start_db():
