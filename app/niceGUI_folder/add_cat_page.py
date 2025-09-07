@@ -19,6 +19,12 @@ async def add_cat_page_render():
          o['owner_id']: f'{o["owner_firstname"]} {o["owner_surname"]}'
          for o in owners
     }
+    
+    _, breeds = await AsyncOrm.get_breed()
+    breed_map = {
+         b['breed_id']: f'{b["breed_firstname"]} {b["breed_surname"]}'
+         for b in breeds
+    } if breeds else {}
     _, cats_female = await AsyncOrm.get_cat(cat_gender="Female")
     cats_female = [
         f'{cat["cat_firstname"]} {cat["cat_surname"]} {cat["cat_gender"]} {cat["cat_microchip_number"]}' 
@@ -47,12 +53,16 @@ async def add_cat_page_render():
                 microchip = ui.input(label='Cat Microchip Number') \
                     .props('outlined dense') \
                     .classes('w-full md:col-span-2')
-                breed = ui.input(label='Cat Breed').props('outlined dense').classes('w-full')
+                breed = ui.select(dict(breed_map), label='Cat Breed').props('outlined dense').classes('w-full')
+                add_breed_btn = ui.button('Add New Breed', on_click=lambda: ui.navigate.to('/add_breed'))
+                add_breed_btn.props('flat size=sm').classes('q-mt-xs')
                 colour = ui.input(label='Cat Colour').props('outlined dense').classes('w-full')
 
                 litter = ui.input(label='Cat Litter').props('outlined dense').classes('w-full')
                 haritage_number = ui.input(label='Cat Haritage Number').props('outlined dense').classes('w-full')
                 owner = ui.select(dict(owner_map), label='Owner').props('outlined dense').classes('w-full')
+                add_owner_btn = ui.button('Add New Owner', on_click=lambda: ui.navigate.to('/add_owner'))
+                add_owner_btn.props('flat size=sm').classes('q-mt-xs')
 
             with ui.row().classes('justify-end q-pt-md'):
                 submit_btn = ui.button('SUBMIT', color='primary').props('unelevated')
@@ -60,7 +70,11 @@ async def add_cat_page_render():
             async def handle_submit():
                 try:
                     # Проверяем, что все обязательные поля заполнены
-                    if not firstname.value or not surname.value or not microchip.value or not owner.value:
+                    required_fields = [
+                        firstname.value, surname.value, microchip.value, 
+                        owner.value, breed.value
+                    ]
+                    if not all(required_fields):
                         ui.notify('Please fill in all required fields', color='negative', position='top')
                         return
 
