@@ -1,6 +1,7 @@
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.pdf_generator import generate_cat_pdf_file
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -150,7 +151,32 @@ async def cat_profile_page_render(cat_id: int):
     with ui.column().classes('w-full items-center q-py-xl'):
         # Main cat information card
         with ui.card().classes('w-full max-w-4xl q-pa-lg'):
-            ui.label(f'{cat.cat_firstname} {cat.cat_surname}').classes('text-h4 q-mb-md')
+            with ui.row().classes('justify-between items-center q-mb-md'):
+                ui.label(f'{cat.cat_firstname} {cat.cat_surname}').classes('text-h4')
+                
+                # Quick PDF generation button
+                async def quick_generate_pdf():
+                    try:
+                        ui.notify('Generating PDF...', color='info', position='top')
+                        
+                        # Get full family tree for PDF
+                        full_tree = await AsyncOrm.get_cat_family_tree(cat_id, max_depth=10)
+                        
+                        # Generate PDF
+                        output_path, filename = generate_cat_pdf_file(cat_info, full_tree)
+                        
+                        ui.notify(f'PDF generated successfully: {filename}', color='positive', position='top')
+                        
+                        # Create download link
+                        with open(output_path, 'rb') as f:
+                            pdf_content = f.read()
+                        
+                        ui.download(pdf_content, filename, 'application/pdf')
+                        
+                    except Exception as e:
+                        ui.notify(f'Error generating PDF: {str(e)}', color='negative', position='top')
+                
+                ui.button('📄 Generate PDF', on_click=quick_generate_pdf, color='primary').props('icon=description')
             
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
                 # Basic information
@@ -326,3 +352,27 @@ async def cat_profile_page_render(cat_id: int):
         with ui.row().classes('q-mt-md'):
             ui.button('Back to Cats List', on_click=lambda: ui.navigate.to('/cats')).props('outline')
             ui.button('Edit Cat', on_click=lambda: ui.navigate.to(f'/edit_cat/{cat_id}')).props('outline')
+            
+            # PDF Generation button
+            async def generate_pdf():
+                try:
+                    ui.notify('Generating PDF...', color='info', position='top')
+                    
+                    # Get full family tree for PDF
+                    full_tree = await AsyncOrm.get_cat_family_tree(cat_id, max_depth=10)
+                    
+                    # Generate PDF
+                    output_path, filename = generate_cat_pdf_file(cat_info, full_tree)
+                    
+                    ui.notify(f'PDF generated successfully: {filename}', color='positive', position='top')
+                    
+                    # Create download link
+                    with open(output_path, 'rb') as f:
+                        pdf_content = f.read()
+                    
+                    ui.download(pdf_content, filename, 'application/pdf')
+                    
+                except Exception as e:
+                    ui.notify(f'Error generating PDF: {str(e)}', color='negative', position='top')
+            
+            ui.button('Generate PDF Report', on_click=generate_pdf, color='primary').props('outline')
