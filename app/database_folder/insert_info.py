@@ -207,6 +207,7 @@ async def main_add_workflow():
         await add_owner()
         await add_owner()
         await add_owner()
+        await add_breeds()  # Add breeders
         await add_family_tree_test_data()
         print("✅ Database initialization completed successfully!")
     except Exception as e:

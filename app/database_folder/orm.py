@@ -67,57 +67,6 @@ class AsyncOrm:
             return len(rows), rows
 
     @log_function_call
-    @staticmethod
-    async def update_cat(cat_id: int = None,
-                         cat_firstname: str = None,
-                         cat_surname: str = None,
-                         cat_birthday: datetime = None,
-                         cat_microchip_number: str = None,
-                         cat_breed_id: str = None,
-                         cat_EMS_colour: str = None,
-                         cat_gender: str = None,
-                         cat_litter: str = None,
-                         cat_connection=None,
-                         country_city=None):
-        async with async_session() as session:
-            query = select(Cat).filter_by(cat_id=cat_id)
-            result = await session.execute(query)
-            cat = result.scalars().first()
-            if cat_firstname:
-                cat.cat_firstname = cat_firstname
-            if cat_surname:
-                cat.cat_surname = cat_surname
-            if cat_birthday:
-                cat.cat_birthday = cat_birthday
-            if cat_microchip_number:
-                cat.cat_microchip_number = cat_microchip_number
-            if cat_breed_id:
-                cat.cat_breed_id = cat_breed_id
-            if cat_EMS_colour:
-                cat.cat_EMS_colour = cat_EMS_colour
-            if cat_gender:
-                cat.cat_gender = cat_gender
-            if cat_litter:
-                cat.cat_litter = cat_litter
-            if cat_connection:
-                cat.cat_connection = cat_connection
-            if country_city:
-                cat.country_city = country_city
-            await session.commit()
-            return cat
-
-    @log_function_call
-    @staticmethod
-    async def delete_cat(cat_id: int):
-        async with async_session() as session:
-            query = select(Cat).filter_by(cat_id=cat_id)
-            result = await session.execute(query)
-            cat = result.scalars().first()
-            if cat:
-                await session.delete(cat)
-                await session.commit()
-                return True
-            return False
 
     # @log_function_call
     @staticmethod
@@ -148,6 +97,61 @@ class AsyncOrm:
             session.add(new_cat)
             await session.commit()
             return new_cat
+
+    @staticmethod
+    async def update_cat(cat_id: int, firstname: str, surname: str, gender: str,
+                         birthday: datetime, microchip: str = None, colour: str = None,
+                         litter: str = None, haritage_number: str = None, owner_id: int = None,
+                         breed_id: int = None, dam_id: int = None, sire_id: int = None) -> bool:
+        """Update cat information"""
+        try:
+            async with async_session() as session:
+                # Get the cat to update
+                result = await session.execute(select(Cat).filter_by(cat_id=cat_id))
+                cat = result.scalar_one_or_none()
+                
+                if not cat:
+                    return False
+                
+                # Update fields
+                cat.cat_firstname = firstname
+                cat.cat_surname = surname
+                cat.cat_gender = gender
+                cat.cat_birthday = birthday
+                cat.cat_microchip_number = microchip
+                cat.cat_EMS_colour = colour
+                cat.cat_litter = litter
+                cat.cat_haritage_number = haritage_number
+                cat.owner_id = owner_id
+                cat.cat_breed_id = breed_id
+                cat.cat_dam_id = dam_id
+                cat.cat_sire_id = sire_id
+                
+                await session.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error updating cat: {e}")
+            return False
+
+    @staticmethod
+    async def delete_cat(cat_id: int) -> bool:
+        """Delete cat by ID"""
+        try:
+            async with async_session() as session:
+                result = await session.execute(select(Cat).filter_by(cat_id=cat_id))
+                cat = result.scalar_one_or_none()
+                
+                if not cat:
+                    return False
+                
+                await session.delete(cat)
+                await session.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error deleting cat: {e}")
+            return False
 
     # @log_function_call
     @staticmethod
