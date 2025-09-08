@@ -94,7 +94,8 @@ async def add_cat_page_render():
                         return
                     
                     # Save photo (with automatic compression)
-                    photo_path = PhotoService.save_photo(e.content.read(), e.name)
+                    microchip_value = microchip.value if microchip.value else None
+                    photo_path = PhotoService.save_photo(e.content.read(), e.name, microchip_value)
                     if photo_path:
                         uploaded_photos.append(photo_path)
                         update_photo_gallery()

@@ -88,9 +88,14 @@ async def edit_cat_page(cat_id: int):
 @app.get('/static/{file_path:path}')
 async def serve_photos(file_path: str):
     """Serve photo files"""
-    full_path = os.path.join(os.getcwd(), file_path)
+    # Normalize path separators for file system
+    normalized_file_path = file_path.replace('/', '\\') if os.name == 'nt' else file_path
+    full_path = os.path.join(os.getcwd(), normalized_file_path)
     print(f"Serving file: {file_path} -> {full_path}")
+    print(f"Normalized path: {normalized_file_path}")
     print(f"File exists: {os.path.exists(full_path)}")
+    print(f"Is file: {os.path.isfile(full_path) if os.path.exists(full_path) else 'N/A'}")
+    
     if os.path.exists(full_path) and os.path.isfile(full_path):
         from fastapi.responses import FileResponse
         return FileResponse(full_path)

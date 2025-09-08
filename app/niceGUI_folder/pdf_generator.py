@@ -171,10 +171,12 @@ class CatPDFGenerator:
                 for j in range(2):
                     if i + j < len(photos):
                         photo_path = photos[i + j]
-                        if os.path.exists(photo_path):
+                        # Normalize path separators for file system check
+                        normalized_path = photo_path.replace('/', '\\') if os.name == 'nt' else photo_path
+                        if os.path.exists(normalized_path):
                             try:
                                 # Create image with max size constraints
-                                img = Image(photo_path, width=2*inch, height=2*inch)
+                                img = Image(normalized_path, width=2*inch, height=2*inch)
                                 img.hAlign = 'CENTER'
                                 photo_row.append(img)
                             except Exception:

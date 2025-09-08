@@ -134,6 +134,9 @@ class EditCatPage:
                         value=cat.cat_microchip_number or ''
                     ).classes('w-full')
                     
+                    # Store original microchip for comparison
+                    self.original_microchip = cat.cat_microchip_number
+                    
                     self.colour_input = ui.input(
                         label='Color',
                         value=cat.cat_EMS_colour or ''
@@ -274,7 +277,8 @@ class EditCatPage:
                         return
                     
                     # Save photo (with automatic compression)
-                    photo_path = PhotoService.save_photo(e.content.read(), e.name)
+                    microchip = self.microchip_input.value if self.microchip_input.value else None
+                    photo_path = PhotoService.save_photo(e.content.read(), e.name, microchip)
                     if photo_path:
                         self.uploaded_photos.append(photo_path)
                         self.update_photo_gallery()
@@ -379,12 +383,42 @@ class EditCatPage:
                 'cat_photos': [photo for photo in self.uploaded_photos if photo and os.path.exists(photo)]
             }
             
+            # Check if microchip changed and update photo paths
+            old_microchip = self.original_microchip
+            new_microchip = data['microchip']
+            
+            print(f"Original microchip: '{old_microchip}'")
+            print(f"New microchip: '{new_microchip}'")
+            print(f"Microchip changed: {old_microchip != new_microchip}")
+            print(f"Number of photos: {len(data['cat_photos'])}")
+            
+            if old_microchip != new_microchip and data['cat_photos']:
+                print(f"Microchip changed from '{old_microchip}' to '{new_microchip}', updating photo paths in database")
+                data['cat_photos'] = PhotoService.update_photo_paths_in_database(
+                    data['cat_photos'], old_microchip, new_microchip
+                )
+            else:
+                print("No photo path update needed")
+            
             print(f"Saving cat with {len(data['cat_photos'])} photos: {data['cat_photos']}")
             
             # Validate and save
             success, message = await self.cat_service.update_cat(self.cat_id, data)
             
             if success:
+                # After successful save, ensure photo directory is renamed if microchip changed
+                if old_microchip != new_microchip:
+                    print(f"Microchip changed, ensuring photo directory is properly renamed")
+                    PhotoService.ensure_photo_directory_renamed(old_microchip, new_microchip)
+                    
+                    # Also update the uploaded_photos list to reflect the new paths
+                    if self.uploaded_photos:
+                        print(f"Updating uploaded_photos list with new paths")
+                        self.uploaded_photos = PhotoService.update_photo_paths_in_database(
+                            self.uploaded_photos, old_microchip, new_microchip
+                        )
+                        print(f"Updated uploaded_photos: {self.uploaded_photos}")
+                
                 ui.notify(message, type='positive')
                 ui.navigate.to(f'/cat_profile/{self.cat_id}')
             else:
