@@ -28,6 +28,7 @@ from app.niceGUI_folder.owners_page import owners_page_render
 from app.niceGUI_folder.breeds_page import breeds_page_render
 from app.niceGUI_folder.cat_profile_page import cat_profile_page_render
 from app.niceGUI_folder.edit_cat_page import edit_cat_page_render
+from app.niceGUI_folder.history_page import history_page_render
 
 
 
@@ -82,6 +83,11 @@ async def cat_profile_page(cat_id: int):
 @ui.page('/edit_cat/{cat_id}')
 async def edit_cat_page(cat_id: int):
     await edit_cat_page_render(cat_id)
+
+
+@ui.page('/history')
+async def history_page():
+    await history_page_render()
 
 
 # Static file serving for photos

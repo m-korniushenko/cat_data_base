@@ -8,4 +8,5 @@ def get_header(label_text: str):
             ui.button('Cats', on_click=lambda: ui.navigate.to('/cats')).classes('q-mr-sm')
             ui.button('Owners', on_click=lambda: ui.navigate.to('/owners')).classes('q-mr-sm')
             ui.button('Breeds', on_click=lambda: ui.navigate.to('/breeds')).classes('q-mr-sm')
+            ui.button('History', on_click=lambda: ui.navigate.to('/history')).classes('q-mr-sm')
             ui.button('Dashboard', on_click=lambda: ui.navigate.to('/')).classes('q-mr-sm')
