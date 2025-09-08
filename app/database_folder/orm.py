@@ -72,8 +72,9 @@ class AsyncOrm:
     @staticmethod
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
                       cat_birthday: datetime, cat_microchip_number: str,
-                      cat_EMS_colour: str, cat_litter: str, cat_id: int = None, cat_breed_id: int = None,
-                      cat_haritage_number: str = None, cat_dam_id: int = None, cat_sire_id: int = None):
+                      cat_EMS_colour: str, cat_litter: str, cat_breed_id: int = None,
+                      cat_haritage_number: str = None, cat_dam_id: int = None, cat_sire_id: int = None,
+                      cat_photos: list = None):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         cat_dam_id = int(cat_dam_id) if cat_dam_id else None
         cat_sire_id = int(cat_sire_id) if cat_sire_id else None
@@ -90,10 +91,9 @@ class AsyncOrm:
                 cat_litter=cat_litter,
                 cat_haritage_number=cat_haritage_number,
                 cat_dam_id=cat_dam_id,
-                cat_sire_id=cat_sire_id
+                cat_sire_id=cat_sire_id,
+                cat_photos=cat_photos or []
             )
-            if cat_id:
-                new_cat.cat_id = cat_id
             session.add(new_cat)
             await session.commit()
             return new_cat
@@ -102,7 +102,8 @@ class AsyncOrm:
     async def update_cat(cat_id: int, firstname: str, surname: str, gender: str,
                          birthday: datetime, microchip: str = None, colour: str = None,
                          litter: str = None, haritage_number: str = None, owner_id: int = None,
-                         breed_id: int = None, dam_id: int = None, sire_id: int = None) -> bool:
+                         breed_id: int = None, dam_id: int = None, sire_id: int = None,
+                         cat_photos: list = None) -> bool:
         """Update cat information"""
         try:
             async with async_session() as session:
@@ -126,12 +127,16 @@ class AsyncOrm:
                 cat.cat_breed_id = breed_id
                 cat.cat_dam_id = dam_id
                 cat.cat_sire_id = sire_id
+                if cat_photos is not None:
+                    cat.cat_photos = cat_photos
                 
                 await session.commit()
                 return True
                 
         except Exception as e:
             print(f"Error updating cat: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     @staticmethod

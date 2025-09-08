@@ -10,6 +10,7 @@ import uvicorn
 from nicegui import ui, app
 from nicegui.events import ValueChangeEventArguments
 import json
+import os
 from app.niceGUI_folder.pydentic_models import CatCreate, CatUpdate, OwnerCreate, OwnerUpdate
 from app.niceGUI_folder.add_cat_page import add_cat_page_render
 from app.niceGUI_folder.add_owner_page import add_owner_page_render
@@ -81,6 +82,19 @@ async def cat_profile_page(cat_id: int):
 @ui.page('/edit_cat/{cat_id}')
 async def edit_cat_page(cat_id: int):
     await edit_cat_page_render(cat_id)
+
+
+# Static file serving for photos
+@app.get('/static/{file_path:path}')
+async def serve_photos(file_path: str):
+    """Serve photo files"""
+    full_path = os.path.join(os.getcwd(), file_path)
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(full_path)
+    else:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="File not found")
 
 
 def start_db():

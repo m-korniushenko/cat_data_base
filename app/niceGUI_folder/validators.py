@@ -66,9 +66,9 @@ class CatValidator(BaseValidator):
             else:
                 errors.append("Invalid birthday format")
         
-        # Validate microchip (if provided)
+        # Validate microchip (if provided and not empty)
         microchip = data.get('microchip')
-        if microchip and len(microchip) < 5:
+        if microchip and microchip.strip() and len(microchip.strip()) < 5:
             errors.append("Microchip number must be at least 5 characters")
         
         # Validate parent IDs (if provided)

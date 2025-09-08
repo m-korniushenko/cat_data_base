@@ -23,7 +23,6 @@ async def add_owner():
 async def add_cat(owner_id, idx, gender, firstname, surname, birthday_year, microchip, 
                   colour="black", litter="A", dam_id=None, sire_id=None, breed_id=1):
     return await AsyncOrm.add_cat(
-        cat_id=idx, 
         owner_id=owner_id, 
         cat_firstname=firstname, 
         cat_surname=surname,

@@ -3,12 +3,16 @@ from pydantic import ValidationError
 # from app.niceGUI_folder.pydentic_models import CatCreate
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.photo_service import PhotoService
 from datetime import datetime
 # import geonamescache
 
 
 async def add_cat_page_render():
     get_header('Add Cat Page')
+    
+    # Store uploaded photos
+    uploaded_photos = []
 
     # gc = geonamescache.GeonamesCache()
     # cities = gc.get_cities()
@@ -73,6 +77,67 @@ async def add_cat_page_render():
                 sire = ui.select(dict(sire_map), label='Sire (Father)') \
                     .props('outlined dense clearable').classes('w-full')
 
+            # Photos section
+            ui.separator().classes('q-my-md')
+            ui.label('Photos').classes('text-h6 q-mb-md')
+            
+            # Photo upload area
+            photo_container = ui.column().classes('w-full')
+            
+            def handle_photo_upload(e):
+                """Handle photo upload"""
+                try:
+                    # Validate photo (without size check since we'll compress if needed)
+                    is_valid, error_msg = PhotoService.is_valid_photo(e.name)
+                    if not is_valid:
+                        ui.notify(error_msg, color='negative', position='top')
+                        return
+                    
+                    # Save photo (with automatic compression)
+                    photo_path = PhotoService.save_photo(e.content.read(), e.name)
+                    if photo_path:
+                        uploaded_photos.append(photo_path)
+                        update_photo_gallery()
+                        ui.notify(f'Photo "{e.name}" uploaded successfully!', color='positive', position='top')
+                    else:
+                        ui.notify('Failed to save photo', color='negative', position='top')
+                        
+                except Exception as ex:
+                    ui.notify(f'Error uploading photo: {str(ex)}', color='negative', position='top')
+            
+            def update_photo_gallery():
+                """Update photo gallery display"""
+                photo_container.clear()
+                with photo_container:
+                    if uploaded_photos:
+                        ui.label(f'Uploaded photos ({len(uploaded_photos)}):').classes('text-subtitle2 q-mb-sm')
+                        PhotoService.create_photo_gallery(uploaded_photos, "150px")
+                        
+                        # Add delete buttons for each photo
+                        for i, photo_path in enumerate(uploaded_photos):
+                            def delete_photo(index=i):
+                                if PhotoService.delete_photo(uploaded_photos[index]):
+                                    uploaded_photos.pop(index)
+                                    update_photo_gallery()
+                                    ui.notify('Photo deleted', color='info', position='top')
+                                else:
+                                    ui.notify('Failed to delete photo', color='negative', position='top')
+                            
+                            with ui.row().classes('items-center gap-2 q-mt-sm'):
+                                ui.button('Delete', on_click=delete_photo, color='negative').props('dense size=sm')
+                    else:
+                        ui.label('No photos uploaded yet').classes('text-grey-6')
+            
+            # Upload widget
+            ui.upload(
+                on_upload=handle_photo_upload,
+                auto_upload=True,
+                max_file_size=PhotoService.MAX_FILE_SIZE
+            ).props('accept=image/*').classes('w-full q-mb-md')
+            
+            # Initial gallery display
+            update_photo_gallery()
+
             with ui.row().classes('justify-end q-pt-md'):
                 submit_btn = ui.button('SUBMIT', color='primary').props('unelevated')
 
@@ -103,7 +168,8 @@ async def add_cat_page_render():
                                            cat_haritage_number=haritage_number.value,
                                            owner_id=owner.value,
                                            cat_dam_id=dam.value,
-                                           cat_sire_id=sire.value
+                                           cat_sire_id=sire.value,
+                                           cat_photos=uploaded_photos
                                            )
                     ui.notify('Cat added successfully!', color='positive', position='top')
                     ui.navigate.to('/cats')

@@ -2,6 +2,7 @@ from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.pdf_generator import generate_cat_pdf_file
+from app.niceGUI_folder.photo_service import PhotoService
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -202,6 +203,12 @@ async def cat_profile_page_render(cat_id: int):
                         ui.label(f'Breeder Email: {breed.breed_email}').classes('q-mb-xs')
                         if breed.breed_phone:
                             ui.label(f'Breeder Phone: {breed.breed_phone}').classes('q-mb-xs')
+        
+        # Photos section
+        if cat.cat_photos and len(cat.cat_photos) > 0:
+            with ui.card().classes('w-full max-w-4xl q-pa-lg q-mt-md'):
+                ui.label('📸 Photos').classes('text-h6 q-mb-md')
+                PhotoService.create_photo_gallery(cat.cat_photos, "200px")
         
         # Parents information
         if dam or sire:

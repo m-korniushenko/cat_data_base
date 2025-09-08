@@ -2,7 +2,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.platypus.flowables import HRFlowable
 from reportlab.lib.enums import TA_CENTER
 from datetime import datetime
@@ -77,17 +77,22 @@ class CatPDFGenerator:
         cat_data = [
             ['🐱 Cat Info', '', '👤 Owner Info', ''],
             ['Name:', f"{cat_info['cat'].cat_firstname} {cat_info['cat'].cat_surname}",
-             'Name:', f"{cat_info['owner'].owner_firstname} {cat_info['owner'].owner_surname}" if cat_info['owner'] else 'Not specified'],
+             'Name:', f"{cat_info['owner'].owner_firstname} {cat_info['owner'].owner_surname}" 
+             if cat_info['owner'] else 'Not specified'],
             ['Gender:', cat_info['cat'].cat_gender,
              'Email:', cat_info['owner'].owner_email if cat_info['owner'] else 'Not specified'],
             ['Birthday:', str(cat_info['cat'].cat_birthday),
-             'Phone:', cat_info['owner'].owner_phone or 'Not specified' if cat_info['owner'] else 'Not specified'],
+             'Phone:', cat_info['owner'].owner_phone or 'Not specified' 
+             if cat_info['owner'] else 'Not specified'],
             ['Microchip:', cat_info['cat'].cat_microchip_number or 'Not specified',
-             'Address:', cat_info['owner'].owner_address or 'Not specified' if cat_info['owner'] else 'Not specified'],
+             'Address:', cat_info['owner'].owner_address or 'Not specified' 
+             if cat_info['owner'] else 'Not specified'],
             ['Color:', cat_info['cat'].cat_EMS_colour or 'Not specified',
-             'City:', cat_info['owner'].owner_city or 'Not specified' if cat_info['owner'] else 'Not specified'],
+             'City:', cat_info['owner'].owner_city or 'Not specified' 
+             if cat_info['owner'] else 'Not specified'],
             ['Litter:', cat_info['cat'].cat_litter or 'Not specified',
-             'Country:', cat_info['owner'].owner_country or 'Not specified' if cat_info['owner'] else 'Not specified'],
+             'Country:', cat_info['owner'].owner_country or 'Not specified' 
+             if cat_info['owner'] else 'Not specified'],
             ['Heritage:', cat_info['cat'].cat_haritage_number or 'Not specified',
              '', '']
         ]
@@ -108,14 +113,18 @@ class CatPDFGenerator:
         if cat_info['dam'] or cat_info['sire']:
             cat_data.extend([
                 ['👨‍👩‍👧‍👦 Parents Info', '', '', ''],
-                ['Mother:', f"{cat_info['dam'].cat_firstname} {cat_info['dam'].cat_surname}" if cat_info['dam'] else 'Not specified',
-                 'Father:', f"{cat_info['sire'].cat_firstname} {cat_info['sire'].cat_surname}" if cat_info['sire'] else 'Not specified'],
+                ['Mother:', f"{cat_info['dam'].cat_firstname} {cat_info['dam'].cat_surname}" 
+                 if cat_info['dam'] else 'Not specified',
+                 'Father:', f"{cat_info['sire'].cat_firstname} {cat_info['sire'].cat_surname}" 
+                 if cat_info['sire'] else 'Not specified'],
                 ['M. Gender:', cat_info['dam'].cat_gender if cat_info['dam'] else 'Not specified',
                  'F. Gender:', cat_info['sire'].cat_gender if cat_info['sire'] else 'Not specified'],
                 ['M. Birthday:', str(cat_info['dam'].cat_birthday) if cat_info['dam'] else 'Not specified',
                  'F. Birthday:', str(cat_info['sire'].cat_birthday) if cat_info['sire'] else 'Not specified'],
-                ['M. Microchip:', cat_info['dam'].cat_microchip_number or 'Not specified' if cat_info['dam'] else 'Not specified',
-                 'F. Microchip:', cat_info['sire'].cat_microchip_number or 'Not specified' if cat_info['sire'] else 'Not specified']
+                ['M. Microchip:', cat_info['dam'].cat_microchip_number or 'Not specified' 
+                 if cat_info['dam'] else 'Not specified',
+                 'F. Microchip:', cat_info['sire'].cat_microchip_number or 'Not specified' 
+                 if cat_info['sire'] else 'Not specified']
             ])
         
         compact_table = Table(cat_data, colWidths=[1.2*inch, 2.3*inch, 1.2*inch, 2.3*inch])
@@ -131,7 +140,8 @@ class CatPDFGenerator:
             # Section headers styling
             ('BACKGROUND', (0, 1), (-1, 1), colors.lightblue),
             ('BACKGROUND', (0, 8), (-1, 8), colors.lightgreen) if cat_info['breed'] else (),
-            ('BACKGROUND', (0, 13), (-1, 13), colors.lightyellow) if cat_info['dam'] or cat_info['sire'] else (),
+            ('BACKGROUND', (0, 13), (-1, 13), colors.lightyellow) 
+            if cat_info['dam'] or cat_info['sire'] else (),
             
             # General styling
             ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
@@ -149,6 +159,43 @@ class CatPDFGenerator:
         story.append(compact_table)
         story.append(Spacer(1, 15))
         
+        # Photos section
+        if cat_info['cat'].cat_photos and len(cat_info['cat'].cat_photos) > 0:
+            story.append(Paragraph("📸 Photos", self.styles['CustomHeading']))
+            story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkblue))
+            
+            # Add photos in a grid layout
+            photos = cat_info['cat'].cat_photos
+            for i in range(0, len(photos), 2):  # 2 photos per row
+                photo_row = []
+                for j in range(2):
+                    if i + j < len(photos):
+                        photo_path = photos[i + j]
+                        if os.path.exists(photo_path):
+                            try:
+                                # Create image with max size constraints
+                                img = Image(photo_path, width=2*inch, height=2*inch)
+                                img.hAlign = 'CENTER'
+                                photo_row.append(img)
+                            except Exception:
+                                # If image can't be loaded, add text instead
+                                photo_row.append(Paragraph(f"Photo {i+j+1}<br/>(Error loading)", 
+                                                          self.styles['Normal']))
+                        else:
+                            photo_row.append(Paragraph(f"Photo {i+j+1}<br/>(File not found)", self.styles['Normal']))
+                    else:
+                        photo_row.append(Paragraph("", self.styles['Normal']))
+                
+                if photo_row:
+                    photo_table = Table([photo_row], colWidths=[2.5*inch, 2.5*inch])
+                    photo_table.setStyle(TableStyle([
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ]))
+                    story.append(photo_table)
+                    story.append(Spacer(1, 8))
+            
+            story.append(Spacer(1, 10))
         
         # Family Tree - Compact version
         if family_tree:

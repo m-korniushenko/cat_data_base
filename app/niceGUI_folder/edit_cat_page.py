@@ -7,6 +7,7 @@ Dependency Inversion: Uses service layer for business logic.
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.cat_service import CatService
+from app.niceGUI_folder.photo_service import PhotoService
 from app.database_folder.orm import AsyncOrm
 
 
@@ -28,6 +29,10 @@ class EditCatPage:
         self.litter_input = None
         self.haritage_input = None
         self.owner_select = None
+        
+        # Photo management
+        self.uploaded_photos = []
+        self.photo_container = None
         self.breeder_select = None
         self.dam_select = None
         self.sire_select = None
@@ -77,7 +82,9 @@ class EditCatPage:
         
         # Debug info
         print(f"Cat: {cat.cat_firstname} {cat.cat_surname}")
-        print(f"Owner: {owner.owner_firstname if owner else 'None'} (ID: {owner.owner_id if owner else 'None'})")
+        owner_name = owner.owner_firstname if owner else 'None'
+        owner_id = owner.owner_id if owner else 'None'
+        print(f"Owner: {owner_name} (ID: {owner_id})")
         print(f"Breeder: {breeder.breed_firstname if breeder else 'None'} (ID: {breeder.breed_id if breeder else 'None'})")
         print(f"Dam: {dam.cat_firstname if dam else 'None'} (ID: {dam.cat_id if dam else 'None'})")
         print(f"Sire: {sire.cat_firstname if sire else 'None'} (ID: {sire.cat_id if sire else 'None'})")
@@ -148,8 +155,10 @@ class EditCatPage:
                     
                     # Create owner select without default value
                     if self.owner_options:
+                        # Convert to simple dict for ui.select
+                        owner_dict = {opt['value']: opt['label'] for opt in self.owner_options}
                         self.owner_select = ui.select(
-                            options=self.owner_options,
+                            options=owner_dict,
                             label='Owner'
                         ).classes('w-full').props('clearable')
                         
@@ -168,8 +177,10 @@ class EditCatPage:
                     
                     # Create breeder select without default value
                     if self.breeder_options:
+                        # Convert to simple dict for ui.select
+                        breeder_dict = {opt['value']: opt['label'] for opt in self.breeder_options}
                         self.breeder_select = ui.select(
-                            options=self.breeder_options,
+                            options=breeder_dict,
                             label='Breeder'
                         ).classes('w-full').props('clearable')
                         
@@ -192,8 +203,10 @@ class EditCatPage:
                     
                     # Create dam select without default value
                     if self.dam_options:
+                        # Convert to simple dict for ui.select
+                        dam_dict = {opt['value']: opt['label'] for opt in self.dam_options}
                         self.dam_select = ui.select(
-                            options=self.dam_options,
+                            options=dam_dict,
                             label='Mother (Dam)'
                         ).classes('w-full').props('clearable')
                         
@@ -212,8 +225,10 @@ class EditCatPage:
                     
                     # Create sire select without default value
                     if self.sire_options:
+                        # Convert to simple dict for ui.select
+                        sire_dict = {opt['value']: opt['label'] for opt in self.sire_options}
                         self.sire_select = ui.select(
-                            options=self.sire_options,
+                            options=sire_dict,
                             label='Father (Sire)'
                         ).classes('w-full').props('clearable')
                         
@@ -230,6 +245,47 @@ class EditCatPage:
                         ui.label('No male cats available').classes('text-gray-500')
                         self.sire_select = None
             
+            # Photos section
+            ui.separator().classes('my-6')
+            ui.label('📸 Photos').classes('text-h6 mb-4')
+            
+            # Load existing photos
+            self.uploaded_photos = list(cat.cat_photos) if cat.cat_photos else []
+            
+            # Photo upload area
+            self.photo_container = ui.column().classes('w-full')
+            
+            def handle_photo_upload(e):
+                """Handle photo upload"""
+                try:
+                    # Validate photo (without size check since we'll compress if needed)
+                    is_valid, error_msg = PhotoService.is_valid_photo(e.name)
+                    if not is_valid:
+                        ui.notify(error_msg, color='negative', position='top')
+                        return
+                    
+                    # Save photo (with automatic compression)
+                    photo_path = PhotoService.save_photo(e.content.read(), e.name)
+                    if photo_path:
+                        self.uploaded_photos.append(photo_path)
+                        self.update_photo_gallery()
+                        ui.notify(f'Photo "{e.name}" uploaded successfully!', color='positive', position='top')
+                    else:
+                        ui.notify('Failed to save photo', color='negative', position='top')
+                        
+                except Exception as ex:
+                    ui.notify(f'Error uploading photo: {str(ex)}', color='negative', position='top')
+            
+            # Upload widget
+            ui.upload(
+                on_upload=handle_photo_upload,
+                auto_upload=True,
+                max_file_size=PhotoService.MAX_FILE_SIZE
+            ).props('accept=image/*').classes('w-full q-mb-md')
+            
+            # Initial gallery display
+            self.update_photo_gallery()
+
             # Action buttons
             with ui.row().classes('w-full justify-center mt-6 gap-4'):
                 ui.button(
@@ -247,6 +303,32 @@ class EditCatPage:
                     on_click=lambda: ui.navigate.to('/cats')
                 ).classes('bg-gray-500 text-white')
     
+    def update_photo_gallery(self):
+        """Update photo gallery display"""
+        if not self.photo_container:
+            return
+            
+        self.photo_container.clear()
+        with self.photo_container:
+            if self.uploaded_photos:
+                ui.label(f'Photos ({len(self.uploaded_photos)}):').classes('text-subtitle2 q-mb-sm')
+                PhotoService.create_photo_gallery(self.uploaded_photos, "150px")
+                
+                # Add delete buttons for each photo
+                for i, photo_path in enumerate(self.uploaded_photos):
+                    def delete_photo(index=i):
+                        if PhotoService.delete_photo(self.uploaded_photos[index]):
+                            self.uploaded_photos.pop(index)
+                            self.update_photo_gallery()
+                            ui.notify('Photo deleted', color='info', position='top')
+                        else:
+                            ui.notify('Failed to delete photo', color='negative', position='top')
+                    
+                    with ui.row().classes('items-center gap-2 q-mt-sm'):
+                        ui.button('Delete', on_click=delete_photo, color='negative').props('dense size=sm')
+            else:
+                ui.label('No photos uploaded yet').classes('text-grey-6')
+
     async def handle_save(self):
         """Handle save button click"""
         try:
@@ -265,14 +347,15 @@ class EditCatPage:
                 'surname': self.surname_input.value,
                 'gender': self.gender_select.value,
                 'birthday': self.birthday_input.value,
-                'microchip': self.microchip_input.value or None,
-                'colour': self.colour_input.value or None,
-                'litter': self.litter_input.value or None,
-                'haritage_number': self.haritage_input.value or None,
+                'microchip': self.microchip_input.value.strip() if self.microchip_input.value else None,
+                'colour': self.colour_input.value.strip() if self.colour_input.value else None,
+                'litter': self.litter_input.value.strip() if self.litter_input.value else None,
+                'haritage_number': self.haritage_input.value.strip() if self.haritage_input.value else None,
                 'owner_id': safe_int(self.owner_select.value) if self.owner_select else None,
                 'breed_id': safe_int(self.breeder_select.value) if self.breeder_select else None,
                 'dam_id': safe_int(self.dam_select.value) if self.dam_select else None,
-                'sire_id': safe_int(self.sire_select.value) if self.sire_select else None
+                'sire_id': safe_int(self.sire_select.value) if self.sire_select else None,
+                'cat_photos': self.uploaded_photos
             }
             
             # Validate and save

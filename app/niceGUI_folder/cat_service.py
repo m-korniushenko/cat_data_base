@@ -5,6 +5,7 @@ Dependency Inversion: Depends on abstractions (ORM interface).
 """
 
 from typing import Optional, Dict, Any, List, Tuple
+from datetime import date
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.validators import create_cat_edit_validator, ValidationResult
 
@@ -118,22 +119,73 @@ class CatService:
         """Validate cat data before saving"""
         return self.validator.validate(data)
     
+    def validate_cat_data_for_edit(self, data: Dict[str, Any]) -> ValidationResult:
+        """Validate cat data for editing (without owner/breeder validation)"""
+        errors = []
+        
+        # Required fields
+        required_fields = ['firstname', 'surname', 'gender', 'birthday']
+        for field in required_fields:
+            if not data.get(field):
+                errors.append(f"{field.capitalize()} is required")
+        
+        # Validate birthday format
+        birthday = data.get('birthday')
+        if birthday:
+            try:
+                if isinstance(birthday, str):
+                    from datetime import datetime
+                    birthday = datetime.strptime(birthday, '%Y-%m-%d').date()
+                if birthday > date.today():
+                    errors.append("Birthday cannot be in the future")
+            except ValueError:
+                errors.append("Invalid birthday format")
+        
+        # Validate microchip (if provided and not empty)
+        microchip = data.get('microchip')
+        if microchip and microchip.strip() and len(microchip.strip()) < 5:
+            errors.append("Microchip number must be at least 5 characters")
+        elif microchip and not microchip.strip():
+            # If microchip is empty string, set it to None
+            data['microchip'] = None
+        
+        # Validate parent IDs (if provided)
+        dam_id = data.get('dam_id')
+        sire_id = data.get('sire_id')
+        
+        if dam_id and sire_id and dam_id == sire_id:
+            errors.append("Mother and father cannot be the same cat")
+        
+        return ValidationResult(
+            is_valid=len(errors) == 0,
+            errors=errors,
+            data=data if len(errors) == 0 else None
+        )
+    
     async def update_cat(self, cat_id: int, data: Dict[str, Any]) -> Tuple[bool, str]:
         """Update cat data"""
         try:
-            # Validate data first
-            validation_result = self.validate_cat_data(data)
+            # Validate data first (using edit-specific validator)
+            validation_result = self.validate_cat_data_for_edit(data)
             if not validation_result.is_valid:
                 error_msg = "; ".join(validation_result.errors)
                 return False, f"Validation failed: {error_msg}"
             
+            # Convert birthday string to date object
+            from datetime import datetime
+            try:
+                birthday_date = datetime.strptime(data['birthday'], '%Y-%m-%d').date()
+            except ValueError:
+                return False, "Invalid birthday format. Use YYYY-MM-DD"
+            
             # Update cat in database
+            print(f"Updating cat {cat_id} with data: {data}")
             success = await self.orm.update_cat(
                 cat_id=cat_id,
                 firstname=data['firstname'],
                 surname=data['surname'],
                 gender=data['gender'],
-                birthday=data['birthday'],
+                birthday=birthday_date,
                 microchip=data.get('microchip'),
                 colour=data.get('colour'),
                 litter=data.get('litter'),
@@ -141,8 +193,10 @@ class CatService:
                 owner_id=data.get('owner_id'),
                 breed_id=data.get('breed_id'),
                 dam_id=data.get('dam_id'),
-                sire_id=data.get('sire_id')
+                sire_id=data.get('sire_id'),
+                cat_photos=data.get('cat_photos')
             )
+            print(f"Update result: {success}")
             
             if success:
                 return True, "Cat updated successfully"
