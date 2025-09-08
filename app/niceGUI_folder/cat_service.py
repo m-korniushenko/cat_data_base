@@ -143,9 +143,8 @@ class CatService:
         
         # Validate microchip (if provided and not empty)
         microchip = data.get('microchip')
-        if microchip and microchip.strip() and len(microchip.strip()) < 5:
-            errors.append("Microchip number must be at least 5 characters")
-        elif microchip and not microchip.strip():
+        # Microchip validation removed - no minimum length requirement
+        if microchip and not microchip.strip():
             # If microchip is empty string, set it to None
             data['microchip'] = None
         
