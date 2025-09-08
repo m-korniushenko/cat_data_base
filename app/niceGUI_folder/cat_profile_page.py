@@ -208,7 +208,8 @@ async def cat_profile_page_render(cat_id: int):
         if cat.cat_photos and len(cat.cat_photos) > 0:
             with ui.card().classes('w-full max-w-4xl q-pa-lg q-mt-md'):
                 ui.label('📸 Photos').classes('text-h6 q-mb-md')
-                PhotoService.create_photo_gallery(cat.cat_photos, "200px")
+                print(f"Cat photos: {cat.cat_photos}")
+                PhotoService.create_photo_gallery(cat.cat_photos, "400px")
         
         # Parents information
         if dam or sire:

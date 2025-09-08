@@ -312,7 +312,7 @@ class EditCatPage:
         with self.photo_container:
             if self.uploaded_photos:
                 ui.label(f'Photos ({len(self.uploaded_photos)}):').classes('text-subtitle2 q-mb-sm')
-                PhotoService.create_photo_gallery(self.uploaded_photos, "150px")
+                PhotoService.create_photo_gallery(self.uploaded_photos, "300px")
                 
                 # Add delete buttons for each photo
                 for i, photo_path in enumerate(self.uploaded_photos):

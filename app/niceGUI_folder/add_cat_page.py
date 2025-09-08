@@ -111,7 +111,7 @@ async def add_cat_page_render():
                 with photo_container:
                     if uploaded_photos:
                         ui.label(f'Uploaded photos ({len(uploaded_photos)}):').classes('text-subtitle2 q-mb-sm')
-                        PhotoService.create_photo_gallery(uploaded_photos, "150px")
+                        PhotoService.create_photo_gallery(uploaded_photos, "300px")
                         
                         # Add delete buttons for each photo
                         for i, photo_path in enumerate(uploaded_photos):

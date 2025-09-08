@@ -89,11 +89,14 @@ async def edit_cat_page(cat_id: int):
 async def serve_photos(file_path: str):
     """Serve photo files"""
     full_path = os.path.join(os.getcwd(), file_path)
+    print(f"Serving file: {file_path} -> {full_path}")
+    print(f"File exists: {os.path.exists(full_path)}")
     if os.path.exists(full_path) and os.path.isfile(full_path):
         from fastapi.responses import FileResponse
         return FileResponse(full_path)
     else:
         from fastapi import HTTPException
+        print(f"File not found: {full_path}")
         raise HTTPException(status_code=404, detail="File not found")
 
 
