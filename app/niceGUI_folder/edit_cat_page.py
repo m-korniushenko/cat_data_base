@@ -4,6 +4,7 @@ Single Responsibility: Handles UI for cat editing.
 Dependency Inversion: Uses service layer for business logic.
 """
 
+import os
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.cat_service import CatService
@@ -249,8 +250,16 @@ class EditCatPage:
             ui.separator().classes('my-6')
             ui.label('📸 Photos').classes('text-h6 mb-4')
             
-            # Load existing photos
-            self.uploaded_photos = list(cat.cat_photos) if cat.cat_photos else []
+            # Load existing photos and filter out non-existent files
+            existing_photos = list(cat.cat_photos) if cat.cat_photos else []
+            self.uploaded_photos = []
+            for photo_path in existing_photos:
+                if photo_path and os.path.exists(photo_path):
+                    self.uploaded_photos.append(photo_path)
+                else:
+                    print(f"Photo file does not exist, skipping: {photo_path}")
+            
+            print(f"Loaded {len(self.uploaded_photos)} existing photos out of {len(existing_photos)} in database")
             
             # Photo upload area
             self.photo_container = ui.column().classes('w-full')
@@ -317,12 +326,24 @@ class EditCatPage:
                 # Add delete buttons for each photo
                 for i, photo_path in enumerate(self.uploaded_photos):
                     def delete_photo(index=i):
-                        if PhotoService.delete_photo(self.uploaded_photos[index]):
-                            self.uploaded_photos.pop(index)
-                            self.update_photo_gallery()
-                            ui.notify('Photo deleted', color='info', position='top')
+                        if index < len(self.uploaded_photos):
+                            photo_to_delete = self.uploaded_photos[index]
+                            print(f"Deleting photo {index}: {photo_to_delete}")
+                            
+                            # Delete file from disk
+                            if PhotoService.delete_photo(photo_to_delete):
+                                # Remove from list
+                                self.uploaded_photos.pop(index)
+                                print(f"Photo deleted, remaining photos: {self.uploaded_photos}")
+                                
+                                # Update gallery
+                                self.update_photo_gallery()
+                                ui.notify('Photo deleted', color='info', position='top')
+                            else:
+                                ui.notify('Failed to delete photo file', color='negative', position='top')
                         else:
-                            ui.notify('Failed to delete photo', color='negative', position='top')
+                            print(f"Invalid photo index: {index}")
+                            ui.notify('Invalid photo index', color='negative', position='top')
                     
                     with ui.row().classes('items-center gap-2 q-mt-sm'):
                         ui.button('Delete', on_click=delete_photo, color='negative').props('dense size=sm')
@@ -355,8 +376,10 @@ class EditCatPage:
                 'breed_id': safe_int(self.breeder_select.value) if self.breeder_select else None,
                 'dam_id': safe_int(self.dam_select.value) if self.dam_select else None,
                 'sire_id': safe_int(self.sire_select.value) if self.sire_select else None,
-                'cat_photos': self.uploaded_photos
+                'cat_photos': [photo for photo in self.uploaded_photos if photo and os.path.exists(photo)]
             }
+            
+            print(f"Saving cat with {len(data['cat_photos'])} photos: {data['cat_photos']}")
             
             # Validate and save
             success, message = await self.cat_service.update_cat(self.cat_id, data)
