@@ -50,7 +50,7 @@ class EditCatPage:
             
             # Load options
             self.owner_options, self.breeder_options = await self.cat_service.get_owners_and_breeders()
-            self.dam_options, self.sire_options = await self.cat_service.get_available_parents()
+            self.dam_options, self.sire_options = await self.cat_service.get_available_parents(self.cat_id)
             
             # Debug info
             print(f"Owner options: {self.owner_options}")
@@ -81,6 +81,12 @@ class EditCatPage:
         print(f"Breeder: {breeder.breed_firstname if breeder else 'None'} (ID: {breeder.breed_id if breeder else 'None'})")
         print(f"Dam: {dam.cat_firstname if dam else 'None'} (ID: {dam.cat_id if dam else 'None'})")
         print(f"Sire: {sire.cat_firstname if sire else 'None'} (ID: {sire.cat_id if sire else 'None'})")
+        
+        # Debug the actual objects
+        print(f"Owner object type: {type(owner)}")
+        print(f"Breeder object type: {type(breeder)}")
+        print(f"Dam object type: {type(dam)}")
+        print(f"Sire object type: {type(sire)}")
         
         with ui.card().classes('w-full max-w-4xl mx-auto'):
             ui.label('✏️ Edit Cat Information').classes('text-h4 text-center mb-6')

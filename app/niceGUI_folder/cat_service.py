@@ -34,28 +34,47 @@ class CatService:
             print(f"Error getting cat for edit: {e}")
             return None
     
-    async def get_available_parents(self) -> Tuple[List[Dict], List[Dict]]:
+    async def get_available_parents(self, exclude_cat_id: int = None) -> Tuple[List[Dict], List[Dict]]:
         """Get available mothers and fathers for selection"""
         try:
             # Get female cats for mothers
             _, female_cats = await self.orm.get_cat(cat_gender="Female")
+            print(f"Found {len(female_cats)} female cats")
+            
+            # Filter out the current cat if specified
+            if exclude_cat_id:
+                female_cats = [cat for cat in female_cats if cat['cat_id'] != exclude_cat_id]
+                print(f"After filtering, {len(female_cats)} female cats available")
+            
             dam_options = [
-                {'label': f"{cat['cat_firstname']} {cat['cat_surname']} ({cat['cat_birthday']})", 
+                {'label': f"{cat['cat_firstname']} {cat['cat_surname']} ({cat.get('cat_birthday', 'N/A')})", 
                  'value': str(cat['cat_id'])}
                 for cat in female_cats
             ]
             
             # Get male cats for fathers
             _, male_cats = await self.orm.get_cat(cat_gender="Male")
+            print(f"Found {len(male_cats)} male cats")
+            
+            # Filter out the current cat if specified
+            if exclude_cat_id:
+                male_cats = [cat for cat in male_cats if cat['cat_id'] != exclude_cat_id]
+                print(f"After filtering, {len(male_cats)} male cats available")
+            
             sire_options = [
-                {'label': f"{cat['cat_firstname']} {cat['cat_surname']} ({cat['cat_birthday']})", 
+                {'label': f"{cat['cat_firstname']} {cat['cat_surname']} ({cat.get('cat_birthday', 'N/A')})", 
                  'value': str(cat['cat_id'])}
                 for cat in male_cats
             ]
             
+            print(f"Dam options: {dam_options}")
+            print(f"Sire options: {sire_options}")
+            
             return dam_options, sire_options
         except Exception as e:
             print(f"Error getting available parents: {e}")
+            import traceback
+            traceback.print_exc()
             return [], []
     
     async def get_owners_and_breeders(self) -> Tuple[List[Dict], List[Dict]]:

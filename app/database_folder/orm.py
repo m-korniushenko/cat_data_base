@@ -596,12 +596,15 @@ class AsyncOrm:
                     Cat.cat_surname.ilike(pattern),
                     Cat.cat_gender.ilike(pattern),
                     Cat.cat_microchip_number.ilike(pattern),
-                    Cat.cat_breed_id.ilike(pattern),
                     Cat.cat_EMS_colour.ilike(pattern),
                     Cat.cat_litter.ilike(pattern),
+                    Cat.cat_haritage_number.ilike(pattern),
                     Owner.owner_firstname.ilike(pattern),
                     Owner.owner_surname.ilike(pattern),
                     Owner.owner_email.ilike(pattern),
+                    BreedAlias.breed_firstname.ilike(pattern),
+                    BreedAlias.breed_surname.ilike(pattern),
+                    BreedAlias.breed_email.ilike(pattern),
                 )
             )
 
@@ -631,6 +634,7 @@ class AsyncOrm:
                     'sire': f'{s.cat_firstname} {s.cat_surname}' if s else None,
                 })
 
+        print(f"get_cat_info_like returned {len(rows)} rows")
         return (len(rows), rows)
 
     @log_function_call
