@@ -16,7 +16,25 @@ columns = [
     {'name': 'country',    'label': 'Country',    'field': 'country',    'align': 'left'},
     {'name': 'zip',        'label': 'ZIP',        'field': 'zip',        'align': 'left'},
     {'name': 'description', 'label': 'Description', 'field': 'description', 'align': 'left'},
+    {'name': 'actions',    'label': 'Actions',    'field': 'actions',    'align': 'center'},
 ]
+
+
+def get_edit_button_vue():
+    return r'''
+      <q-tr :props="props">
+        <q-td v-for="col in props.cols" :key="col.name" :props="props">
+          <template v-if="col.name === 'actions'">
+            <q-btn size="sm" color="primary" flat
+                   :href="'/edit_breed/' + props.row.id"
+                   label="Edit" />
+          </template>
+          <template v-else>
+            {{ col.value }}
+          </template>
+        </q-td>
+      </q-tr>
+    '''
 
 
 def breed_to_row(b):
@@ -55,8 +73,18 @@ def breed_to_row(b):
 async def breeds_page_render():
     len_breeds, breeds = await AsyncOrm.get_breed()
     get_header('🐱 Breeds')
+    
+    # Convert breeds to rows
     rows = [breed_to_row(b) for b in (breeds if isinstance(breeds, list) else [breeds])]
-    ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
-
+    
+    # Add actions field to each row
+    for row in rows:
+        row['actions'] = ''
+    
+    # Create table with Vue slot for custom buttons
+    table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
+    table.add_slot('body', get_edit_button_vue())
+    
+    # Add action buttons below the table
     with ui.row().classes('q-pa-md'):
         ui.button('Add Breed', on_click=lambda: ui.navigate.to('/add_breed')).classes('q-mr-sm')

@@ -261,6 +261,49 @@ class AsyncOrm:
             await session.commit()
             return owner
 
+    @staticmethod
+    async def update_owner_dict(owner_id: int, owner_data: dict) -> bool:
+        """Update owner information using dictionary"""
+        try:
+            async with async_session() as session:
+                # Get the owner to update
+                result = await session.execute(select(Owner).filter_by(owner_id=owner_id))
+                owner = result.scalar_one_or_none()
+                
+                if not owner:
+                    return False
+                
+                # Update fields
+                if 'owner_firstname' in owner_data:
+                    owner.owner_firstname = owner_data['owner_firstname']
+                if 'owner_lastname' in owner_data:
+                    owner.owner_surname = owner_data['owner_lastname']
+                if 'owner_email' in owner_data:
+                    owner.owner_email = owner_data['owner_email']
+                if 'owner_phone' in owner_data:
+                    owner.owner_phone = owner_data['owner_phone']
+                if 'owner_address' in owner_data:
+                    owner.owner_address = owner_data['owner_address']
+                if 'owner_city' in owner_data:
+                    owner.owner_city = owner_data['owner_city']
+                if 'owner_country' in owner_data:
+                    owner.owner_country = owner_data['owner_country']
+                if 'owner_zip' in owner_data:
+                    owner.owner_zip = owner_data['owner_zip']
+                if 'owner_birthday' in owner_data:
+                    owner.owner_birthday = owner_data['owner_birthday']
+                if 'owner_permission' in owner_data:
+                    owner.owner_permission = owner_data['owner_permission']
+                
+                await session.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error updating owner: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
     @log_function_call
     @staticmethod
     async def delete_owner(owner_id: int):
@@ -709,6 +752,92 @@ class AsyncOrm:
             if breed_id:
                 return (len(rows), rows[0] if rows else None)
             return (len(rows), rows)
+
+    @staticmethod
+    async def get_owner_by_id(owner_id: int):
+        """Get owner by ID"""
+        try:
+            async with async_session() as session:
+                result = await session.execute(select(Owner).filter_by(owner_id=owner_id))
+                return result.scalar_one_or_none()
+        except Exception as e:
+            print(f"Error getting owner by ID: {e}")
+            return None
+
+    @staticmethod
+    async def get_breed_by_id(breed_id: int):
+        """Get breed by ID"""
+        try:
+            async with async_session() as session:
+                result = await session.execute(select(Breed).filter_by(breed_id=breed_id))
+                return result.scalar_one_or_none()
+        except Exception as e:
+            print(f"Error getting breed by ID: {e}")
+            return None
+
+    @staticmethod
+    async def update_breed(breed_id: int, breed_data: dict) -> bool:
+        """Update breed information"""
+        try:
+            async with async_session() as session:
+                # Get the breed to update
+                result = await session.execute(select(Breed).filter_by(breed_id=breed_id))
+                breed = result.scalar_one_or_none()
+                
+                if not breed:
+                    return False
+                
+                # Update fields
+                if 'breed_firstname' in breed_data:
+                    breed.breed_firstname = breed_data['breed_firstname']
+                if 'breed_lastname' in breed_data:
+                    breed.breed_surname = breed_data['breed_lastname']
+                if 'breed_email' in breed_data:
+                    breed.breed_email = breed_data['breed_email']
+                if 'breed_phone' in breed_data:
+                    breed.breed_phone = breed_data['breed_phone']
+                if 'breed_address' in breed_data:
+                    breed.breed_address = breed_data['breed_address']
+                if 'breed_city' in breed_data:
+                    breed.breed_city = breed_data['breed_city']
+                if 'breed_country' in breed_data:
+                    breed.breed_country = breed_data['breed_country']
+                if 'breed_zip' in breed_data:
+                    breed.breed_zip = breed_data['breed_zip']
+                if 'breed_birthday' in breed_data:
+                    breed.breed_birthday = breed_data['breed_birthday']
+                if 'breed_gender' in breed_data:
+                    breed.breed_gender = breed_data['breed_gender']
+                if 'breed_description' in breed_data:
+                    breed.breed_description = breed_data['breed_description']
+                
+                await session.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error updating breed: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    @staticmethod
+    async def delete_breed(breed_id: int) -> bool:
+        """Delete breed by ID"""
+        try:
+            async with async_session() as session:
+                result = await session.execute(select(Breed).filter_by(breed_id=breed_id))
+                breed = result.scalar_one_or_none()
+                
+                if not breed:
+                    return False
+                
+                await session.delete(breed)
+                await session.commit()
+                return True
+                
+        except Exception as e:
+            print(f"Error deleting breed: {e}")
+            return False
 
     @log_function_call
     @staticmethod

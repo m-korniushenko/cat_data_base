@@ -15,7 +15,25 @@ columns = [
     {'name': 'zip',        'label': 'ZIP',        'field': 'zip',        'align': 'left'},
     {'name': 'birthday',   'label': 'Birthday',   'field': 'birthday',   'align': 'left'},
     {'name': 'permission', 'label': 'Permission', 'field': 'permission', 'align': 'left'},
+    {'name': 'actions',    'label': 'Actions',    'field': 'actions',    'align': 'center'},
 ]
+
+
+def get_edit_button_vue():
+    return r'''
+      <q-tr :props="props">
+        <q-td v-for="col in props.cols" :key="col.name" :props="props">
+          <template v-if="col.name === 'actions'">
+            <q-btn size="sm" color="primary" flat
+                   :href="'/edit_owner/' + props.row.id"
+                   label="Edit" />
+          </template>
+          <template v-else>
+            {{ col.value }}
+          </template>
+        </q-td>
+      </q-tr>
+    '''
 
 
 def owner_to_row(o):
@@ -52,8 +70,18 @@ def owner_to_row(o):
 async def owners_page_render():
     len_owners, owners = await AsyncOrm.get_owner()
     get_header('👤 Owners')
+    
+    # Convert owners to rows
     rows = [owner_to_row(o) for o in (owners if isinstance(owners, list) else [owners])]
-    ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
-
+    
+    # Add actions field to each row
+    for row in rows:
+        row['actions'] = ''
+    
+    # Create table with Vue slot for custom buttons
+    table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
+    table.add_slot('body', get_edit_button_vue())
+    
+    # Add action buttons below the table
     with ui.row().classes('q-pa-md'):
         ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')

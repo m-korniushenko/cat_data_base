@@ -28,6 +28,8 @@ from app.niceGUI_folder.owners_page import owners_page_render
 from app.niceGUI_folder.breeds_page import breeds_page_render
 from app.niceGUI_folder.cat_profile_page import cat_profile_page_render
 from app.niceGUI_folder.edit_cat_page import edit_cat_page_render
+from app.niceGUI_folder.edit_owner_page import edit_owner_page_render
+from app.niceGUI_folder.edit_breed_page import edit_breed_page_render
 from app.niceGUI_folder.history_page import history_page_render
 
 
@@ -83,6 +85,16 @@ async def cat_profile_page(cat_id: int):
 @ui.page('/edit_cat/{cat_id}')
 async def edit_cat_page(cat_id: int):
     await edit_cat_page_render(cat_id)
+
+
+@ui.page('/edit_owner/{owner_id}')
+async def edit_owner_page(owner_id: int):
+    await edit_owner_page_render(owner_id)
+
+
+@ui.page('/edit_breed/{breed_id}')
+async def edit_breed_page(breed_id: int):
+    await edit_breed_page_render(breed_id)
 
 
 @ui.page('/history')
