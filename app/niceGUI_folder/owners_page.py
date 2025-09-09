@@ -1,4 +1,5 @@
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 
@@ -67,7 +68,8 @@ def owner_to_row(o):
 
 
 @ui.page('/owners')
-async def owners_page_render():
+@require_auth(required_permission=1)  # Only admins can view owners
+async def owners_page_render(current_user=None, session_id=None):
     len_owners, owners = await AsyncOrm.get_owner()
     get_header('👤 Owners')
     

@@ -1,6 +1,7 @@
 from app.database_folder.orm import AsyncOrm
 import asyncio
 from datetime import date
+import hashlib
 
 
 async def add_permissions():
@@ -10,12 +11,16 @@ async def add_permissions():
     )
 
 
+def hash_password(password: str) -> str:
+    """Hash password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
 async def add_owner():
     return await AsyncOrm.add_owner(
         owner_firstname="admin",
         owner_surname="admin",
         owner_email="admin@admin.com",
-        owner_hashed_password="admin",
+        owner_hashed_password=hash_password("admin"),
         owner_permission=1
     )
 
@@ -207,12 +212,33 @@ async def add_family_tree_test_data():
         raise
 
 
+async def add_test_owners():
+    """Add test owners with different permissions"""
+    # Admin user
+    await add_owner()
+    
+    # Owner user (permission 2)
+    await AsyncOrm.add_owner(
+        owner_firstname="John",
+        owner_surname="Doe",
+        owner_email="john@example.com",
+        owner_hashed_password=hash_password("password"),
+        owner_permission=2
+    )
+    
+    # Another owner user
+    await AsyncOrm.add_owner(
+        owner_firstname="Jane",
+        owner_surname="Smith",
+        owner_email="jane@example.com",
+        owner_hashed_password=hash_password("password"),
+        owner_permission=2
+    )
+
 async def main_add_workflow():
     try:
         await add_permissions()
-        await add_owner()
-        await add_owner()
-        await add_owner()
+        await add_test_owners()
         await add_breeds()  # Add breeders
         await add_family_tree_test_data()
         print("✅ Database initialization completed successfully!")

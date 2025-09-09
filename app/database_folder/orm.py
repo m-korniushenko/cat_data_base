@@ -212,6 +212,7 @@ class AsyncOrm:
                              "owner_firstname": row.owner_firstname,
                              "owner_surname": row.owner_surname,
                              "owner_email": row.owner_email,
+                             "owner_hashed_password": row.owner_hashed_password,
                              "owner_address": row.owner_address,
                              "owner_city": row.owner_city,
                              "owner_country": row.owner_country,

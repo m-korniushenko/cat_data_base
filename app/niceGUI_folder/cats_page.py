@@ -1,5 +1,7 @@
 from datetime import date, datetime
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.auth_middleware import require_auth
+from app.niceGUI_folder.auth_service import AuthService
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 
@@ -26,29 +28,54 @@ cats_column = [
 ]
 
 
-def get_edit_button_vue():
-    return r'''
-      <q-tr :props="props">
-        <q-td v-for="col in props.cols" :key="col.name" :props="props">
-          <template v-if="col.name === 'actions'">
-            <q-btn size="sm" color="primary" flat
-                   :href="'/cat_profile/' + props.row.id"
-                   label="View" class="q-mr-xs" />
-            <q-btn size="sm" color="secondary" flat
-                   :href="'/edit_cat/' + props.row.id"
-                   label="Edit" />
-          </template>
-          <template v-else-if="col.name === 'firstname'">
-            <q-btn flat no-caps color="primary"
-                   :href="'/cat_profile/' + props.row.id"
-                   :label="col.value" />
-          </template>
-          <template v-else>
-            {{ col.value }}
-          </template>
-        </q-td>
-      </q-tr>
-    '''
+def get_edit_button_vue(current_user):
+    # Check if user can edit cats
+    can_edit = current_user and current_user.get('owner_permission') == 1  # Only admins can edit
+    
+    if can_edit:
+        return r'''
+          <q-tr :props="props">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              <template v-if="col.name === 'actions'">
+                <q-btn size="sm" color="primary" flat
+                       :href="'/cat_profile/' + props.row.id"
+                       label="View" class="q-mr-xs" />
+                <q-btn size="sm" color="secondary" flat
+                       :href="'/edit_cat/' + props.row.id"
+                       label="Edit" />
+              </template>
+              <template v-else-if="col.name === 'firstname'">
+                <q-btn flat no-caps color="primary"
+                       :href="'/cat_profile/' + props.row.id"
+                       :label="col.value" />
+              </template>
+              <template v-else>
+                {{ col.value }}
+              </template>
+            </q-td>
+          </q-tr>
+        '''
+    else:
+        # Owners can only view
+        return r'''
+          <q-tr :props="props">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              <template v-if="col.name === 'actions'">
+                <q-btn size="sm" color="primary" flat
+                       :href="'/cat_profile/' + props.row.id"
+                       label="View" />
+              </template>
+              <template v-else-if="col.name === 'firstname'">
+                <q-btn flat no-caps color="primary"
+                       :href="'/cat_profile/' + props.row.id"
+                       :label="col.value" />
+              </template>
+              <template v-else>
+                {{ col.value }}
+              </template>
+            </q-td>
+          </q-tr>
+        '''
 
 
 async def get_cats_rows(cats_rows):
@@ -63,12 +90,22 @@ async def get_cats_rows(cats_rows):
     return safe_rows
 
 
-async def cats_page_render():
+@require_auth(required_permission=2)  # Require at least owner permission
+async def cats_page_render(current_user=None, session_id=None):
     ui.label('Cats Page')
     get_header('🐱 Cats')
     
-    # Load initial data
+    # Filter cats based on user permission
+    owner_filter = AuthService.get_user_cats_filter(current_user)
     _, cats_rows = await AsyncOrm.get_cat_info()
+    
+    # Apply filter if needed
+    if owner_filter is not None:
+        if owner_filter == -1:  # No access
+            cats_rows = []
+        else:
+            cats_rows = [cat for cat in cats_rows if cat.get('owner_id') == owner_filter]
+    
     safe_rows = await get_cats_rows(cats_rows)
     
     search_bar = ui.input(label='Search').props('outlined dense').classes('w-full')
@@ -87,7 +124,7 @@ async def cats_page_render():
         table_container.clear()
         with table_container:
             table = ui.table(columns=cats_column, rows=safe_rows, row_key='id').classes('q-pa-md')
-            table.add_slot('body', get_edit_button_vue())
+            table.add_slot('body', get_edit_button_vue(current_user))
     
     # Create initial table
     await update_table('')
@@ -95,5 +132,7 @@ async def cats_page_render():
     # Set up search
     search_bar.on_value_change(lambda e: update_table(e.value))
     
-    with ui.row().classes('q-pa-md'):
-        ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')
+    # Add Cat button only for admins
+    if current_user and current_user.get('owner_permission') == 1:
+        with ui.row().classes('q-pa-md'):
+            ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')

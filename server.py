@@ -31,6 +31,8 @@ from app.niceGUI_folder.edit_cat_page import edit_cat_page_render
 from app.niceGUI_folder.edit_owner_page import edit_owner_page_render
 from app.niceGUI_folder.edit_breed_page import edit_breed_page_render
 from app.niceGUI_folder.history_page import history_page_render
+from app.niceGUI_folder.login_page import login_page_render
+from app.niceGUI_folder.auth_check_page import auth_check_page_render
 
 
 
@@ -43,8 +45,16 @@ async def swallow_disconnects(request: Request, exc: Exception):
 
 
 @ui.page('/')
+async def root_page():
+    auth_check_page_render()
+
+@ui.page('/dashboard')
 async def main_page():
     await main_page_render()
+
+@ui.page('/login')
+async def login_page():
+    login_page_render()
 
 
 @ui.page('/cats')

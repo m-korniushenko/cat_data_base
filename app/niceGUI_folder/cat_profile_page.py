@@ -4,6 +4,8 @@ from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.pdf_generator import generate_cat_pdf_file
 from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
+from app.niceGUI_folder.auth_middleware import require_auth
+from app.niceGUI_folder.auth_service import AuthService
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -134,7 +136,8 @@ def render_family_tree(family_tree, depth=0, max_depth=3, line_type="both"):
                                             render_family_tree_node(family_tree['sire']['sire']['sire'], depth + 3)
 
 
-async def cat_profile_page_render(cat_id: int):
+@require_auth(required_permission=2)  # Require at least owner permission
+async def cat_profile_page_render(cat_id: int, current_user=None, session_id=None):
     get_header('Cat Profile')
     
     # Get cat information with parents
@@ -145,6 +148,11 @@ async def cat_profile_page_render(cat_id: int):
         return
     
     cat = cat_info['cat']
+    
+    # Check if user can view this cat
+    if not AuthService.can_view_cat(current_user, cat.owner_id):
+        ui.label('You do not have permission to view this cat').classes('text-h6 text-center q-py-xl text-red-500')
+        return
     owner = cat_info['owner']
     breed = cat_info['breed']
     dam = cat_info['dam']
@@ -367,7 +375,10 @@ async def cat_profile_page_render(cat_id: int):
         # Navigation buttons
         with ui.row().classes('q-mt-md'):
             ui.button('Back to Cats List', on_click=lambda: ui.navigate.to('/cats')).props('outline')
-            ui.button('Edit Cat', on_click=lambda: ui.navigate.to(f'/edit_cat/{cat_id}')).props('outline')
+            
+            # Edit button only for admins
+            if current_user and current_user.get('owner_permission') == 1:
+                ui.button('Edit Cat', on_click=lambda: ui.navigate.to(f'/edit_cat/{cat_id}')).props('outline')
             
             # PDF Generation button
             async def generate_pdf():

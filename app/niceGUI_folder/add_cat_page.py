@@ -5,11 +5,13 @@ from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
+from app.niceGUI_folder.auth_middleware import require_auth
 from datetime import datetime
 # import geonamescache
 
 
-async def add_cat_page_render():
+@require_auth(required_permission=1)  # Only admins can add cats
+async def add_cat_page_render(current_user=None, session_id=None):
     get_header('Add Cat Page')
     
     # Store uploaded photos and files

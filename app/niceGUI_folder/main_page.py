@@ -1,9 +1,11 @@
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 
 
-async def main_page_render():
+@require_auth(required_permission=2)  # Require at least owner permission
+async def main_page_render(current_user=None, session_id=None):
     len_owners, owners = await AsyncOrm.get_owner()
     len_cats, cats = await AsyncOrm.get_cat()
     len_breeds = await AsyncOrm.get_breed_count()

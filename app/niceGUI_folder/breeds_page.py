@@ -1,4 +1,5 @@
 from app.niceGUI_folder.header import get_header
+from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 
@@ -70,7 +71,8 @@ def breed_to_row(b):
 
 
 @ui.page('/breeds')
-async def breeds_page_render():
+@require_auth(required_permission=1)  # Only admins can view breeds
+async def breeds_page_render(current_user=None, session_id=None):
     len_breeds, breeds = await AsyncOrm.get_breed()
     get_header('🐱 Breeds')
     
