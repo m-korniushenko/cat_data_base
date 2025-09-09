@@ -17,6 +17,7 @@ class PhotoService:
     PHOTOS_DIR = "cat_photos"
     ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
     MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+    STANDARD_SIZE = (400, 400)  # Standard square size for all photos
     
     @classmethod
     def ensure_photos_dir(cls) -> str:
@@ -132,10 +133,10 @@ class PhotoService:
         return True, ""
     
     @classmethod
-    def compress_image(cls, file_content: bytes, target_size_kb: int = 500) -> bytes:
+    def standardize_image(cls, file_content: bytes, target_size_kb: int = 500) -> bytes:
         """
-        Compress image to target size
-        Returns: compressed image bytes
+        Standardize image to 400x400 square format and compress to target size
+        Returns: standardized and compressed image bytes
         """
         try:
             # Open image
@@ -145,7 +146,10 @@ class PhotoService:
             if image.mode in ('RGBA', 'LA', 'P'):
                 image = image.convert('RGB')
             
-            # Start with high quality and reduce until target size is reached
+            # Resize to standard square size (400x400) with smart cropping
+            image = cls._resize_to_square(image, cls.STANDARD_SIZE)
+            
+            # Compress to target size
             quality = 95
             target_size_bytes = target_size_kb * 1024
             
@@ -159,32 +163,42 @@ class PhotoService:
                 
                 quality -= 10
             
-            # If still too large, resize the image
-            while quality > 10:
-                # Resize image
-                width, height = image.size
-                new_width = int(width * 0.8)
-                new_height = int(height * 0.8)
-                resized_image = image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
-                
-                output = io.BytesIO()
-                resized_image.save(output, format='JPEG', quality=quality, optimize=True)
-                compressed_size = len(output.getvalue())
-                
-                if compressed_size <= target_size_bytes:
-                    return output.getvalue()
-                
-                quality -= 10
-                image = resized_image
-            
-            # Return the smallest we could get
-            output = io.BytesIO()
-            image.save(output, format='JPEG', quality=10, optimize=True)
+            # Final fallback - return the last attempt
             return output.getvalue()
             
         except Exception as e:
-            print(f"Error compressing image: {e}")
-            return file_content  # Return original if compression fails
+            print(f"Error standardizing image: {e}")
+            return file_content
+    
+    @classmethod
+    def _resize_to_square(cls, image: PILImage.Image, target_size: tuple) -> PILImage.Image:
+        """
+        Resize image to square format with smart cropping
+        """
+        width, height = image.size
+        target_width, target_height = target_size
+        
+        # Calculate scaling factor to fit the image in the target size
+        scale_factor = min(target_width / width, target_height / height)
+        
+        # Calculate new dimensions
+        new_width = int(width * scale_factor)
+        new_height = int(height * scale_factor)
+        
+        # Resize image maintaining aspect ratio
+        resized_image = image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+        
+        # Create a new square image with white background
+        square_image = PILImage.new('RGB', target_size, (255, 255, 255))
+        
+        # Calculate position to center the resized image
+        x_offset = (target_width - new_width) // 2
+        y_offset = (target_height - new_height) // 2
+        
+        # Paste the resized image onto the square background
+        square_image.paste(resized_image, (x_offset, y_offset))
+        
+        return square_image
 
     @classmethod
     def save_photo(cls, file_content: bytes, original_filename: str, microchip: str = None) -> Optional[str]:
@@ -200,11 +214,10 @@ class PhotoService:
             cat_photos_dir = cls.get_cat_photos_dir(microchip)
             file_path = os.path.join(cat_photos_dir, unique_filename)
             
-            # Compress image if it's too large
+            # Standardize and compress image
             original_size = len(file_content)
-            if original_size > 500 * 1024:  # If larger than 500KB
-                file_content = cls.compress_image(file_content, 500)
-                print(f"Compressed image from {original_size // 1024}KB to {len(file_content) // 1024}KB")
+            file_content = cls.standardize_image(file_content, 500)
+            print(f"Standardized image from {original_size // 1024}KB to {len(file_content) // 1024}KB")
             
             # Save file
             with open(file_path, 'wb') as f:
