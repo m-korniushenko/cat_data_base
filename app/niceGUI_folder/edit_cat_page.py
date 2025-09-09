@@ -9,6 +9,7 @@ from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.cat_service import CatService
 from app.niceGUI_folder.photo_service import PhotoService
+from app.niceGUI_folder.file_service import FileService
 from app.database_folder.orm import AsyncOrm
 
 
@@ -31,9 +32,11 @@ class EditCatPage:
         self.haritage_input = None
         self.owner_select = None
         
-        # Photo management
+        # Photo and file management
         self.uploaded_photos = []
+        self.uploaded_files = []
         self.photo_container = None
+        self.file_container = None
         self.breeder_select = None
         self.dam_select = None
         self.sire_select = None
@@ -264,6 +267,17 @@ class EditCatPage:
             
             print(f"Loaded {len(self.uploaded_photos)} existing photos out of {len(existing_photos)} in database")
             
+            # Load existing files and filter out non-existent files
+            existing_files = list(cat.cat_files) if cat.cat_files else []
+            self.uploaded_files = []
+            for file_path in existing_files:
+                if file_path and os.path.exists(file_path):
+                    self.uploaded_files.append(file_path)
+                else:
+                    print(f"File does not exist, skipping: {file_path}")
+            
+            print(f"Loaded {len(self.uploaded_files)} existing files out of {len(existing_files)} in database")
+            
             # Photo upload area
             self.photo_container = ui.column().classes('w-full')
             
@@ -298,23 +312,95 @@ class EditCatPage:
             
             # Initial gallery display
             self.update_photo_gallery()
+        
+        # Files section
+        ui.separator().classes('my-6')
+        ui.label('📁 Files').classes('text-h6 mb-4')
+        
+        # File upload area
+        self.file_container = ui.column().classes('w-full')
+        
+        def handle_file_upload(e):
+            """Handle file upload"""
+            try:
+                # Validate file
+                is_valid, error_msg = FileService.is_valid_file(e)
+                if not is_valid:
+                    ui.notify(error_msg, color='negative', position='top')
+                    return
+                
+                # Save file
+                microchip = self.microchip_input.value if self.microchip_input.value else None
+                success, message, file_path = FileService.save_file(microchip, e)
+                if success:
+                    self.uploaded_files.append(file_path)
+                    self.update_file_list()
+                    ui.notify(f'File "{e.name}" uploaded successfully!', color='positive', position='top')
+                else:
+                    ui.notify(f'Error uploading file: {message}', color='negative', position='top')
+                    
+            except Exception as ex:
+                ui.notify(f'Error uploading file: {str(ex)}', color='negative', position='top')
+        
+        def update_file_list():
+            """Update file list display"""
+            self.file_container.clear()
+            with self.file_container:
+                if self.uploaded_files:
+                    ui.label(f'Files ({len(self.uploaded_files)}):').classes('text-subtitle2 q-mb-sm')
+                    FileService.create_file_list(self.uploaded_files, "300px")
+                    
+                    # Add delete buttons for each file
+                    for i, file_path in enumerate(self.uploaded_files):
+                        def delete_file(index=i):
+                            if index < len(self.uploaded_files):
+                                file_to_delete = self.uploaded_files[index]
+                                print(f"Deleting file {index}: {file_to_delete}")
+                                
+                                # Delete file from disk
+                                if FileService.delete_file(file_to_delete):
+                                    # Remove from list
+                                    self.uploaded_files.pop(index)
+                                    print(f"File deleted, remaining files: {self.uploaded_files}")
+                                    
+                                    # Update list
+                                    self.update_file_list()
+                                    ui.notify('File deleted successfully!', color='positive', position='top')
+                                else:
+                                    ui.notify('Failed to delete file', color='negative', position='top')
+                        
+                        with ui.row().classes('items-center gap-2 q-mt-sm'):
+                            ui.button('Delete', on_click=delete_file, color='negative').props('dense size=sm')
+                else:
+                    ui.label('No files uploaded yet').classes('text-grey-6')
+        
+        # Upload widget
+        ui.upload(
+            on_upload=handle_file_upload,
+            auto_upload=True,
+            max_file_size=FileService.MAX_FILE_SIZE
+        ).props('accept=.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar').classes('w-full q-mb-md')
+        
+        # Initial file list display
+        self.update_file_list = update_file_list
+        self.update_file_list()
 
-            # Action buttons
-            with ui.row().classes('w-full justify-center mt-6 gap-4'):
-                ui.button(
-                    '💾 Save Changes',
-                    on_click=self.handle_save
-                ).classes('bg-green-500 text-white')
-                
-                ui.button(
-                    '🗑️ Delete Cat',
-                    on_click=self.handle_delete
-                ).classes('bg-red-500 text-white')
-                
-                ui.button(
-                    '❌ Cancel',
-                    on_click=lambda: ui.navigate.to('/cats')
-                ).classes('bg-gray-500 text-white')
+        # Action buttons
+        with ui.row().classes('w-full justify-center mt-6 gap-4'):
+            ui.button(
+                '💾 Save Changes',
+                on_click=self.handle_save
+            ).classes('bg-green-500 text-white')
+            
+            ui.button(
+                '🗑️ Delete Cat',
+                on_click=self.handle_delete
+            ).classes('bg-red-500 text-white')
+            
+            ui.button(
+                '❌ Cancel',
+                on_click=lambda: ui.navigate.to('/cats')
+            ).classes('bg-gray-500 text-white')
     
     def update_photo_gallery(self):
         """Update photo gallery display"""
@@ -380,7 +466,8 @@ class EditCatPage:
                 'breed_id': safe_int(self.breeder_select.value) if self.breeder_select else None,
                 'dam_id': safe_int(self.dam_select.value) if self.dam_select else None,
                 'sire_id': safe_int(self.sire_select.value) if self.sire_select else None,
-                'cat_photos': [photo for photo in self.uploaded_photos if photo and os.path.exists(photo)]
+                'cat_photos': [photo for photo in self.uploaded_photos if photo and os.path.exists(photo)],
+                'cat_files': [file for file in self.uploaded_files if file and os.path.exists(file)]
             }
             
             # Check if microchip changed and update photo paths
@@ -418,6 +505,17 @@ class EditCatPage:
                             self.uploaded_photos, old_microchip, new_microchip
                         )
                         print(f"Updated uploaded_photos: {self.uploaded_photos}")
+                    
+                    # Update file paths in database and move files
+                    if self.uploaded_files:
+                        print(f"Updating file paths in database")
+                        self.uploaded_files = FileService.update_file_paths_in_database(
+                            self.uploaded_files, old_microchip, new_microchip
+                        )
+                        print(f"Updated uploaded_files: {self.uploaded_files}")
+                    
+                    print(f"Microchip changed, ensuring file directory is properly renamed")
+                    FileService.ensure_file_directory_renamed(old_microchip, new_microchip)
                 
                 ui.notify(message, type='positive')
                 ui.navigate.to(f'/cat_profile/{self.cat_id}')

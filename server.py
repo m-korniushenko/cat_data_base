@@ -102,10 +102,10 @@ async def history_page():
     await history_page_render()
 
 
-# Static file serving for photos
+# Static file serving for photos and files
 @app.get('/static/{file_path:path}')
-async def serve_photos(file_path: str):
-    """Serve photo files"""
+async def serve_static_files(file_path: str):
+    """Serve static files (photos and documents)"""
     # Normalize path separators for file system
     normalized_file_path = file_path.replace('/', '\\') if os.name == 'nt' else file_path
     full_path = os.path.join(os.getcwd(), normalized_file_path)

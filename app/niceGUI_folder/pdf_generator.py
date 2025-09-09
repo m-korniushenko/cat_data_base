@@ -139,9 +139,6 @@ class CatPDFGenerator:
             
             # Section headers styling
             ('BACKGROUND', (0, 1), (-1, 1), colors.lightblue),
-            ('BACKGROUND', (0, 8), (-1, 8), colors.lightgreen) if cat_info['breed'] else (),
-            ('BACKGROUND', (0, 13), (-1, 13), colors.lightyellow) 
-            if cat_info['dam'] or cat_info['sire'] else (),
             
             # General styling
             ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
@@ -155,6 +152,13 @@ class CatPDFGenerator:
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'TOP')
         ]))
+        
+        # Add conditional styling
+        if cat_info['breed']:
+            compact_table.setStyle(TableStyle([('BACKGROUND', (0, 8), (-1, 8), colors.lightgreen)]))
+        
+        if cat_info['dam'] or cat_info['sire']:
+            compact_table.setStyle(TableStyle([('BACKGROUND', (0, 13), (-1, 13), colors.lightyellow)]))
         
         story.append(compact_table)
         story.append(Spacer(1, 15))
@@ -199,35 +203,87 @@ class CatPDFGenerator:
             
             story.append(Spacer(1, 10))
         
-        # Family Tree - Compact version
-        if family_tree:
-            story.append(Spacer(1, 10))
-            story.append(Paragraph("🌳 Family Tree", self.styles['CustomHeading']))
-            story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkgreen))
+        # Files section
+        if cat_info['cat'].cat_files and len(cat_info['cat'].cat_files) > 0:
+            story.append(Paragraph("📁 Files", self.styles['CustomHeading']))
+            story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkblue))
             
+            # Add files list
+            files = cat_info['cat'].cat_files
+            for i, file_path in enumerate(files):
+                try:
+                    if file_path:
+                        # Get filename from path and extract original name
+                        full_filename = os.path.basename(file_path)
+                        # Remove UUID part to show original filename
+                        if '_' in full_filename:
+                            parts = full_filename.split('_')
+                            if len(parts) >= 2:
+                                # Check if last part looks like UUID (8 hex characters)
+                                last_part = parts[-1]
+                                file_ext = os.path.splitext(last_part)[1]
+                                uuid_part = last_part.replace(file_ext, '')
+                                if len(uuid_part) == 8 and all(c in '0123456789abcdef' for c in uuid_part.lower()):
+                                    # Remove the UUID part and rejoin
+                                    original_name = '_'.join(parts[:-1]) + file_ext
+                                else:
+                                    original_name = full_filename
+                            else:
+                                original_name = full_filename
+                        else:
+                            original_name = full_filename
+                        
+                        # Normalize path separators for file system check
+                        normalized_path = file_path.replace('/', '\\') if os.name == 'nt' else file_path
+                        if os.path.exists(normalized_path):
+                            story.append(Paragraph(f"📎 {original_name}", self.styles['Normal']))
+                        else:
+                            story.append(Paragraph(f"📎 {original_name} (File not found)", self.styles['Normal']))
+                except Exception as e:
+                    print(f"Error processing file {file_path}: {e}")
+                    story.append(Paragraph(f"📎 {file_path} (Error processing)", self.styles['Normal']))
+            
+            story.append(Spacer(1, 10))
+        
+        # Family Tree - Compact version
+        story.append(Spacer(1, 10))
+        story.append(Paragraph("🌳 Family Tree", self.styles['CustomHeading']))
+        story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkgreen))
+        
+        if family_tree:
             # Generate compact family tree table
-            family_data = self.generate_family_tree_table(family_tree)
-            if family_data:
-                family_table = Table(family_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-                family_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+            try:
+                family_data = self.generate_family_tree_table(family_tree)
+                if family_data and len(family_data) > 0:
+                    family_table = Table(family_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+                    family_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                        
+                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 8),
+                        ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+                        ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
+                        ('TOPPADDING', (0, 1), (-1, -1), 3),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey)
+                    ]))
                     
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                    ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
-                    ('TOPPADDING', (0, 1), (-1, -1), 3),
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey)
-                ]))
-                
-                story.append(family_table)
+                    story.append(family_table)
+                else:
+                    # No family tree data available
+                    story.append(Paragraph("No family tree information available.", self.styles['Normal']))
+            except Exception as e:
+                print(f"Error generating family tree table: {e}")
+                story.append(Paragraph("Error generating family tree information.", self.styles['Normal']))
+        else:
+            # No family tree data available
+            story.append(Paragraph("No family tree information available.", self.styles['Normal']))
         
         # Footer
         story.append(Spacer(1, 30))
@@ -252,14 +308,18 @@ class CatPDFGenerator:
             if not node or depth > max_depth:
                 return
             
+            # Check if node has required fields
+            if not isinstance(node, dict) or 'firstname' not in node or 'surname' not in node:
+                return
+            
             if depth not in generations:
                 generations[depth] = []
             
             generations[depth].append({
-                'name': f"{node['firstname']} {node['surname']}",
-                'gender': node['gender'],
-                'birthday': str(node['birthday']),
-                'microchip': node['microchip'] or 'N/A'
+                'name': f"{node.get('firstname', 'Unknown')} {node.get('surname', 'Unknown')}",
+                'gender': node.get('gender', 'Unknown'),
+                'birthday': str(node.get('birthday', 'Unknown')),
+                'microchip': node.get('microchip') or 'N/A'
             })
             
             if node.get('dam'):
@@ -277,7 +337,10 @@ class CatPDFGenerator:
         table_data.append(headers)
         
         # Fill data by generation
-        max_rows = max(len(generations.get(i, [])) for i in range(max_depth + 1)) if generations else 0
+        if not generations:
+            return []
+        
+        max_rows = max(len(generations.get(i, [])) for i in range(max_depth + 1))
         
         for row in range(max_rows):
             row_data = []

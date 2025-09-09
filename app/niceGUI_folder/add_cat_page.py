@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.photo_service import PhotoService
+from app.niceGUI_folder.file_service import FileService
 from datetime import datetime
 # import geonamescache
 
@@ -11,8 +12,9 @@ from datetime import datetime
 async def add_cat_page_render():
     get_header('Add Cat Page')
     
-    # Store uploaded photos
+    # Store uploaded photos and files
     uploaded_photos = []
+    uploaded_files = []
 
     # gc = geonamescache.GeonamesCache()
     # cities = gc.get_cities()
@@ -138,6 +140,71 @@ async def add_cat_page_render():
             
             # Initial gallery display
             update_photo_gallery()
+        
+        # Files section
+        with ui.card().classes('w-full q-pa-md'):
+            ui.label('Files').classes('text-h6 q-mb-md')
+            
+            # File upload area
+            file_container = ui.column().classes('w-full')
+            
+            def handle_file_upload(e):
+                """Handle file upload"""
+                try:
+                    # Validate file
+                    is_valid, error_msg = FileService.is_valid_file(e)
+                    if not is_valid:
+                        ui.notify(error_msg, color='negative', position='top')
+                        return
+                    
+                    # Save file (we need microchip, but it might not be set yet)
+                    if not microchip.value:
+                        ui.notify('Please enter microchip number before uploading files', color='negative', position='top')
+                        return
+                    
+                    success, message, file_path = FileService.save_file(microchip.value, e)
+                    if success:
+                        uploaded_files.append(file_path)
+                        update_file_list()
+                        ui.notify(f'File uploaded: {e.name}', color='positive', position='top')
+                    else:
+                        ui.notify(f'Error uploading file: {message}', color='negative', position='top')
+                        
+                except Exception as ex:
+                    ui.notify(f'Error uploading file: {str(ex)}', color='negative', position='top')
+            
+            def update_file_list():
+                """Update file list display"""
+                file_container.clear()
+                with file_container:
+                    if uploaded_files:
+                        ui.label(f'Uploaded files ({len(uploaded_files)}):').classes('text-subtitle2 q-mb-sm')
+                        FileService.create_file_list(uploaded_files, "300px")
+                        
+                        # Add delete buttons for each file
+                        for i, file_path in enumerate(uploaded_files):
+                            def delete_file(index=i):
+                                if FileService.delete_file(uploaded_files[index]):
+                                    uploaded_files.pop(index)
+                                    update_file_list()
+                                    ui.notify('File deleted', color='info', position='top')
+                                else:
+                                    ui.notify('Failed to delete file', color='negative', position='top')
+                            
+                            with ui.row().classes('items-center gap-2 q-mt-sm'):
+                                ui.button('Delete', on_click=delete_file, color='negative').props('dense size=sm')
+                    else:
+                        ui.label('No files uploaded yet').classes('text-grey-6')
+            
+            # Upload widget
+            ui.upload(
+                on_upload=handle_file_upload,
+                auto_upload=True,
+                max_file_size=FileService.MAX_FILE_SIZE
+            ).props('accept=.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar').classes('w-full q-mb-md')
+            
+            # Initial file list display
+            update_file_list()
 
             with ui.row().classes('justify-end q-pt-md'):
                 submit_btn = ui.button('SUBMIT', color='primary').props('unelevated')
@@ -170,7 +237,8 @@ async def add_cat_page_render():
                                            owner_id=owner.value,
                                            cat_dam_id=dam.value,
                                            cat_sire_id=sire.value,
-                                           cat_photos=uploaded_photos
+                                           cat_photos=uploaded_photos,
+                                           cat_files=uploaded_files
                                            )
                     ui.notify('Cat added successfully!', color='positive', position='top')
                     ui.navigate.to('/cats')

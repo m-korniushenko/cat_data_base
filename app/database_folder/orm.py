@@ -74,7 +74,7 @@ class AsyncOrm:
                       cat_birthday: datetime, cat_microchip_number: str,
                       cat_EMS_colour: str, cat_litter: str, cat_breed_id: int = None,
                       cat_haritage_number: str = None, cat_dam_id: int = None, cat_sire_id: int = None,
-                      cat_photos: list = None):
+                      cat_photos: list = None, cat_files: list = None):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         cat_dam_id = int(cat_dam_id) if cat_dam_id else None
         cat_sire_id = int(cat_sire_id) if cat_sire_id else None
@@ -92,7 +92,8 @@ class AsyncOrm:
                 cat_haritage_number=cat_haritage_number,
                 cat_dam_id=cat_dam_id,
                 cat_sire_id=cat_sire_id,
-                cat_photos=cat_photos or []
+                cat_photos=cat_photos or [],
+                cat_files=cat_files or []
             )
             session.add(new_cat)
             await session.commit()
@@ -103,7 +104,7 @@ class AsyncOrm:
                          birthday: datetime, microchip: str = None, colour: str = None,
                          litter: str = None, haritage_number: str = None, owner_id: int = None,
                          breed_id: int = None, dam_id: int = None, sire_id: int = None,
-                         cat_photos: list = None) -> bool:
+                         cat_photos: list = None, cat_files: list = None) -> bool:
         """Update cat information"""
         try:
             async with async_session() as session:
@@ -129,6 +130,8 @@ class AsyncOrm:
                 cat.cat_sire_id = sire_id
                 if cat_photos is not None:
                     cat.cat_photos = cat_photos
+                if cat_files is not None:
+                    cat.cat_files = cat_files
                 
                 await session.commit()
                 return True

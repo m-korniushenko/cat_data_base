@@ -193,7 +193,8 @@ class CatService:
                 breed_id=data.get('breed_id'),
                 dam_id=data.get('dam_id'),
                 sire_id=data.get('sire_id'),
-                cat_photos=data.get('cat_photos')
+                cat_photos=data.get('cat_photos'),
+                cat_files=data.get('cat_files')
             )
             print(f"Update result: {success}")
             

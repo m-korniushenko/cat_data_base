@@ -3,6 +3,7 @@ from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.pdf_generator import generate_cat_pdf_file
 from app.niceGUI_folder.photo_service import PhotoService
+from app.niceGUI_folder.file_service import FileService
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -210,6 +211,13 @@ async def cat_profile_page_render(cat_id: int):
                 ui.label('📸 Photos').classes('text-h6 q-mb-md')
                 print(f"Cat photos: {cat.cat_photos}")
                 PhotoService.create_photo_gallery(cat.cat_photos, "400px")
+        
+        # Files section
+        if cat.cat_files and len(cat.cat_files) > 0:
+            with ui.card().classes('w-full max-w-4xl q-pa-lg q-mt-md'):
+                ui.label('📁 Files').classes('text-h6 q-mb-md')
+                print(f"Cat files: {cat.cat_files}")
+                FileService.create_file_list(cat.cat_files, "400px")
         
         # Parents information
         if dam or sire:
