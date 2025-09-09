@@ -21,11 +21,25 @@ async def edit_owner_page_render(owner_id: int):
         
         # Form fields
         with ui.card().classes('w-full p-4'):
-            firstname = ui.input('First Name', value=owner_data.get('owner_firstname', '')).classes('w-full mb-2')
-            lastname = ui.input('Last Name', value=owner_data.get('owner_lastname', '')).classes('w-full mb-2')
-            email = ui.input('Email', value=owner_data.get('owner_email', '')).classes('w-full mb-2')
-            phone = ui.input('Phone', value=owner_data.get('owner_phone', '')).classes('w-full mb-2')
-            address = ui.input('Address', value=owner_data.get('owner_address', '')).classes('w-full mb-2')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                # Основная информация
+                firstname = ui.input('First Name', value=owner_data.get('owner_firstname', '')).props('outlined dense').classes('w-full')
+                lastname = ui.input('Last Name', value=owner_data.get('owner_lastname', '')).props('outlined dense').classes('w-full')
+                email = ui.input('Email', value=owner_data.get('owner_email', '')).props('outlined dense type=email').classes('w-full')
+                phone = ui.input('Phone', value=owner_data.get('owner_phone', '')).props('outlined dense').classes('w-full')
+                
+                # Адрес
+                address = ui.input('Address', value=owner_data.get('owner_address', '')).props('outlined dense').classes('w-full md:col-span-2')
+                city = ui.input('City', value=owner_data.get('owner_city', '')).props('outlined dense').classes('w-full')
+                country = ui.input('Country', value=owner_data.get('owner_country', '')).props('outlined dense').classes('w-full')
+                zip_code = ui.input('ZIP Code', value=owner_data.get('owner_zip', '')).props('outlined dense').classes('w-full')
+                
+                # Дополнительная информация
+                birthday_value = owner_data.get('owner_birthday', '')
+                if birthday_value and hasattr(birthday_value, 'isoformat'):
+                    birthday_value = birthday_value.isoformat()
+                birthday = ui.input('Birthday', value=birthday_value).props('type=date outlined dense').classes('w-full')
+                permission = ui.input('Permission', value=str(owner_data.get('owner_permission', ''))).props('outlined dense readonly').classes('w-full')
             
             # Action buttons
             with ui.row().classes('w-full justify-end gap-2 mt-4'):
@@ -33,12 +47,26 @@ async def edit_owner_page_render(owner_id: int):
                     """Handle save button click"""
                     try:
                         # Collect form data
+                        # Convert birthday string to date object if provided
+                        birthday_date = None
+                        if birthday.value:
+                            try:
+                                from datetime import date
+                                birthday_date = date.fromisoformat(birthday.value)
+                            except ValueError:
+                                ui.notify('Invalid birthday format. Please use YYYY-MM-DD', type='negative')
+                                return
+                        
                         owner_update_data = {
                             'owner_firstname': firstname.value.strip(),
                             'owner_lastname': lastname.value.strip(),
                             'owner_email': email.value.strip(),
                             'owner_phone': phone.value.strip(),
-                            'owner_address': address.value.strip()
+                            'owner_address': address.value.strip(),
+                            'owner_city': city.value.strip(),
+                            'owner_country': country.value.strip(),
+                            'owner_zip': zip_code.value.strip(),
+                            'owner_birthday': birthday_date
                         }
                         
                         # Update owner

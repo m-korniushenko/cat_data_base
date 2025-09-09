@@ -22,7 +22,12 @@ class OwnerService:
                 'owner_lastname': owner.owner_surname,
                 'owner_email': owner.owner_email,
                 'owner_phone': owner.owner_phone,
-                'owner_address': owner.owner_address
+                'owner_address': owner.owner_address,
+                'owner_city': owner.owner_city,
+                'owner_country': owner.owner_country,
+                'owner_zip': owner.owner_zip,
+                'owner_birthday': owner.owner_birthday,
+                'owner_permission': owner.owner_permission
             }
         except Exception as e:
             print(f"Error getting owner data: {e}")

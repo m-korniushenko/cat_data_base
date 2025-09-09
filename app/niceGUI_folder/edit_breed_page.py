@@ -21,11 +21,27 @@ async def edit_breed_page_render(breed_id: int):
         
         # Form fields
         with ui.card().classes('w-full p-4'):
-            firstname = ui.input('First Name', value=breed_data.get('breed_firstname', '')).classes('w-full mb-2')
-            lastname = ui.input('Last Name', value=breed_data.get('breed_lastname', '')).classes('w-full mb-2')
-            email = ui.input('Email', value=breed_data.get('breed_email', '')).classes('w-full mb-2')
-            phone = ui.input('Phone', value=breed_data.get('breed_phone', '')).classes('w-full mb-2')
-            address = ui.input('Address', value=breed_data.get('breed_address', '')).classes('w-full mb-2')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                # Основная информация
+                firstname = ui.input('First Name', value=breed_data.get('breed_firstname', '')).props('outlined dense').classes('w-full')
+                lastname = ui.input('Last Name', value=breed_data.get('breed_lastname', '')).props('outlined dense').classes('w-full')
+                email = ui.input('Email', value=breed_data.get('breed_email', '')).props('outlined dense type=email').classes('w-full')
+                phone = ui.input('Phone', value=breed_data.get('breed_phone', '')).props('outlined dense').classes('w-full')
+                
+                gender = ui.select(['Male', 'Female'], value=breed_data.get('breed_gender', '')).props('outlined dense').classes('w-full')
+                birthday_value = breed_data.get('breed_birthday', '')
+                if birthday_value and hasattr(birthday_value, 'isoformat'):
+                    birthday_value = birthday_value.isoformat()
+                birthday = ui.input('Birthday', value=birthday_value).props('type=date outlined dense').classes('w-full')
+                
+                # Адрес
+                address = ui.input('Address', value=breed_data.get('breed_address', '')).props('outlined dense').classes('w-full md:col-span-2')
+                city = ui.input('City', value=breed_data.get('breed_city', '')).props('outlined dense').classes('w-full')
+                country = ui.input('Country', value=breed_data.get('breed_country', '')).props('outlined dense').classes('w-full')
+                zip_code = ui.input('ZIP Code', value=breed_data.get('breed_zip', '')).props('outlined dense').classes('w-full')
+                
+                # Описание
+                description = ui.textarea('Description', value=breed_data.get('breed_description', '')).props('outlined dense').classes('w-full md:col-span-2')
             
             # Action buttons
             with ui.row().classes('w-full justify-end gap-2 mt-4'):
@@ -33,12 +49,28 @@ async def edit_breed_page_render(breed_id: int):
                     """Handle save button click"""
                     try:
                         # Collect form data
+                        # Convert birthday string to date object if provided
+                        birthday_date = None
+                        if birthday.value:
+                            try:
+                                from datetime import date
+                                birthday_date = date.fromisoformat(birthday.value)
+                            except ValueError:
+                                ui.notify('Invalid birthday format. Please use YYYY-MM-DD', type='negative')
+                                return
+                        
                         breed_update_data = {
                             'breed_firstname': firstname.value.strip(),
                             'breed_lastname': lastname.value.strip(),
                             'breed_email': email.value.strip(),
                             'breed_phone': phone.value.strip(),
-                            'breed_address': address.value.strip()
+                            'breed_gender': gender.value,
+                            'breed_birthday': birthday_date,
+                            'breed_address': address.value.strip(),
+                            'breed_city': city.value.strip(),
+                            'breed_country': country.value.strip(),
+                            'breed_zip': zip_code.value.strip(),
+                            'breed_description': description.value.strip()
                         }
                         
                         # Update breed

@@ -22,7 +22,13 @@ class BreedService:
                 'breed_lastname': breed.breed_surname,
                 'breed_email': breed.breed_email,
                 'breed_phone': breed.breed_phone,
-                'breed_address': breed.breed_address
+                'breed_gender': breed.breed_gender,
+                'breed_birthday': breed.breed_birthday,
+                'breed_address': breed.breed_address,
+                'breed_city': breed.breed_city,
+                'breed_country': breed.breed_country,
+                'breed_zip': breed.breed_zip,
+                'breed_description': breed.breed_description
             }
         except Exception as e:
             print(f"Error getting breed data: {e}")
