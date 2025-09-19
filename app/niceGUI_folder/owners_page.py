@@ -5,18 +5,18 @@ from app.database_folder.orm import AsyncOrm
 
 
 columns = [
-    {'name': 'id',         'label': 'ID',         'field': 'id',         'align': 'left'},
-    {'name': 'firstname',  'label': 'First Name', 'field': 'firstname',  'align': 'left'},
-    {'name': 'surname',    'label': 'Surname',    'field': 'surname',    'align': 'left'},
-    {'name': 'email',      'label': 'Email',      'field': 'email',      'align': 'left'},
-    {'name': 'phone',      'label': 'Phone',      'field': 'phone',      'align': 'left'},
-    {'name': 'address',    'label': 'Address',    'field': 'address',    'align': 'left'},
-    {'name': 'city',       'label': 'City',       'field': 'city',       'align': 'left'},
-    {'name': 'country',    'label': 'Country',    'field': 'country',    'align': 'left'},
-    {'name': 'zip',        'label': 'ZIP',        'field': 'zip',        'align': 'left'},
-    {'name': 'birthday',   'label': 'Birthday',   'field': 'birthday',   'align': 'left'},
+    {'name': 'id', 'label': 'ID', 'field': 'id', 'align': 'left'},
+    {'name': 'firstname', 'label': 'First Name', 'field': 'firstname', 'align': 'left'},
+    {'name': 'surname', 'label': 'Surname', 'field': 'surname', 'align': 'left'},
+    {'name': 'email', 'label': 'Email', 'field': 'email', 'align': 'left'},
+    {'name': 'phone', 'label': 'Phone', 'field': 'phone', 'align': 'left'},
+    {'name': 'address', 'label': 'Address', 'field': 'address', 'align': 'left'},
+    {'name': 'city', 'label': 'City', 'field': 'city', 'align': 'left'},
+    {'name': 'country', 'label': 'Country', 'field': 'country', 'align': 'left'},
+    {'name': 'zip', 'label': 'ZIP', 'field': 'zip', 'align': 'left'},
+    {'name': 'birthday', 'label': 'Birthday', 'field': 'birthday', 'align': 'left'},
     {'name': 'permission', 'label': 'Permission', 'field': 'permission', 'align': 'left'},
-    {'name': 'actions',    'label': 'Actions',    'field': 'actions',    'align': 'center'},
+    {'name': 'actions', 'label': 'Actions', 'field': 'actions', 'align': 'center'},
 ]
 
 
@@ -68,22 +68,18 @@ def owner_to_row(o):
 
 
 @ui.page('/owners')
-@require_auth(required_permission=1)  # Only admins can view owners
+@require_auth(required_permission=1)
 async def owners_page_render(current_user=None, session_id=None):
     len_owners, owners = await AsyncOrm.get_owner()
     get_header('👤 Owners')
-    
-    # Convert owners to rows
-    rows = [owner_to_row(o) for o in (owners if isinstance(owners, list) else [owners])]
-    
-    # Add actions field to each row
-    for row in rows:
-        row['actions'] = ''
-    
-    # Create table with Vue slot for custom buttons
-    table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
-    table.add_slot('body', get_edit_button_vue())
-    
-    # Add action buttons below the table
+
     with ui.row().classes('q-pa-md'):
         ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')
+
+    rows = [owner_to_row(o) for o in (owners if isinstance(owners, list) else [owners])]
+
+    for row in rows:
+        row['actions'] = ''
+
+    table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
+    table.add_slot('body', get_edit_button_vue())

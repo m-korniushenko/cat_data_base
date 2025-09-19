@@ -18,20 +18,19 @@ class ValidationResult:
 
 class BaseValidator:
     """Base validator class following Open/Closed principle"""
-    
+
     def validate(self, data: Dict[str, Any]) -> ValidationResult:
         """Validate data and return result"""
         errors = []
-        
-        # Override in subclasses
+
         self._validate_data(data, errors)
-        
+
         return ValidationResult(
             is_valid=len(errors) == 0,
             errors=errors,
             data=data if len(errors) == 0 else None
         )
-    
+
     def _validate_data(self, data: Dict[str, Any], errors: List[str]) -> None:
         """Override in subclasses to implement specific validation"""
         pass
@@ -39,20 +38,17 @@ class BaseValidator:
 
 class CatValidator(BaseValidator):
     """Validator for cat data"""
-    
+
     def _validate_data(self, data: Dict[str, Any], errors: List[str]) -> None:
         """Validate cat-specific data"""
-        # Required fields
         required_fields = ['firstname', 'surname', 'gender', 'birthday']
         for field in required_fields:
             if not data.get(field):
                 errors.append(f"{field.capitalize()} is required")
-        
-        # Validate gender
+
         if data.get('gender') and data['gender'] not in ['Male', 'Female']:
             errors.append("Gender must be 'Male' or 'Female'")
-        
-        # Validate birthday
+
         birthday = data.get('birthday')
         if birthday:
             if isinstance(birthday, str):
@@ -65,38 +61,32 @@ class CatValidator(BaseValidator):
                     errors.append("Birthday cannot be in the future")
             else:
                 errors.append("Invalid birthday format")
-        
-        # Validate microchip (if provided and not empty)
+
         microchip = data.get('microchip')
-        # Microchip validation removed - no minimum length requirement
-        
-        # Validate parent IDs (if provided)
+
         dam_id = data.get('dam_id')
         sire_id = data.get('sire_id')
-        
+
         if dam_id and sire_id and dam_id == sire_id:
             errors.append("Mother and father cannot be the same cat")
-        
-        # Validate parent genders
+
         if dam_id and data.get('dam_gender') and data['dam_gender'] != 'Female':
             errors.append("Mother must be a female cat")
-        
+
         if sire_id and data.get('sire_gender') and data['sire_gender'] != 'Male':
             errors.append("Father must be a male cat")
 
 
 class OwnerValidator(BaseValidator):
     """Validator for owner data"""
-    
+
     def _validate_data(self, data: Dict[str, Any], errors: List[str]) -> None:
         """Validate owner-specific data"""
-        # Required fields
         required_fields = ['firstname', 'surname', 'email']
         for field in required_fields:
             if not data.get(field):
                 errors.append(f"Owner {field.capitalize()} is required")
-        
-        # Validate email format
+
         email = data.get('email')
         if email and '@' not in email:
             errors.append("Invalid email format")
@@ -104,16 +94,14 @@ class OwnerValidator(BaseValidator):
 
 class BreederValidator(BaseValidator):
     """Validator for breeder data"""
-    
+
     def _validate_data(self, data: Dict[str, Any], errors: List[str]) -> None:
         """Validate breeder-specific data"""
-        # Required fields
         required_fields = ['firstname', 'surname', 'email']
         for field in required_fields:
             if not data.get(field):
                 errors.append(f"Breeder {field.capitalize()} is required")
-        
-        # Validate email format
+
         email = data.get('email')
         if email and '@' not in email:
             errors.append("Invalid breeder email format")
@@ -121,23 +109,23 @@ class BreederValidator(BaseValidator):
 
 class CompositeValidator:
     """Composite validator following Composite pattern"""
-    
+
     def __init__(self):
         self.validators = []
-    
+
     def add_validator(self, validator: BaseValidator) -> None:
         """Add a validator to the composite"""
         self.validators.append(validator)
-    
+
     def validate(self, data: Dict[str, Any]) -> ValidationResult:
         """Validate data using all validators"""
         all_errors = []
-        
+
         for validator in self.validators:
             result = validator.validate(data)
             if not result.is_valid:
                 all_errors.extend(result.errors)
-        
+
         return ValidationResult(
             is_valid=len(all_errors) == 0,
             errors=all_errors,
