@@ -11,6 +11,12 @@ from nicegui import ui, app
 from nicegui.events import ValueChangeEventArguments
 import json
 import os
+
+# Настройка логирования
+from logging_config import setup_logging, log_info, log_error, log_success, log_warning
+
+# Инициализация логирования
+logger = setup_logging()
 from app.niceGUI_folder.pydentic_models import CatCreate, CatUpdate, OwnerCreate, OwnerUpdate
 from app.niceGUI_folder.add_cat_page import add_cat_page_render
 from app.niceGUI_folder.add_owner_page import add_owner_page_render
@@ -134,20 +140,50 @@ async def serve_static_files(file_path: str):
 
 
 def start_db():
+    log_info("Инициализация базы данных...")
+    
     if not check_creds():
+        log_error("Ошибка проверки учетных данных")
         sys.exit()
+    
+    log_info("Создание базы данных...")
     drop_database_if_exists()
     postgres_check_and_create_database(Base)
+    
     if not check_db_connection():
+        log_error("Ошибка подключения к базе данных")
         sys.exit()
+    
+    log_success("База данных готова")
+    log_info("Загрузка тестовых данных...")
     start_add_workflow()
+    log_success("Тестовые данные загружены")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    start_db()
-    ui.run(
-        port=8080,
-        title='Cat Database Management System',
-        show=True,
-        reload=True,
-    )
+    log_info("Запуск Cat Database Management System v2.0")
+    log_info("=" * 50)
+    
+    try:
+        start_db()
+        
+        log_success("Сервер запущен успешно!")
+        log_info("🌐 Доступ: http://localhost:8080")
+        log_info("🔐 Тестовые аккаунты:")
+        log_info("   Admin: admin@admin.com / admin")
+        log_info("   Owner: john@example.com / password")
+        log_info("🛑 Для остановки нажмите Ctrl+C")
+        log_info("=" * 50)
+        
+        ui.run(
+            port=8080,
+            title='Cat Database Management System',
+            show=True,
+            reload=True,
+        )
+        
+    except KeyboardInterrupt:
+        log_info("Остановка сервера...")
+    except Exception as e:
+        log_error(f"Ошибка запуска: {e}")
+        sys.exit(1)
