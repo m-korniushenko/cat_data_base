@@ -7,23 +7,19 @@ from app.database_folder.orm import AsyncOrm
 
 cats_column = [
     {'name': 'id', 'label': 'ID', 'field': 'id', 'align': 'left'},
-    {'name': 'firstname', 'label': 'First Name', 'field': 'firstname', 'align': 'left'},
+    {'name': 'firstname', 'label': 'Name', 'field': 'firstname', 'align': 'left'},
     {'name': 'surname', 'label': 'Surname', 'field': 'surname', 'align': 'left'},
+    {'name': 'callname', 'label': 'Callname', 'field': 'callname', 'align': 'left'},
     {'name': 'gender', 'label': 'Gender', 'field': 'gender', 'align': 'left'},
     {'name': 'birthday', 'label': 'Birthday', 'field': 'birthday', 'align': 'left'},
     {'name': 'microchip', 'label': 'Microchip', 'field': 'microchip', 'align': 'left'},
-    {'name': 'breed', 'label': 'Breed', 'field': 'breed', 'align': 'left'},
-    {'name': 'colour', 'label': 'Colour', 'field': 'colour', 'align': 'left'},
-    {'name': 'litter', 'label': 'Litter', 'field': 'litter', 'align': 'left'},
-    {'name': 'haritage_number', 'label': 'Haritage Number', 'field': 'haritage_number', 'align': 'left'},
-    {'name': 'owner_firstname', 'label': 'Owner First Name', 'field': 'owner_firstname', 'align': 'left'},
-    {'name': 'owner_surname', 'label': 'Owner Surname', 'field': 'owner_surname', 'align': 'left'},
-    {'name': 'owner_email', 'label': 'Owner Mail', 'field': 'owner_email', 'align': 'left'},
-    {'name': 'breed_firstname', 'label': 'Breed First Name', 'field': 'breed_firstname', 'align': 'left'},
-    {'name': 'breed_surname', 'label': 'Breed Surname', 'field': 'breed_surname', 'align': 'left'},
-    {'name': 'breed_email', 'label': 'Breed Email', 'field': 'breed_email', 'align': 'left'},
-    {'name': 'dam', 'label': 'Dam', 'field': 'dam', 'align': 'left'},
-    {'name': 'sire', 'label': 'Sire', 'field': 'sire', 'align': 'left'},
+    {'name': 'title', 'label': 'Title', 'field': 'title', 'align': 'left'},
+    {'name': 'eye_colour', 'label': 'Eye Color', 'field': 'eye_colour', 'align': 'left'},
+    {'name': 'hair_type', 'label': 'Hair Type', 'field': 'hair_type', 'align': 'left'},
+    {'name': 'colour', 'label': 'Color', 'field': 'colour', 'align': 'left'},
+    {'name': 'breed_name', 'label': 'Breeder', 'field': 'breed_name', 'align': 'left'},
+    {'name': 'owner_name', 'label': 'Owner', 'field': 'owner_name', 'align': 'left'},
+    {'name': 'status', 'label': 'Status', 'field': 'status', 'align': 'left'},
     {'name': 'actions', 'label': 'Actions', 'field': 'actions', 'align': 'center'},
 ]
 
@@ -90,40 +86,290 @@ async def get_cats_rows(cats_rows):
 
 @require_auth(required_permission=2)
 async def cats_page_render(current_user=None, session_id=None):
-    ui.label('Cats Page')
     get_header('🐱 Cats')
 
+    # Add Cat button for admins
     if current_user and current_user.get('owner_permission') == 1:
         with ui.row().classes('q-pa-md'):
             ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')
 
-    owner_filter = AuthService.get_user_cats_filter(current_user)
-    _, cats_rows = await AsyncOrm.get_cat_info()
+    # Load data for filters
+    _, cats_data = await AsyncOrm.get_cat_info()
+    _, owners_data = await AsyncOrm.get_owner()
+    _, breeds_data = await AsyncOrm.get_breed()
 
+    # Apply user permission filter
+    owner_filter = AuthService.get_user_cats_filter(current_user)
     if owner_filter is not None:
         if owner_filter == -1:
-            cats_rows = []
+            cats_data = []
         else:
-            cats_rows = [cat for cat in cats_rows if cat.get('owner_id') == owner_filter]
+            cats_data = [cat for cat in cats_data if cat.get('owner_id') == owner_filter]
 
-    safe_rows = await get_cats_rows(cats_rows)
+    # Create filter options
+    gender_options = ['Male', 'Female']
+    eye_color_options = list(set([cat.get('eye_colour') for cat in cats_data if cat.get('eye_colour')]))
+    hair_type_options = list(set([cat.get('hair_type') for cat in cats_data if cat.get('hair_type')]))
+    status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
+    
+    owner_options = {owner['owner_id']: f"{owner['owner_firstname']} {owner['owner_surname']}"
+                     for owner in owners_data}
+    breed_options = {breed['breed_id']: f"{breed['breed_firstname']} {breed['breed_surname']}"
+                     for breed in breeds_data}
 
-    search_bar = ui.input(label='Search').props('outlined dense').classes('w-full')
+    # Filter UI
+    with ui.card().classes('w-full q-pa-md q-mb-md'):
+        ui.label('🔍 Filters').classes('text-h6 q-mb-md')
+        
+        with ui.grid(columns=4).classes('gap-4 w-full'):
+            # Search
+            search_input = ui.input(label='Search (Name, Microchip, etc.)').props('outlined dense')
+            
+            # Gender filter
+            gender_filter = ui.select(
+                options=[''] + gender_options,
+                label='Gender'
+            ).props('outlined dense clearable')
+            
+            # Owner filter
+            owner_filter_select = ui.select(
+                options=[''] + list(owner_options.values()),
+                label='Owner'
+            ).props('outlined dense clearable')
+            
+            # Breeder filter
+            breeder_filter = ui.select(
+                options=[''] + list(breed_options.values()),
+                label='Breeder'
+            ).props('outlined dense clearable')
+            
+            # Eye color filter
+            eye_color_filter = ui.select(
+                options=[''] + eye_color_options,
+                label='Eye Color'
+            ).props('outlined dense clearable')
+            
+            # Hair type filter
+            hair_type_filter = ui.select(
+                options=[''] + hair_type_options,
+                label='Hair Type'
+            ).props('outlined dense clearable')
+            
+            # Status filter
+            status_filter = ui.select(
+                options=[''] + status_options,
+                label='Status'
+            ).props('outlined dense clearable')
+            
+            # Color filter
+            color_options = list(set([cat.get('colour') for cat in cats_data if cat.get('colour')]))
+            color_filter = ui.select(
+                options=[''] + color_options,
+                label='Color'
+            ).props('outlined dense clearable')
+            
+            # Birthday range
+            birthday_from = ui.input(label='Birthday From').props('type=date outlined dense')
+            birthday_to = ui.input(label='Birthday To').props('type=date outlined dense')
+            
+            # Weight range
+            weight_min = ui.number(label='Min Weight (kg)', value=None, min=0, max=50, step=0.1).props('outlined dense')
+            weight_max = ui.number(label='Max Weight (kg)', value=None, min=0, max=50, step=0.1).props('outlined dense')
+            
+            # Breeding status
+            breeding_animal_filter = ui.select(
+                options=['', 'Yes', 'No'],
+                label='Breeding Animal'
+            ).props('outlined dense clearable')
+            
+            breeding_lock_filter = ui.select(
+                options=['', 'Yes', 'No'],
+                label='Breeding Lock'
+            ).props('outlined dense clearable')
+            
+            # Clear filters button
+            clear_filters_btn = ui.button('Clear All Filters', color='secondary').props('outline')
 
+    # Results counter
+    results_label = ui.label('').classes('text-subtitle2 q-mb-sm')
+
+    # Table container
     table_container = ui.column()
 
-    async def update_table(search_value):
-        print(f"Updating table with search: '{search_value}'")
-        _, cats_rows = await AsyncOrm.get_cat_info_like(search_value)
-        print(f"Found {len(cats_rows)} cats")
-        safe_rows = await get_cats_rows(cats_rows)
-        print(f"Safe rows: {len(safe_rows)}")
+    def apply_filters():
+        """Apply all filters to the data"""
+        filtered_cats = cats_data.copy()
+        
+        # Search filter
+        search_term = search_input.value.lower() if search_input.value else ''
+        if search_term:
+            filtered_cats = [
+                cat for cat in filtered_cats
+                if (search_term in (cat.get('firstname', '').lower() or '') or
+                    search_term in (cat.get('surname', '').lower() or '') or
+                    search_term in (cat.get('microchip', '').lower() or '') or
+                    search_term in (cat.get('callname', '').lower() or '') or
+                    search_term in (cat.get('haritage_number', '').lower() or '') or
+                    search_term in (cat.get('owner_firstname', '').lower() or '') or
+                    search_term in (cat.get('owner_surname', '').lower() or ''))
+            ]
+        
+        # Gender filter
+        if gender_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('gender') == gender_filter.value]
+        
+        # Owner filter
+        if owner_filter_select.value:
+            selected_owner_name = owner_filter_select.value
+            selected_owner_id = next((k for k, v in owner_options.items() if v == selected_owner_name), None)
+            if selected_owner_id:
+                filtered_cats = [cat for cat in filtered_cats if cat.get('owner_id') == selected_owner_id]
+        
+        # Breeder filter
+        if breeder_filter.value:
+            selected_breeder_name = breeder_filter.value
+            selected_breeder_id = next((k for k, v in breed_options.items() if v == selected_breeder_name), None)
+            if selected_breeder_id:
+                filtered_cats = [cat for cat in filtered_cats if cat.get('breed_id') == selected_breeder_id]
+        
+        # Eye color filter
+        if eye_color_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('eye_colour') == eye_color_filter.value]
+        
+        # Hair type filter
+        if hair_type_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('hair_type') == hair_type_filter.value]
+        
+        # Status filter
+        if status_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('status') == status_filter.value]
+        
+        # Color filter
+        if color_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('colour') == color_filter.value]
+        
+        # Birthday range filter
+        if birthday_from.value:
+            try:
+                from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
+                filtered_cats = [cat for cat in filtered_cats
+                                if cat.get('birthday') and cat.get('birthday') >= from_date]
+            except ValueError:
+                pass
+        
+        if birthday_to.value:
+            try:
+                to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
+                filtered_cats = [cat for cat in filtered_cats
+                                if cat.get('birthday') and cat.get('birthday') <= to_date]
+            except ValueError:
+                pass
+        
+        # Weight range filter
+        if weight_min.value is not None:
+            filtered_cats = [cat for cat in filtered_cats
+                           if cat.get('weight') and cat.get('weight') >= weight_min.value]
+        
+        if weight_max.value is not None:
+            filtered_cats = [cat for cat in filtered_cats
+                           if cat.get('weight') and cat.get('weight') <= weight_max.value]
+        
+        # Breeding animal filter
+        if breeding_animal_filter.value:
+            breeding_value = breeding_animal_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_animal') == breeding_value]
+        
+        # Breeding lock filter
+        if breeding_lock_filter.value:
+            lock_value = breeding_lock_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_lock') == lock_value]
+        
+        return filtered_cats
 
+    async def update_table():
+        """Update the table with filtered data"""
+        filtered_cats = apply_filters()
+        
+        # Prepare rows for display
+        display_rows = []
+        for cat in filtered_cats:
+            # Format title
+            title_display = cat.get('title')[0] if cat.get('title') else ''
+            
+            # Format owner name
+            owner_name = f"{cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}".strip()
+            
+            # Format breeder name
+            breeder_name = f"{cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}".strip()
+            
+            # Format birthday
+            birthday_display = cat.get('birthday').isoformat() if cat.get('birthday') else ''
+            
+            row = {
+                'id': cat.get('id'),
+                'firstname': cat.get('firstname', ''),
+                'surname': cat.get('surname', ''),
+                'callname': cat.get('callname', ''),
+                'gender': cat.get('gender', ''),
+                'birthday': birthday_display,
+                'microchip': cat.get('microchip', ''),
+                'title': title_display,
+                'eye_colour': cat.get('eye_colour', ''),
+                'hair_type': cat.get('hair_type', ''),
+                'colour': cat.get('colour', ''),
+                'breed_name': breeder_name,
+                'owner_name': owner_name,
+                'status': cat.get('status', ''),
+                'actions': ''
+            }
+            display_rows.append(row)
+        
+        # Update results counter
+        results_label.text = f"Found {len(display_rows)} cats"
+        
+        # Update table
         table_container.clear()
         with table_container:
-            table = ui.table(columns=cats_column, rows=safe_rows, row_key='id').classes('q-pa-md')
-            table.add_slot('body', get_edit_button_vue(current_user))
+            if display_rows:
+                table = ui.table(columns=cats_column, rows=display_rows, row_key='id').classes('q-pa-md')
+                table.add_slot('body', get_edit_button_vue(current_user))
+            else:
+                ui.label('No cats found matching the criteria').classes('text-center q-py-xl text-grey-6')
 
-    await update_table('')
+    def clear_all_filters():
+        """Clear all filter inputs"""
+        search_input.value = ''
+        gender_filter.value = ''
+        owner_filter_select.value = ''
+        breeder_filter.value = ''
+        eye_color_filter.value = ''
+        hair_type_filter.value = ''
+        status_filter.value = ''
+        color_filter.value = ''
+        birthday_from.value = ''
+        birthday_to.value = ''
+        weight_min.value = None
+        weight_max.value = None
+        breeding_animal_filter.value = ''
+        breeding_lock_filter.value = ''
+        update_table()
 
-    search_bar.on_value_change(lambda e: update_table(e.value))
+    # Set up event handlers
+    search_input.on_value_change(lambda e: update_table())
+    gender_filter.on_value_change(lambda e: update_table())
+    owner_filter_select.on_value_change(lambda e: update_table())
+    breeder_filter.on_value_change(lambda e: update_table())
+    eye_color_filter.on_value_change(lambda e: update_table())
+    hair_type_filter.on_value_change(lambda e: update_table())
+    status_filter.on_value_change(lambda e: update_table())
+    color_filter.on_value_change(lambda e: update_table())
+    birthday_from.on_value_change(lambda e: update_table())
+    birthday_to.on_value_change(lambda e: update_table())
+    weight_min.on_value_change(lambda e: update_table())
+    weight_max.on_value_change(lambda e: update_table())
+    breeding_animal_filter.on_value_change(lambda e: update_table())
+    breeding_lock_filter.on_value_change(lambda e: update_table())
+    clear_filters_btn.on_click(clear_all_filters)
+
+    # Initial load
+    await update_table()
