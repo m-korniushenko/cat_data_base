@@ -148,26 +148,71 @@ class AsyncOrm:
                          birthday: datetime, microchip: str = None, colour: str = None,
                          litter: str = None, haritage_number: str = None, owner_id: int = None,
                          breed_id: int = None, dam_id: int = None, sire_id: int = None,
-                         cat_photos: list = None, cat_files: list = None) -> bool:
+                         cat_photos: list = None, cat_files: list = None,
+                         callname: str = None, haritage_number_2: str = None,
+                         eye_colour: str = None, hair_type: str = None,
+                         tests: str = None, litter_size_male: int = None,
+                         litter_size_female: int = None, blood_group: str = None,
+                         gencode: str = None, features: str = None,
+                         notes: str = None, show_results: str = None,
+                         breeding_lock: bool = None, breeding_lock_date: date = None,
+                         breeding_animal: bool = None, birth_country: str = None,
+                         location: str = None, weight: float = None,
+                         birth_weight: float = None, transfer_weight: float = None,
+                         faults_deviations: str = None, association: str = None,
+                         jaw_fault: str = None, hernia: str = None,
+                         testicles: str = None, death_date: date = None,
+                         death_cause: str = None, status: str = None,
+                         kitten_transfer: bool = None) -> bool:
         """Update cat information"""
         try:
             async with async_session() as session:
-                # Get the cat to update
                 result = await session.execute(select(Cat).filter_by(cat_id=cat_id))
                 cat = result.scalar_one_or_none()
                 
                 if not cat:
                     return False
                 
-                # Update fields
                 cat.cat_firstname = firstname
                 cat.cat_surname = surname
+                cat.cat_callname = callname
                 cat.cat_gender = gender
                 cat.cat_birthday = birthday
                 cat.cat_microchip_number = microchip
                 cat.cat_EMS_colour = colour
                 cat.cat_litter = litter
                 cat.cat_haritage_number = haritage_number
+                cat.cat_haritage_number_2 = haritage_number_2
+                cat.cat_eye_colour = eye_colour
+                cat.cat_hair_type = hair_type
+                cat.cat_tests = tests
+                cat.cat_litter_size_male = litter_size_male
+                cat.cat_litter_size_female = litter_size_female
+                cat.cat_blood_group = blood_group
+                cat.cat_gencode = gencode
+                cat.cat_features = features
+                cat.cat_notes = notes
+                cat.cat_show_results = show_results
+                if breeding_lock is not None:
+                    cat.cat_breeding_lock = breeding_lock
+                cat.cat_breeding_lock_date = breeding_lock_date
+                if breeding_animal is not None:
+                    cat.cat_breeding_animal = breeding_animal
+                cat.cat_birth_country = birth_country
+                cat.cat_location = location
+                cat.cat_weight = weight
+                cat.cat_birth_weight = birth_weight
+                cat.cat_transfer_weight = transfer_weight
+                cat.cat_faults_deviations = faults_deviations
+                cat.cat_association = association
+                cat.cat_jaw_fault = jaw_fault
+                cat.cat_hernia = hernia
+                cat.cat_testicles = testicles
+                cat.cat_death_date = death_date
+                cat.cat_death_cause = death_cause
+                cat.cat_status = status
+                if kitten_transfer is not None:
+                    cat.cat_kitten_transfer = kitten_transfer
                 cat.owner_id = owner_id
                 cat.cat_breed_id = breed_id
                 cat.cat_dam_id = dam_id

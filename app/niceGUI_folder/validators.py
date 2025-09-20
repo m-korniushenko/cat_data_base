@@ -41,7 +41,7 @@ class CatValidator(BaseValidator):
 
     def _validate_data(self, data: Dict[str, Any], errors: List[str]) -> None:
         """Validate cat-specific data"""
-        required_fields = ['firstname', 'surname', 'gender', 'birthday']
+        required_fields = ['firstname', 'gender', 'birthday']
         for field in required_fields:
             if not data.get(field):
                 errors.append(f"{field.capitalize()} is required")
@@ -62,7 +62,68 @@ class CatValidator(BaseValidator):
             else:
                 errors.append("Invalid birthday format")
 
-        microchip = data.get('microchip')
+        # Validate eye color
+        eye_colour = data.get('eye_colour')
+        if eye_colour and eye_colour not in ['', 'Blue', 'Green', 'Yellow', 'Orange', 'Heterochromatic']:
+            errors.append("Invalid eye color")
+
+        # Validate hair type
+        hair_type = data.get('hair_type')
+        if hair_type and hair_type not in ['', 'Short Hair', 'Long Hair', 'Semi-Long Hair']:
+            errors.append("Invalid hair type")
+
+        # Validate litter sizes
+        litter_size_male = data.get('litter_size_male')
+        if litter_size_male is not None and (not isinstance(litter_size_male, int) or litter_size_male < 0 or litter_size_male > 20):
+            errors.append("Litter size (male) must be between 0 and 20")
+
+        litter_size_female = data.get('litter_size_female')
+        if litter_size_female is not None and (not isinstance(litter_size_female, int) or litter_size_female < 0 or litter_size_female > 20):
+            errors.append("Litter size (female) must be between 0 and 20")
+
+        # Validate weights
+        weight = data.get('weight')
+        if weight is not None and (not isinstance(weight, (int, float)) or weight < 0 or weight > 50):
+            errors.append("Weight must be between 0 and 50 kg")
+
+        birth_weight = data.get('birth_weight')
+        if birth_weight is not None and (not isinstance(birth_weight, (int, float)) or birth_weight < 0 or birth_weight > 200):
+            errors.append("Birth weight must be between 0 and 200 g")
+
+        transfer_weight = data.get('transfer_weight')
+        if transfer_weight is not None and (not isinstance(transfer_weight, (int, float)) or transfer_weight < 0 or transfer_weight > 200):
+            errors.append("Transfer weight must be between 0 and 200 g")
+
+        # Validate jaw fault
+        jaw_fault = data.get('jaw_fault')
+        if jaw_fault and jaw_fault not in ['', 'None', 'Overbite', 'Underbite', 'Crossbite']:
+            errors.append("Invalid jaw fault")
+
+        # Validate hernia
+        hernia = data.get('hernia')
+        if hernia and hernia not in ['', 'None', 'Umbilical', 'Inguinal', 'Diaphragmatic']:
+            errors.append("Invalid hernia type")
+
+        # Validate testicles
+        testicles = data.get('testicles')
+        if testicles and testicles not in ['', 'Normal', 'Cryptorchid', 'Monorchid']:
+            errors.append("Invalid testicles condition")
+
+        # Validate status
+        status = data.get('status')
+        if status and status not in ['', 'Alive', 'Deceased', 'Missing', 'Transferred']:
+            errors.append("Invalid status")
+
+        # Validate dates
+        breeding_lock_date = data.get('breeding_lock_date')
+        if breeding_lock_date and isinstance(breeding_lock_date, (date, datetime)):
+            if breeding_lock_date > date.today():
+                errors.append("Breeding lock date cannot be in the future")
+
+        death_date = data.get('death_date')
+        if death_date and isinstance(death_date, (date, datetime)):
+            if death_date > date.today():
+                errors.append("Death date cannot be in the future")
 
         dam_id = data.get('dam_id')
         sire_id = data.get('sire_id')

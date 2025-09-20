@@ -5,6 +5,7 @@ Dependency Inversion: Uses service layer for business logic.
 """
 
 import os
+from datetime import datetime
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.cat_service import CatService
@@ -94,44 +95,78 @@ class EditCatPage:
         with ui.card().classes('w-full max-w-4xl mx-auto'):
             ui.label('✏️ Edit Cat Information').classes('text-h4 text-center mb-6')
 
-            with ui.grid(columns=2).classes('gap-4'):
-                with ui.card().classes('p-4'):
-                    ui.label('🐱 Basic Information').classes('text-h6 mb-4')
-
+            # Basic Information Section
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('🐱 Basic Information').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
                     self.firstname_input = ui.input(
-                        label='First Name',
+                        label='Name *',
                         value=cat.cat_firstname
                     ).classes('w-full')
 
                     self.surname_input = ui.input(
                         label='Surname',
-                        value=cat.cat_surname
+                        value=cat.cat_surname or ''
+                    ).classes('w-full')
+
+                    self.callname_input = ui.input(
+                        label='Callname',
+                        value=cat.cat_callname or ''
                     ).classes('w-full')
 
                     self.gender_select = ui.select(
                         options=['Male', 'Female'],
                         value=cat.cat_gender,
-                        label='Gender'
+                        label='Gender *'
                     ).classes('w-full')
 
                     self.birthday_input = ui.input(
-                        label='Birthday (YYYY-MM-DD)',
+                        label='Birthday *',
                         value=cat.cat_birthday.strftime('%Y-%m-%d') if cat.cat_birthday else ''
-                    ).classes('w-full')
-
-                with ui.card().classes('p-4'):
-                    ui.label('📋 Additional Information').classes('text-h6 mb-4')
+                    ).props('type=date outlined dense').classes('w-full')
 
                     self.microchip_input = ui.input(
-                        label='Microchip Number',
+                        label='Chip Number',
                         value=cat.cat_microchip_number or ''
                     ).classes('w-full')
 
                     self.original_microchip = cat.cat_microchip_number
 
+                    self.title_select = ui.select(
+                        options=['', 'Champion', 'Grand Champion', 'Supreme Grand Champion'],
+                        value=cat.cat_title[0] if cat.cat_title else '',
+                        label='Title'
+                    ).classes('w-full')
+
+                    self.haritage_input = ui.input(
+                        label='Studbook Number 1',
+                        value=cat.cat_haritage_number or ''
+                    ).classes('w-full')
+
+                    self.haritage_2_input = ui.input(
+                        label='Studbook Number 2',
+                        value=cat.cat_haritage_number_2 or ''
+                    ).classes('w-full')
+
+            # Breed and Color Information
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('🎨 Breed & Color Information').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
                     self.colour_input = ui.input(
                         label='Color',
                         value=cat.cat_EMS_colour or ''
+                    ).classes('w-full')
+
+                    self.eye_colour_select = ui.select(
+                        options=['', 'Blue', 'Green', 'Yellow', 'Orange', 'Heterochromatic'],
+                        value=cat.cat_eye_colour or '',
+                        label='Eye Color'
+                    ).classes('w-full')
+
+                    self.hair_type_select = ui.select(
+                        options=['', 'Short Hair', 'Long Hair', 'Semi-Long Hair'],
+                        value=cat.cat_hair_type or '',
+                        label='Hair Type'
                     ).classes('w-full')
 
                     self.litter_input = ui.input(
@@ -139,10 +174,163 @@ class EditCatPage:
                         value=cat.cat_litter or ''
                     ).classes('w-full')
 
-                    self.haritage_input = ui.input(
-                        label='Heritage Number',
-                        value=cat.cat_haritage_number or ''
+                    self.litter_size_male_input = ui.number(
+                        label='Litter Size (Male)',
+                        value=cat.cat_litter_size_male or 0,
+                        min=0, max=20
+                    ).props('outlined dense').classes('w-full')
+
+                    self.litter_size_female_input = ui.number(
+                        label='Litter Size (Female)',
+                        value=cat.cat_litter_size_female or 0,
+                        min=0, max=20
+                    ).props('outlined dense').classes('w-full')
+
+            # Health and Medical Information
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('🏥 Health & Medical Information').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
+                    self.tests_input = ui.input(
+                        label='Tests',
+                        value=cat.cat_tests or ''
                     ).classes('w-full')
+
+                    self.blood_group_input = ui.input(
+                        label='Blood Group',
+                        value=cat.cat_blood_group or ''
+                    ).classes('w-full')
+
+                    self.gencode_input = ui.input(
+                        label='Gencode',
+                        value=cat.cat_gencode or ''
+                    ).classes('w-full')
+
+                    self.weight_input = ui.number(
+                        label='Weight (kg)',
+                        value=cat.cat_weight or 0.0,
+                        min=0.0, max=50.0, step=0.1
+                    ).props('outlined dense').classes('w-full')
+
+                    self.birth_weight_input = ui.number(
+                        label='Birth Weight (g)',
+                        value=cat.cat_birth_weight or 0.0,
+                        min=0.0, max=200.0, step=0.1
+                    ).props('outlined dense').classes('w-full')
+
+                    self.transfer_weight_input = ui.number(
+                        label='Transfer Weight (g)',
+                        value=cat.cat_transfer_weight or 0.0,
+                        min=0.0, max=200.0, step=0.1
+                    ).props('outlined dense').classes('w-full')
+
+            # Breeding Information
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('🐾 Breeding Information').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
+                    self.breeding_lock_checkbox = ui.checkbox(
+                        'Breeding Lock',
+                        value=cat.cat_breeding_lock or False
+                    )
+
+                    self.breeding_lock_date_input = ui.input(
+                        label='Breeding Lock Date',
+                        value=cat.cat_breeding_lock_date.strftime('%Y-%m-%d') if cat.cat_breeding_lock_date else ''
+                    ).props('type=date outlined dense').classes('w-full')
+
+                    self.breeding_animal_checkbox = ui.checkbox(
+                        'Breeding Animal',
+                        value=cat.cat_breeding_animal or False
+                    )
+
+                    self.kitten_transfer_checkbox = ui.checkbox(
+                        'Kitten Transfer',
+                        value=cat.cat_kitten_transfer or False
+                    )
+
+            # Location and Association
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('📍 Location & Association').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
+                    self.birth_country_input = ui.input(
+                        label='Birth Country',
+                        value=cat.cat_birth_country or ''
+                    ).classes('w-full')
+
+                    self.location_input = ui.input(
+                        label='Location',
+                        value=cat.cat_location or ''
+                    ).classes('w-full')
+
+                    self.association_input = ui.input(
+                        label='Association',
+                        value=cat.cat_association or ''
+                    ).classes('w-full')
+
+            # Health Issues
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('⚠️ Health Issues').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
+                    self.faults_deviations_input = ui.input(
+                        label='Faults / Deviations',
+                        value=cat.cat_faults_deviations or ''
+                    ).classes('w-full')
+
+                    self.jaw_fault_select = ui.select(
+                        options=['', 'None', 'Overbite', 'Underbite', 'Crossbite'],
+                        value=cat.cat_jaw_fault or '',
+                        label='Jaw Fault'
+                    ).classes('w-full')
+
+                    self.hernia_select = ui.select(
+                        options=['', 'None', 'Umbilical', 'Inguinal', 'Diaphragmatic'],
+                        value=cat.cat_hernia or '',
+                        label='Hernia'
+                    ).classes('w-full')
+
+                    self.testicles_select = ui.select(
+                        options=['', 'Normal', 'Cryptorchid', 'Monorchid'],
+                        value=cat.cat_testicles or '',
+                        label='Testicles'
+                    ).classes('w-full')
+
+            # Death Information
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('💀 Death Information').classes('text-h6 mb-4')
+                with ui.grid(columns=2).classes('gap-4'):
+                    self.death_date_input = ui.input(
+                        label='Death Date',
+                        value=cat.cat_death_date.strftime('%Y-%m-%d') if cat.cat_death_date else ''
+                    ).props('type=date outlined dense').classes('w-full')
+
+                    self.death_cause_input = ui.input(
+                        label='Death Cause',
+                        value=cat.cat_death_cause or ''
+                    ).classes('w-full')
+
+                    self.status_select = ui.select(
+                        options=['', 'Alive', 'Deceased', 'Missing', 'Transferred'],
+                        value=cat.cat_status or '',
+                        label='Status'
+                    ).classes('w-full')
+
+            # Additional Information
+            with ui.card().classes('p-4 mb-4'):
+                ui.label('📝 Additional Information').classes('text-h6 mb-4')
+                with ui.grid(columns=1).classes('gap-4'):
+                    self.features_textarea = ui.textarea(
+                        label='Features',
+                        value=cat.cat_features or ''
+                    ).props('outlined dense').classes('w-full')
+
+                    self.notes_textarea = ui.textarea(
+                        label='Notes',
+                        value=cat.cat_notes or ''
+                    ).props('outlined dense').classes('w-full')
+
+                    self.show_results_textarea = ui.textarea(
+                        label='Show Results',
+                        value=cat.cat_show_results or ''
+                    ).props('outlined dense').classes('w-full')
 
             with ui.grid(columns=2).classes('gap-4 mt-4'):
                 with ui.card().classes('p-4'):
@@ -363,21 +551,82 @@ class EditCatPage:
                 except (ValueError, TypeError):
                     return None
 
+            # Convert date strings to date objects
+            birthday_date = None
+            if self.birthday_input.value:
+                birthday_date = datetime.strptime(self.birthday_input.value, '%Y-%m-%d').date()
+            
+            breeding_lock_date_obj = None
+            if self.breeding_lock_date_input.value:
+                breeding_lock_date_obj = datetime.strptime(
+                    self.breeding_lock_date_input.value, '%Y-%m-%d').date()
+            
+            death_date_obj = None
+            if self.death_date_input.value:
+                death_date_obj = datetime.strptime(self.death_date_input.value, '%Y-%m-%d').date()
+
             data = {
                 'firstname': self.firstname_input.value,
                 'surname': self.surname_input.value,
+                'callname': self.callname_input.value.strip() if self.callname_input.value else None,
                 'gender': self.gender_select.value,
-                'birthday': self.birthday_input.value,
+                'birthday': birthday_date,
                 'microchip': self.microchip_input.value.strip() if self.microchip_input.value else None,
                 'colour': self.colour_input.value.strip() if self.colour_input.value else None,
                 'litter': self.litter_input.value.strip() if self.litter_input.value else None,
                 'haritage_number': self.haritage_input.value.strip() if self.haritage_input.value else None,
-                'owner_id': safe_int(self.owner_select.value) if self.owner_select else None,
-                'breed_id': safe_int(self.breeder_select.value) if self.breeder_select else None,
-                'dam_id': safe_int(self.dam_select.value) if self.dam_select else None,
-                'sire_id': safe_int(self.sire_select.value) if self.sire_select else None,
-                'cat_photos': [photo for photo in self.uploaded_photos if photo and os.path.exists(photo)],
-                'cat_files': [file for file in self.uploaded_files if file and os.path.exists(file)]
+                'haritage_number_2': self.haritage_2_input.value.strip() if self.haritage_2_input.value else None,
+                'eye_colour': self.eye_colour_select.value if self.eye_colour_select.value else None,
+                'hair_type': self.hair_type_select.value if self.hair_type_select.value else None,
+                'tests': self.tests_input.value.strip() if self.tests_input.value else None,
+                'litter_size_male': (int(self.litter_size_male_input.value) 
+                                    if self.litter_size_male_input.value else None),
+                'litter_size_female': (int(self.litter_size_female_input.value) 
+                                     if self.litter_size_female_input.value else None),
+                'blood_group': self.blood_group_input.value.strip() if self.blood_group_input.value else None,
+                'gencode': self.gencode_input.value.strip() if self.gencode_input.value else None,
+                'features': self.features_textarea.value.strip() if self.features_textarea.value else None,
+                'notes': self.notes_textarea.value.strip() if self.notes_textarea.value else None,
+                'show_results': self.show_results_textarea.value.strip() if self.show_results_textarea.value else None,
+                'breeding_lock': self.breeding_lock_checkbox.value,
+                'breeding_lock_date': breeding_lock_date_obj,
+                'breeding_animal': self.breeding_animal_checkbox.value,
+                'birth_country': self.birth_country_input.value.strip() if self.birth_country_input.value else None,
+                'location': self.location_input.value.strip() if self.location_input.value else None,
+                'weight': (float(self.weight_input.value) 
+                          if self.weight_input.value else None),
+                'birth_weight': (float(self.birth_weight_input.value) 
+                               if self.birth_weight_input.value else None),
+                'transfer_weight': (float(self.transfer_weight_input.value) 
+                                  if self.transfer_weight_input.value else None),
+                'faults_deviations': (self.faults_deviations_input.value.strip() 
+                                     if self.faults_deviations_input.value else None),
+                'association': (self.association_input.value.strip() 
+                               if self.association_input.value else None),
+                'jaw_fault': (self.jaw_fault_select.value 
+                             if self.jaw_fault_select.value else None),
+                'hernia': (self.hernia_select.value 
+                          if self.hernia_select.value else None),
+                'testicles': (self.testicles_select.value 
+                             if self.testicles_select.value else None),
+                'death_date': death_date_obj,
+                'death_cause': (self.death_cause_input.value.strip() 
+                               if self.death_cause_input.value else None),
+                'status': (self.status_select.value 
+                          if self.status_select.value else None),
+                'kitten_transfer': self.kitten_transfer_checkbox.value,
+                'owner_id': (safe_int(self.owner_select.value) 
+                            if self.owner_select else None),
+                'breed_id': (safe_int(self.breeder_select.value) 
+                           if self.breeder_select else None),
+                'dam_id': (safe_int(self.dam_select.value) 
+                          if self.dam_select else None),
+                'sire_id': (safe_int(self.sire_select.value) 
+                           if self.sire_select else None),
+                'cat_photos': [photo for photo in self.uploaded_photos 
+                              if photo and os.path.exists(photo)],
+                'cat_files': [file for file in self.uploaded_files 
+                             if file and os.path.exists(file)]
             }
             old_microchip = self.original_microchip
             new_microchip = data['microchip']
