@@ -39,6 +39,7 @@ from app.niceGUI_folder.edit_breed_page import edit_breed_page_render
 from app.niceGUI_folder.history_page import history_page_render
 from app.niceGUI_folder.login_page import login_page_render
 from app.niceGUI_folder.auth_check_page import auth_check_page_render
+from app.niceGUI_folder.studbook_page import studbook_page_render
 
 
 
@@ -116,6 +117,10 @@ async def edit_breed_page(breed_id: int):
 @ui.page('/history')
 async def history_page():
     await history_page_render()
+
+@ui.page('/studbook')
+async def studbook_page():
+    await studbook_page_render()
 
 
 # Static file serving for photos and files

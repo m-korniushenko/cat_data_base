@@ -7,3 +7,13 @@ __pycache__/
 .idea/
 *.py[cod]
 requirements.txt
+*.pdf
+*.xlsx
+*.xls
+*.csv
+*.json
+*.yaml
+*.yml
+*.txt
+*.log
+*.log.*
