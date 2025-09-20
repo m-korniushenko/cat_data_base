@@ -205,13 +205,15 @@ async def cats_page_render(current_user=None, session_id=None):
         if search_term:
             filtered_cats = [
                 cat for cat in filtered_cats
-                if (search_term in (cat.get('firstname', '').lower() or '') or
-                    search_term in (cat.get('surname', '').lower() or '') or
-                    search_term in (cat.get('microchip', '').lower() or '') or
-                    search_term in (cat.get('callname', '').lower() or '') or
-                    search_term in (cat.get('haritage_number', '').lower() or '') or
-                    search_term in (cat.get('owner_firstname', '').lower() or '') or
-                    search_term in (cat.get('owner_surname', '').lower() or ''))
+                if (search_term in str(cat.get('firstname', '') or '').lower() or
+                    search_term in str(cat.get('surname', '') or '').lower() or
+                    search_term in str(cat.get('microchip', '') or '').lower() or
+                    search_term in str(cat.get('callname', '') or '').lower() or
+                    search_term in str(cat.get('haritage_number', '') or '').lower() or
+                    search_term in str(cat.get('owner_firstname', '') or '').lower() or
+                    search_term in str(cat.get('owner_surname', '') or '').lower() or
+                    search_term in str(cat.get('breed_firstname', '') or '').lower() or
+                    search_term in str(cat.get('breed_surname', '') or '').lower())
             ]
         
         # Gender filter
@@ -230,7 +232,7 @@ async def cats_page_render(current_user=None, session_id=None):
             selected_breeder_name = breeder_filter.value
             selected_breeder_id = next((k for k, v in breed_options.items() if v == selected_breeder_name), None)
             if selected_breeder_id:
-                filtered_cats = [cat for cat in filtered_cats if cat.get('breed_id') == selected_breeder_id]
+                filtered_cats = [cat for cat in filtered_cats if cat.get('breed') == selected_breeder_id]
         
         # Eye color filter
         if eye_color_filter.value:
@@ -294,7 +296,7 @@ async def cats_page_render(current_user=None, session_id=None):
         display_rows = []
         for cat in filtered_cats:
             # Format title
-            title_display = cat.get('title')[0] if cat.get('title') else ''
+            title_display = cat.get('title')[0] if cat.get('title') and len(cat.get('title')) > 0 else ''
             
             # Format owner name
             owner_name = f"{cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}".strip()
