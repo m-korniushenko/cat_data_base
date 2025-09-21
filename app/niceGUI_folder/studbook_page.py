@@ -1,4 +1,8 @@
 from datetime import datetime
+import tempfile
+import os
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
@@ -296,6 +300,87 @@ async def studbook_page_render(current_user=None, session_id=None):
                         # Set up table row click handler
                         table.on('rowClick', lambda e: show_cat_details(e.args[1]))
 
+    async def export_to_xlsx():
+        """Export filtered studbook data to XLSX file"""
+        try:
+            ui.notify('Export started...', type='info', position='top')
+            
+            # Get current filtered data
+            filtered_cats = apply_filters()
+            
+            if not filtered_cats:
+                ui.notify('No data to export', type='warning', position='top')
+                return
+            
+            # Create workbook and worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Studbook Export"
+            
+            # Define headers based on studbook_table_columns
+            headers = [col['label'] for col in studbook_table_columns]
+            
+            # Style for headers
+            header_font = Font(bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            header_alignment = Alignment(horizontal="center", vertical="center")
+            
+            # Write headers
+            for col_idx, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_idx, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+            
+            # Write data rows
+            for row_idx, cat in enumerate(filtered_cats, 2):
+                # Create studbook row data
+                studbook_row = create_studbook_row(cat, row_idx - 1)
+                
+                # Write each column value
+                for col_idx, col_def in enumerate(studbook_table_columns, 1):
+                    field_name = col_def['field']
+                    value = studbook_row.get(field_name, '')
+                    ws.cell(row=row_idx, column=col_idx, value=value)
+            
+            # Auto-adjust column widths
+            for column in ws.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except Exception:
+                        pass
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f'studbook_export_{timestamp}.xlsx'
+            
+            # Save to temporary file and read content
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                wb.save(tmp_file.name)
+                temp_path = tmp_file.name
+            
+            # Read file content
+            with open(temp_path, 'rb') as f:
+                file_content = f.read()
+            
+            # Clean up temporary file
+            os.unlink(temp_path)
+            
+            # Download the file using ui.download with content
+            ui.download(file_content, filename)
+            
+            ui.notify('XLSX file ready for download', type='positive', position='top')
+            
+        except Exception as e:
+            print(f"Export error: {e}")
+            ui.notify(f'Export failed: {str(e)}', type='negative', position='top')
+
     async def clear_all_filters():
         """Clear all filter inputs"""
         for key, input_widget in filter_inputs.items():
@@ -351,6 +436,9 @@ async def studbook_page_render(current_user=None, session_id=None):
 
                 # Clear filters button
                 clear_filters_btn = ui.button('Clear All', icon='clear').props('color=secondary outline')
+                
+                # Export XLSX button
+                export_xlsx_btn = ui.button('Export XLSX', icon='download').props('color=primary')
 
         # Set up event handlers for the newly created filters
         filter_inputs['search_input'].on_value_change(lambda: update_studbook_display())
@@ -361,6 +449,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         filter_inputs['birthday_from'].on_value_change(lambda: update_studbook_display())
         filter_inputs['birthday_to'].on_value_change(lambda: update_studbook_display())
         clear_filters_btn.on_click(clear_all_filters)
+        export_xlsx_btn.on_click(export_to_xlsx)
 
         # Results counter
         nonlocal results_label

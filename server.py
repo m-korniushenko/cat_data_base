@@ -138,6 +138,20 @@ async def serve_static_files(file_path: str):
         raise HTTPException(status_code=404, detail="File not found")
 
 
+@app.get('/exports/{filename}')
+async def serve_exports(filename: str):
+    """Serve exported files from exports directory"""
+    exports_dir = os.path.join(os.getcwd(), 'exports')
+    file_path = os.path.join(exports_dir, filename)
+    
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(file_path, filename=filename)
+    else:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Export file not found")
+
+
 def start_db():
     log_info("Initializing database...")
     
@@ -147,7 +161,7 @@ def start_db():
     
     log_info("Creating database...")
     try:
-        drop_database_if_exists()
+        # drop_database_if_exists()
         postgres_check_and_create_database(Base)
     except Exception as e:
         log_warning(f"Database already exists or creation error: {e}")
@@ -172,7 +186,7 @@ def start_db():
     
     log_success("Database ready")
     log_info("Loading test data...")
-    start_add_workflow()
+    # start_add_workflow()
     log_success("Test data loaded")
 
 
