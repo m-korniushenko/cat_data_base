@@ -161,7 +161,7 @@ def start_db():
     
     log_info("Creating database...")
     try:
-        drop_database_if_exists()
+        # drop_database_if_exists()
         postgres_check_and_create_database(Base)
     except Exception as e:
         log_warning(f"Database already exists or creation error: {e}")
@@ -186,7 +186,7 @@ def start_db():
     
     log_success("Database ready")
     log_info("Loading test data...")
-    start_add_workflow()
+    # start_add_workflow()
     log_success("Test data loaded")
 
 
