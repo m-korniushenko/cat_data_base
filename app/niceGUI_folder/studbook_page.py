@@ -107,16 +107,18 @@ async def studbook_page_render(current_user=None, session_id=None):
                 from_date = datetime.strptime(filter_inputs['birthday_from'].value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
                                  if cat.get('birthday') and cat.get('birthday') >= from_date]
-            except ValueError:
-                pass
+                print(f"DEBUG: Filtered by birthday_from: {from_date}, found {len(filtered_cats)} cats")
+            except ValueError as e:
+                print(f"DEBUG: Error parsing birthday_from: {e}")
 
         if filter_inputs.get('birthday_to') and filter_inputs['birthday_to'].value:
             try:
                 to_date = datetime.strptime(filter_inputs['birthday_to'].value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
                                  if cat.get('birthday') and cat.get('birthday') <= to_date]
-            except ValueError:
-                pass
+                print(f"DEBUG: Filtered by birthday_to: {to_date}, found {len(filtered_cats)} cats")
+            except ValueError as e:
+                print(f"DEBUG: Error parsing birthday_to: {e}")
 
         return filtered_cats
 
@@ -347,8 +349,8 @@ async def studbook_page_render(current_user=None, session_id=None):
                 ).props('outlined dense')
 
                 # Birthday filters
-                filter_inputs['birthday_from'] = ui.input(label='Дата рождения от').props('outlined dense')
-                filter_inputs['birthday_to'] = ui.input(label='Дата рождения до').props('outlined dense')
+                filter_inputs['birthday_from'] = ui.input(label='Дата рождения от').props('type=date outlined dense')
+                filter_inputs['birthday_to'] = ui.input(label='Дата рождения до').props('type=date outlined dense')
 
                 # Clear filters button
                 clear_filters_btn = ui.button('Очистить все', icon='clear').props('color=secondary outline')
