@@ -152,8 +152,15 @@ def start_db():
         sys.exit()
     
     log_info("Создание базы данных...")
-    drop_database_if_exists()
-    postgres_check_and_create_database(Base)
+    try:
+        drop_database_if_exists()
+        postgres_check_and_create_database(Base)
+    except Exception as e:
+        log_warning(f"База данных уже существует или ошибка при создании: {e}")
+        # Попробуем просто проверить подключение к существующей базе
+        if not check_db_connection():
+            log_error("Не удается подключиться к базе данных")
+            sys.exit()
     
     if not check_db_connection():
         log_error("Ошибка подключения к базе данных")

@@ -100,6 +100,27 @@ async def add_breeds():
             breed_phone="+0987654321",
             breed_description="Royal bloodline breeding"
         )
+        await AsyncOrm.add_breed(
+            breed_firstname="Golden",
+            breed_surname="Paws",
+            breed_email="golden@paws.com", 
+            breed_phone="+1122334455",
+            breed_description="Golden standard breeding"
+        )
+        await AsyncOrm.add_breed(
+            breed_firstname="Silver",
+            breed_surname="Whiskers",
+            breed_email="silver@whiskers.com", 
+            breed_phone="+5566778899",
+            breed_description="Silver premium breeding"
+        )
+        await AsyncOrm.add_breed(
+            breed_firstname="Diamond",
+            breed_surname="Cats",
+            breed_email="diamond@cats.com", 
+            breed_phone="+9988776655",
+            breed_description="Diamond quality breeding"
+        )
         print("✅ Breeders added successfully!")
     except Exception as e:
         print(f"❌ Error adding breeders: {e}")
@@ -206,8 +227,7 @@ async def add_family_tree_test_data():
         for i in range(5):
             await add_owner()
         
-        # Add breeders
-        await add_breeds()
+        # Add breeders (moved to main init)
         
         # Generation 1: Ancient ancestors (1990) - 4 cats with diverse data
         await add_cat_with_random_data(1, 1, "Female", "Ancient", "Moonlight", 1990, "G10M001", "white", "A", breed_id=1)
@@ -399,12 +419,14 @@ async def add_test_owners():
 async def add_diverse_test_cats():
     """Add diverse test cats with different owners for filter testing"""
     try:
-        # Add cats with different owners (IDs 2-6)
+        # Add cats with different owners (IDs 2-6) and breeders (IDs 1-5)
         owners = [2, 3, 4, 5, 6]
+        breeders = [1, 2, 3, 4, 5]  # Now we have 5 breeders
         
         # Add 50 diverse cats
         for i in range(50):
             owner_id = owners[i % len(owners)]
+            breed_id = breeders[i % len(breeders)]  # Use different breeders
             data = get_random_cat_data(300 + i)
             
             # Vary birth years
@@ -420,7 +442,7 @@ async def add_diverse_test_cats():
                 microchip=f"TEST{i+1:03d}",
                 colour=data.get("colour", "black"),
                 litter=f"L{i+1}",
-                breed_id=1 if i % 2 == 0 else 2,
+                breed_id=breed_id,
                 **data
             )
         
@@ -441,7 +463,7 @@ async def main_add_workflow():
         print("✅ Database initialization completed successfully!")
         print("📊 Test data summary:")
         print("  - 6 Owners (1 admin, 5 regular users)")
-        print("  - 2 Breeders")
+        print("  - 5 Breeders (Elite Cattery, Royal Breeders, Golden Paws, Silver Whiskers, Diamond Cats)")
         print("  - 200 Family tree cats")
         print("  - 50 Diverse test cats")
         print("  - Total: 250 cats with extensive filter data!")
