@@ -216,7 +216,9 @@ class CatService:
                 death_date=data.get('death_date'),
                 death_cause=data.get('death_cause'),
                 status=data.get('status'),
-                kitten_transfer=data.get('kitten_transfer')
+                kitten_transfer=data.get('kitten_transfer'),
+                wcf_sticker=data.get('wcf_sticker'),
+                description=data.get('description')
             )
             print(f"Update result: {success}")
             

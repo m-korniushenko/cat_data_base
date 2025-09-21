@@ -77,7 +77,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
             ui.separator().classes('q-my-md')
             ui.label('🎨 Breed & Color Information').classes('text-h6 q-mb-md')
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
-                breed = ui.select(dict(breed_map), label='Breed *').props('outlined dense').classes('w-full')
+                breed = ui.select(dict(breed_map), label='Breed *').props('outlined dense use-input').classes('w-full')
                 add_breed_btn = ui.button('Add New Breed', on_click=lambda: ui.navigate.to('/add_breed'))
                 add_breed_btn.props('flat size=sm').classes('q-mt-xs')
                 
@@ -92,9 +92,9 @@ async def add_cat_page_render(current_user=None, session_id=None):
             ui.label('👨‍👩‍👧‍👦 Family Information').classes('text-h6 q-mb-md')
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
                 dam = ui.select(dict(dam_map), label='Dam (Mother)') \
-                    .props('outlined dense clearable').classes('w-full')
+                    .props('outlined dense clearable use-input').classes('w-full')
                 sire = ui.select(dict(sire_map), label='Sire (Father)') \
-                    .props('outlined dense clearable').classes('w-full')
+                    .props('outlined dense clearable use-input').classes('w-full')
                 
                 litter = ui.input(label='Litter').props('outlined dense').classes('w-full')
                 litter_size_male = ui.number(label='Litter Size (Male)', value=0, min=0, max=20) \
@@ -106,7 +106,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
             ui.separator().classes('q-my-md')
             ui.label('👤 Owner & Breeder Information').classes('text-h6 q-mb-md')
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
-                owner = ui.select(dict(owner_map), label='Owner *').props('outlined dense').classes('w-full')
+                owner = ui.select(dict(owner_map), label='Owner *').props('outlined dense use-input').classes('w-full')
                 add_owner_btn = ui.button('Add New Owner', on_click=lambda: ui.navigate.to('/add_owner'))
                 add_owner_btn.props('flat size=sm').classes('q-mt-xs')
 
@@ -135,6 +135,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
                     .classes('w-full')
                 breeding_animal = ui.checkbox('Breeding Animal')
                 kitten_transfer = ui.checkbox('Kitten Transfer')
+                wcf_sticker = ui.input(label='WCF Sticker').props('outlined dense').classes('w-full')
 
             # Location and Association
             ui.separator().classes('q-my-md')
@@ -174,6 +175,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
                 features = ui.textarea(label='Features').props('outlined dense').classes('w-full')
                 notes = ui.textarea(label='Notes').props('outlined dense').classes('w-full')
                 show_results = ui.textarea(label='Show Results').props('outlined dense').classes('w-full')
+                description = ui.textarea(label='Description').props('outlined dense').classes('w-full')
 
             # Photos section
             ui.separator().classes('q-my-md')
@@ -345,6 +347,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
                         cat_features=features.value,
                         cat_notes=notes.value,
                         cat_show_results=show_results.value,
+                        cat_description=description.value,
                         cat_breeding_lock=breeding_lock.value,
                         cat_breeding_lock_date=breeding_lock_date_obj,
                         cat_breeding_animal=breeding_animal.value,
@@ -362,6 +365,7 @@ async def add_cat_page_render(current_user=None, session_id=None):
                         cat_death_cause=death_cause.value,
                         cat_status=status.value,
                         cat_kitten_transfer=kitten_transfer.value,
+                        wcf_sticker=wcf_sticker.value,
                         owner_id=owner.value,
                         cat_dam_id=dam.value,
                         cat_sire_id=sire.value,

@@ -89,7 +89,7 @@ class AsyncOrm:
                       cat_jaw_fault: str = None, cat_hernia: str = None,
                       cat_testicles: str = None, cat_death_date: date = None,
                       cat_death_cause: str = None, cat_status: str = None,
-                      cat_kitten_transfer: bool = False):
+                      cat_kitten_transfer: bool = False, wcf_sticker: str = None, cat_description: str = None):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         cat_dam_id = int(cat_dam_id) if cat_dam_id else None
         cat_sire_id = int(cat_sire_id) if cat_sire_id else None
@@ -134,11 +134,13 @@ class AsyncOrm:
                 cat_death_cause=cat_death_cause,
                 cat_status=cat_status,
                 cat_kitten_transfer=cat_kitten_transfer,
+                wcf_sticker=wcf_sticker,
                 cat_dam_id=cat_dam_id,
                 cat_sire_id=cat_sire_id,
                 cat_photos=cat_photos or [],
                 cat_files=cat_files or [],
-                cat_title=cat_title
+                cat_title=cat_title,
+                cat_description=cat_description
             )
             session.add(new_cat)
             await session.commit()
@@ -164,7 +166,7 @@ class AsyncOrm:
                          jaw_fault: str = None, hernia: str = None,
                          testicles: str = None, death_date: date = None,
                          death_cause: str = None, status: str = None,
-                         kitten_transfer: bool = None) -> bool:
+                         kitten_transfer: bool = None, wcf_sticker: str = None, description: str = None) -> bool:
         """Update cat information"""
         try:
             async with async_session() as session:
@@ -214,6 +216,8 @@ class AsyncOrm:
                 cat.cat_status = status
                 if kitten_transfer is not None:
                     cat.cat_kitten_transfer = kitten_transfer
+                cat.wcf_sticker = wcf_sticker
+                cat.cat_description = description
                 cat.owner_id = owner_id
                 cat.cat_breed_id = breed_id
                 cat.cat_dam_id = dam_id
@@ -744,6 +748,8 @@ class AsyncOrm:
                     'death_cause': c.cat_death_cause,
                     'status': c.cat_status,
                     'kitten_transfer': c.cat_kitten_transfer,
+                    'wcf_sticker': c.wcf_sticker,
+                    'description': c.cat_description,
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
@@ -864,6 +870,8 @@ class AsyncOrm:
                     'death_cause': c.cat_death_cause,
                     'status': c.cat_status,
                     'kitten_transfer': c.cat_kitten_transfer,
+                    'wcf_sticker': c.wcf_sticker,
+                    'description': c.cat_description,
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,

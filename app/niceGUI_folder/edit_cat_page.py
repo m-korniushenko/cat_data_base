@@ -247,6 +247,11 @@ class EditCatPage:
                         value=cat.cat_kitten_transfer or False
                     )
 
+                    self.wcf_sticker_input = ui.input(
+                        label='WCF Sticker',
+                        value=cat.wcf_sticker or ''
+                    ).props('outlined dense').classes('w-full')
+
             # Location and Association
             with ui.card().classes('p-4 mb-4'):
                 ui.label('📍 Location & Association').classes('text-h6 mb-4')
@@ -327,10 +332,15 @@ class EditCatPage:
                         value=cat.cat_notes or ''
                     ).props('outlined dense').classes('w-full')
 
-                    self.show_results_textarea = ui.textarea(
-                        label='Show Results',
-                        value=cat.cat_show_results or ''
-                    ).props('outlined dense').classes('w-full')
+                self.show_results_textarea = ui.textarea(
+                    label='Show Results',
+                    value=cat.cat_show_results or ''
+                ).props('outlined dense').classes('w-full')
+
+                self.description_textarea = ui.textarea(
+                    label='Description',
+                    value=cat.cat_description or ''
+                ).props('outlined dense').classes('w-full')
 
             with ui.grid(columns=2).classes('gap-4 mt-4'):
                 with ui.card().classes('p-4'):
@@ -340,7 +350,7 @@ class EditCatPage:
                         self.owner_select = ui.select(
                             options=owner_dict,
                             label='Owner'
-                        ).classes('w-full').props('clearable')
+                        ).classes('w-full').props('clearable use-input')
                         if owner and owner.owner_id:
                             owner_id_str = str(owner.owner_id)
                             print(f"Setting owner value to: {owner_id_str}")
@@ -356,7 +366,7 @@ class EditCatPage:
                         self.breeder_select = ui.select(
                             options=breeder_dict,
                             label='Breeder'
-                        ).classes('w-full').props('clearable')
+                        ).classes('w-full').props('clearable use-input')
                         if breeder and breeder.breed_id:
                             breeder_id_str = str(breeder.breed_id)
                             print(f"Setting breeder value to: {breeder_id_str}")
@@ -374,7 +384,7 @@ class EditCatPage:
                         self.dam_select = ui.select(
                             options=dam_dict,
                             label='Mother (Dam)'
-                        ).classes('w-full').props('clearable')
+                        ).classes('w-full').props('clearable use-input')
                         if dam and dam.cat_id:
                             dam_id_str = str(dam.cat_id)
                             print(f"Setting dam value to: {dam_id_str}")
@@ -390,7 +400,7 @@ class EditCatPage:
                         self.sire_select = ui.select(
                             options=sire_dict,
                             label='Father (Sire)'
-                        ).classes('w-full').props('clearable')
+                        ).classes('w-full').props('clearable use-input')
                         if sire and sire.cat_id:
                             sire_id_str = str(sire.cat_id)
                             print(f"Setting sire value to: {sire_id_str}")
@@ -588,6 +598,7 @@ class EditCatPage:
                 'features': self.features_textarea.value.strip() if self.features_textarea.value else None,
                 'notes': self.notes_textarea.value.strip() if self.notes_textarea.value else None,
                 'show_results': self.show_results_textarea.value.strip() if self.show_results_textarea.value else None,
+                'description': self.description_textarea.value.strip() if self.description_textarea.value else None,
                 'breeding_lock': self.breeding_lock_checkbox.value,
                 'breeding_lock_date': breeding_lock_date_obj,
                 'breeding_animal': self.breeding_animal_checkbox.value,
@@ -615,6 +626,7 @@ class EditCatPage:
                 'status': (self.status_select.value 
                           if self.status_select.value else None),
                 'kitten_transfer': self.kitten_transfer_checkbox.value,
+                'wcf_sticker': self.wcf_sticker_input.value.strip() if self.wcf_sticker_input.value else None,
                 'owner_id': (safe_int(self.owner_select.value) 
                             if self.owner_select else None),
                 'breed_id': (safe_int(self.breeder_select.value) 
