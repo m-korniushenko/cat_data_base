@@ -116,7 +116,7 @@ class CatPDFGenerator:
             ['Birth Country:', cat_info['cat'].cat_birth_country or 'Not specified',
              'Location:', cat_info['cat'].cat_location or 'Not specified'],
             ['Association:', cat_info['cat'].cat_association or 'Not specified',
-             '', ''],
+             'WCF Sticker:', cat_info['cat'].wcf_sticker or 'Not specified'],
             
             ['💀 Death Information', '', '', ''],
             ['Death Date:', str(cat_info['cat'].cat_death_date) if cat_info['cat'].cat_death_date else 'Not specified',
@@ -215,6 +215,8 @@ class CatPDFGenerator:
             additional_info.append(['Notes:', cat_info['cat'].cat_notes])
         if cat_info['cat'].cat_show_results:
             additional_info.append(['Show Results:', cat_info['cat'].cat_show_results])
+        if cat_info['cat'].cat_description:
+            additional_info.append(['Description:', cat_info['cat'].cat_description])
         
         if additional_info:
             story.append(Paragraph("📝 Additional Information", self.styles['CustomHeading']))

@@ -254,6 +254,7 @@ async def cat_profile_page_render(cat_id: int, current_user=None, session_id=Non
                         ui.label(f'Kitten Transfer: {"Yes" if cat.cat_kitten_transfer else "No"}').classes('q-mb-xs')
                     
                     with ui.column():
+                        ui.label(f'WCF Sticker: {cat.wcf_sticker or "Not specified"}').classes('q-mb-xs')
                         ui.label(f'Birth Country: {cat.cat_birth_country or "Not specified"}').classes('q-mb-xs')
                         ui.label(f'Location: {cat.cat_location or "Not specified"}').classes('q-mb-xs')
                         ui.label(f'Association: {cat.cat_association or "Not specified"}').classes('q-mb-xs')
@@ -291,7 +292,7 @@ async def cat_profile_page_render(cat_id: int, current_user=None, session_id=Non
                     ui.label('Owner: Not specified').classes('q-mb-xs')
 
             # Additional Information
-            if cat.cat_features or cat.cat_notes or cat.cat_show_results:
+            if cat.cat_features or cat.cat_notes or cat.cat_show_results or cat.cat_description:
                 with ui.card().classes('w-full q-pa-md q-mb-md'):
                     ui.label('📝 Additional Information').classes('text-h6 q-mb-md')
                     if cat.cat_features:
@@ -303,6 +304,9 @@ async def cat_profile_page_render(cat_id: int, current_user=None, session_id=Non
                     if cat.cat_show_results:
                         ui.label('Show Results:').classes('text-subtitle2 q-mb-xs')
                         ui.label(cat.cat_show_results).classes('q-mb-md')
+                    if cat.cat_description:
+                        ui.label('Description:').classes('text-subtitle2 q-mb-xs')
+                        ui.label(cat.cat_description).classes('q-mb-md')
         
         # Photos section
         if cat.cat_photos and len(cat.cat_photos) > 0:
