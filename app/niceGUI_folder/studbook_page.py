@@ -3,6 +3,10 @@ import tempfile
 import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
@@ -381,6 +385,102 @@ async def studbook_page_render(current_user=None, session_id=None):
             print(f"Export error: {e}")
             ui.notify(f'Export failed: {str(e)}', type='negative', position='top')
 
+    async def export_to_pdf():
+        """Export filtered studbook data to PDF file"""
+        try:
+            ui.notify('PDF export started...', type='info', position='top')
+            
+            # Get current filtered data
+            filtered_cats = apply_filters()
+            
+            if not filtered_cats:
+                ui.notify('No data to export', type='warning', position='top')
+                return
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f'studbook_export_{timestamp}.pdf'
+            
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                temp_path = tmp_file.name
+            
+            # Create PDF document
+            doc = SimpleDocTemplate(temp_path, pagesize=landscape(A4))
+            story = []
+            
+            # Define styles
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=16,
+                spaceAfter=30,
+                alignment=1  # Center alignment
+            )
+            
+            # Add title
+            title = Paragraph("Studbook Export", title_style)
+            story.append(title)
+            story.append(Spacer(1, 12))
+            
+            # Prepare table data
+            headers = [col['label'] for col in studbook_table_columns]
+            table_data = [headers]
+            
+            # Add data rows
+            for cat in filtered_cats:
+                studbook_row = create_studbook_row(cat, len(table_data))
+                row_data = []
+                for col_def in studbook_table_columns:
+                    field_name = col_def['field']
+                    value = str(studbook_row.get(field_name, ''))
+                    # Truncate long text for PDF display
+                    if len(value) > 20:
+                        value = value[:17] + "..."
+                    row_data.append(value)
+                table_data.append(row_data)
+            
+            # Create table
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                # Header row styling
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                
+                # Data rows styling
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('FONTSIZE', (0, 1), (-1, -1), 7),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+            ]))
+            
+            story.append(table)
+            
+            # Build PDF
+            doc.build(story)
+            
+            # Read file content
+            with open(temp_path, 'rb') as f:
+                file_content = f.read()
+            
+            # Clean up temporary file
+            os.unlink(temp_path)
+            
+            # Download the file
+            ui.download(file_content, filename)
+            
+            ui.notify('PDF file ready for download', type='positive', position='top')
+            
+        except Exception as e:
+            print(f"PDF export error: {e}")
+            ui.notify(f'PDF export failed: {str(e)}', type='negative', position='top')
+
     async def clear_all_filters():
         """Clear all filter inputs"""
         for key, input_widget in filter_inputs.items():
@@ -437,8 +537,9 @@ async def studbook_page_render(current_user=None, session_id=None):
                 # Clear filters button
                 clear_filters_btn = ui.button('Clear All', icon='clear').props('color=secondary outline')
                 
-                # Export XLSX button
+                # Export buttons
                 export_xlsx_btn = ui.button('Export XLSX', icon='download').props('color=primary')
+                export_pdf_btn = ui.button('Export PDF', icon='picture_as_pdf').props('color=secondary')
 
         # Set up event handlers for the newly created filters
         filter_inputs['search_input'].on_value_change(lambda: update_studbook_display())
@@ -450,6 +551,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         filter_inputs['birthday_to'].on_value_change(lambda: update_studbook_display())
         clear_filters_btn.on_click(clear_all_filters)
         export_xlsx_btn.on_click(export_to_xlsx)
+        export_pdf_btn.on_click(export_to_pdf)
 
         # Results counter
         nonlocal results_label
