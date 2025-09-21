@@ -79,35 +79,110 @@ def owner_to_row(o):
 @ui.page('/owners')
 @require_auth(required_permission=1)
 async def owners_page_render(current_user=None, session_id=None):
-    len_owners, owners = await AsyncOrm.get_owner()
     get_header('👤 Owners')
+
+    # Pagination settings
+    PAGE_SIZE = 100
+    current_offset = 0
+    all_owners_data = []
+    loading_more = False
+    has_more_data = True
+
+    async def load_owners_data(offset=0, limit=PAGE_SIZE, reset=False):
+        """Load owners data with pagination"""
+        nonlocal all_owners_data, has_more_data, loading_more
+        
+        if loading_more:
+            return []
+            
+        loading_more = True
+        
+        try:
+            # Load data from database with pagination
+            _, new_owners = await AsyncOrm.get_owner(limit=limit, offset=offset)
+            
+            if reset:
+                all_owners_data = new_owners
+            else:
+                all_owners_data.extend(new_owners)
+            
+            # Check if there's more data
+            has_more_data = len(new_owners) == limit
+            
+            return new_owners
+        finally:
+            loading_more = False
+
+    async def update_table():
+        """Update the table with current data"""
+        # Convert data to rows
+        rows = [owner_to_row(o) for o in all_owners_data]
+        for row in rows:
+            row['actions'] = ''
+
+        # Update table
+        table_container.clear()
+        with table_container:
+            if rows:
+                table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
+                table.add_slot('body', get_edit_button_vue())
+                
+                # Add load more button if there's more data
+                if has_more_data:
+                    with ui.row().classes('q-pa-md justify-center'):
+                        load_more_btn = ui.button('Load More', icon='expand_more',
+                                                  on_click=load_more_data).props('color=primary outline')
+                        if loading_more:
+                            load_more_btn.props('loading')
+                elif len(rows) > 0:
+                    with ui.row().classes('q-pa-md justify-center'):
+                        ui.label('All records loaded').classes('text-grey-6')
+            else:
+                ui.label('No owners found').classes('text-center q-py-xl text-grey-6')
+
+    async def load_more_data():
+        """Load more data when button is clicked"""
+        nonlocal current_offset, loading_more
+        
+        if loading_more or not has_more_data:
+            return
+            
+        current_offset += PAGE_SIZE
+        new_owners = await load_owners_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
+        
+        if new_owners:
+            await update_table()
 
     with ui.row().classes('q-pa-md'):
         ui.button('Add Owner', on_click=lambda: ui.navigate.to('/add_owner')).classes('q-mr-sm')
         export_xlsx_btn = ui.button('Export XLSX', icon='download').props('color=primary').classes('q-mr-sm')
         export_pdf_btn = ui.button('Export PDF', icon='picture_as_pdf').props('color=secondary')
 
-    rows = [owner_to_row(o) for o in (owners if isinstance(owners, list) else [owners])]
-
-    for row in rows:
-        row['actions'] = ''
-
-    table = ui.table(columns=columns, rows=rows, row_key='id').classes('q-pa-md')
-    table.add_slot('body', get_edit_button_vue())
+    # Table container
+    table_container = ui.column()
     
     # Set up export event handlers
-    export_xlsx_btn.on_click(lambda: export_to_xlsx(rows))
-    export_pdf_btn.on_click(lambda: export_to_pdf(rows))
+    export_xlsx_btn.on_click(lambda: export_to_xlsx(all_owners_data))
+    export_pdf_btn.on_click(lambda: export_to_pdf(all_owners_data))
+
+    # Initial load
+    await load_owners_data(offset=0, limit=PAGE_SIZE, reset=True)
+    await update_table()
 
 
-def export_to_xlsx(rows):
+def export_to_xlsx(owners_data):
     """Export owners data to XLSX file"""
     try:
         ui.notify('Export started...', type='info', position='top')
         
-        if not rows:
+        if not owners_data:
             ui.notify('No data to export', type='warning', position='top')
             return
+        
+        # Convert data to rows
+        rows = [owner_to_row(o) for o in owners_data]
+        for row in rows:
+            row['actions'] = ''
         
         # Create workbook and worksheet
         wb = Workbook()
@@ -179,14 +254,19 @@ def export_to_xlsx(rows):
         ui.notify(f'Export failed: {str(e)}', type='negative', position='top')
 
 
-def export_to_pdf(rows):
+def export_to_pdf(owners_data):
     """Export owners data to PDF file"""
     try:
         ui.notify('PDF export started...', type='info', position='top')
         
-        if not rows:
+        if not owners_data:
             ui.notify('No data to export', type='warning', position='top')
             return
+        
+        # Convert data to rows
+        rows = [owner_to_row(o) for o in owners_data]
+        for row in rows:
+            row['actions'] = ''
         
         # Generate filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
