@@ -267,7 +267,7 @@ async def cats_page_render(current_user=None, session_id=None):
             try:
                 from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
-                                if cat.get('birthday') and cat.get('birthday') >= from_date]
+                                 if cat.get('birthday') and cat.get('birthday') >= from_date]
             except ValueError:
                 pass
         
@@ -275,18 +275,18 @@ async def cats_page_render(current_user=None, session_id=None):
             try:
                 to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
-                                if cat.get('birthday') and cat.get('birthday') <= to_date]
+                                 if cat.get('birthday') and cat.get('birthday') <= to_date]
             except ValueError:
                 pass
         
         # Weight range filter
         if weight_min.value is not None:
             filtered_cats = [cat for cat in filtered_cats
-                           if cat.get('weight') and cat.get('weight') >= weight_min.value]
+                             if cat.get('weight') and cat.get('weight') >= weight_min.value]
         
         if weight_max.value is not None:
             filtered_cats = [cat for cat in filtered_cats
-                           if cat.get('weight') and cat.get('weight') <= weight_max.value]
+                             if cat.get('weight') and cat.get('weight') <= weight_max.value]
         
         # Breeding animal filter
         if breeding_animal_filter.value:
@@ -356,7 +356,7 @@ async def cats_page_render(current_user=None, session_id=None):
             ui.notify('Export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = get_filtered_cats()
+            filtered_cats = apply_filters()
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -384,13 +384,42 @@ async def cats_page_render(current_user=None, session_id=None):
             
             # Write data rows
             for row_idx, cat in enumerate(filtered_cats, 2):
+                # Format title
+                title_display = cat.get('title')[0] if cat.get('title') and len(cat.get('title')) > 0 else ''
+                
+                # Format owner name
+                owner_name = f"{cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}".strip()
+                
+                # Format breeder name
+                breeder_name = f"{cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}".strip()
+                
+                # Format birthday
+                birthday_display = cat.get('birthday').strftime('%Y-%m-%d') if cat.get('birthday') else ''
+                
+                # Create row data
+                row_data = {
+                    'id': cat.get('id'),
+                    'firstname': cat.get('firstname', ''),
+                    'surname': cat.get('surname', ''),
+                    'callname': cat.get('callname', ''),
+                    'gender': cat.get('gender', ''),
+                    'birthday': birthday_display,
+                    'microchip': cat.get('microchip', ''),
+                    'title': title_display,
+                    'eye_colour': cat.get('eye_colour', ''),
+                    'hair_type': cat.get('hair_type', ''),
+                    'colour': cat.get('colour', ''),
+                    'breed_name': breeder_name,
+                    'owner_name': owner_name,
+                    'status': cat.get('status', ''),
+                    'actions': ''
+                }
+                
                 for col_idx, col_def in enumerate(cats_column, 1):
                     if col_def['name'] == 'actions':
                         continue
                     field_name = col_def['field']
-                    value = cat.get(field_name, '')
-                    if field_name == 'birthday' and value:
-                        value = value.strftime('%Y-%m-%d') if hasattr(value, 'strftime') else str(value)
+                    value = row_data.get(field_name, '')
                     ws.cell(row=row_idx, column=col_idx, value=value)
             
             # Auto-adjust column widths
@@ -437,7 +466,7 @@ async def cats_page_render(current_user=None, session_id=None):
             ui.notify('PDF export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = get_filtered_cats()
+            filtered_cats = apply_filters()
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -476,20 +505,48 @@ async def cats_page_render(current_user=None, session_id=None):
             
             # Add data rows
             for cat in filtered_cats:
-                row_data = []
+                # Format title
+                title_display = cat.get('title')[0] if cat.get('title') and len(cat.get('title')) > 0 else ''
+                
+                # Format owner name
+                owner_name = f"{cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}".strip()
+                
+                # Format breeder name
+                breeder_name = f"{cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}".strip()
+                
+                # Format birthday
+                birthday_display = cat.get('birthday').strftime('%Y-%m-%d') if cat.get('birthday') else ''
+                
+                # Create row data
+                row_data = {
+                    'id': cat.get('id'),
+                    'firstname': cat.get('firstname', ''),
+                    'surname': cat.get('surname', ''),
+                    'callname': cat.get('callname', ''),
+                    'gender': cat.get('gender', ''),
+                    'birthday': birthday_display,
+                    'microchip': cat.get('microchip', ''),
+                    'title': title_display,
+                    'eye_colour': cat.get('eye_colour', ''),
+                    'hair_type': cat.get('hair_type', ''),
+                    'colour': cat.get('colour', ''),
+                    'breed_name': breeder_name,
+                    'owner_name': owner_name,
+                    'status': cat.get('status', ''),
+                    'actions': ''
+                }
+                
+                pdf_row_data = []
                 for col_def in cats_column:
                     if col_def['name'] == 'actions':
                         continue
                     field_name = col_def['field']
-                    value = str(cat.get(field_name, ''))
-                    if field_name == 'birthday' and cat.get(field_name):
-                        birthday_val = cat.get(field_name)
-                        value = birthday_val.strftime('%Y-%m-%d') if hasattr(birthday_val, 'strftime') else str(birthday_val)
+                    value = str(row_data.get(field_name, ''))
                     # Truncate long text for PDF display
                     if len(value) > 15:
                         value = value[:12] + "..."
-                    row_data.append(value)
-                table_data.append(row_data)
+                    pdf_row_data.append(value)
+                table_data.append(pdf_row_data)
             
             # Create table
             table = Table(table_data)
