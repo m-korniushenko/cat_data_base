@@ -12,10 +12,7 @@ from nicegui.events import ValueChangeEventArguments
 import json
 import os
 
-# Настройка логирования
 from logging_config import setup_logging, log_info, log_error, log_success, log_warning
-
-# Инициализация логирования
 logger = setup_logging()
 from app.niceGUI_folder.pydentic_models import CatCreate, CatUpdate, OwnerCreate, OwnerUpdate
 from app.niceGUI_folder.add_cat_page import add_cat_page_render
@@ -123,11 +120,8 @@ async def studbook_page():
     await studbook_page_render()
 
 
-# Static file serving for photos and files
 @app.get('/static/{file_path:path}')
 async def serve_static_files(file_path: str):
-    """Serve static files (photos and documents)"""
-    # Normalize path separators for file system
     normalized_file_path = file_path.replace('/', '\\') if os.name == 'nt' else file_path
     full_path = os.path.join(os.getcwd(), normalized_file_path)
     print(f"Serving file: {file_path} -> {full_path}")
@@ -145,46 +139,45 @@ async def serve_static_files(file_path: str):
 
 
 def start_db():
-    log_info("Инициализация базы данных...")
+    log_info("Initializing database...")
     
     if not check_creds():
-        log_error("Ошибка проверки учетных данных")
+        log_error("Credentials verification error")
         sys.exit()
     
-    log_info("Создание базы данных...")
+    log_info("Creating database...")
     try:
         drop_database_if_exists()
         postgres_check_and_create_database(Base)
     except Exception as e:
-        log_warning(f"База данных уже существует или ошибка при создании: {e}")
-        # Попробуем просто проверить подключение к существующей базе
+        log_warning(f"Database already exists or creation error: {e}")
         if not check_db_connection():
-            log_error("Не удается подключиться к базе данных")
+            log_error("Cannot connect to database")
             sys.exit()
     
     if not check_db_connection():
-        log_error("Ошибка подключения к базе данных")
+        log_error("Database connection error")
         sys.exit()
     
-    log_success("База данных готова")
-    log_info("Загрузка тестовых данных...")
+    log_success("Database ready")
+    log_info("Loading test data...")
     start_add_workflow()
-    log_success("Тестовые данные загружены")
+    log_success("Test data loaded")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    log_info("Запуск Cat Database Management System v2.0")
+    log_info("Starting Cat Database Management System v2.0")
     log_info("=" * 50)
     
     try:
         start_db()
         
-        log_success("Сервер запущен успешно!")
-        log_info("🌐 Доступ: http://localhost:8080")
-        log_info("🔐 Тестовые аккаунты:")
+        log_success("Server started successfully!")
+        log_info("🌐 Access: http://localhost:8080")
+        log_info("🔐 Test accounts:")
         log_info("   Admin: admin@admin.com / admin")
         log_info("   Owner: john@example.com / password")
-        log_info("🛑 Для остановки нажмите Ctrl+C")
+        log_info("🛑 Press Ctrl+C to stop")
         log_info("=" * 50)
         
         ui.run(
@@ -195,7 +188,7 @@ if __name__ in {"__main__", "__mp_main__"}:
         )
         
     except KeyboardInterrupt:
-        log_info("Остановка сервера...")
+        log_info("Stopping server...")
     except Exception as e:
-        log_error(f"Ошибка запуска: {e}")
+        log_error(f"Startup error: {e}")
         sys.exit(1)

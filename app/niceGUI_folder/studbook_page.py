@@ -26,20 +26,16 @@ studbook_table_columns = [
 async def studbook_page_render(current_user=None, session_id=None):
     """Render the Studbook page with grouped structure by breeder and litter"""
 
-    # Load data for filters
     _, cats_data = await AsyncOrm.get_cat_info()
     _, owners_data = await AsyncOrm.get_owner()
     _, breeds_data = await AsyncOrm.get_breed()
 
-    # Apply user permission filter
     owner_filter = AuthService.get_user_cats_filter(current_user)
     if owner_filter is not None:
         if owner_filter == -1:
             cats_data = []
         else:
             cats_data = [cat for cat in cats_data if cat.get('owner_id') == owner_filter]
-
-    # Create filter options
     breeder_options = {
         breed['breed_id']: f"{breed['breed_firstname']} {breed['breed_surname']}"
         for breed in breeds_data
@@ -129,7 +125,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         for cat in filtered_cats:
             breeder_name = f"{cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}".strip()
             if not breeder_name:
-                breeder_name = "Неизвестный заводчик"
+                breeder_name = "Unknown Breeder"
 
             if breeder_name not in grouped:
                 grouped[breeder_name] = {
@@ -142,7 +138,7 @@ async def studbook_page_render(current_user=None, session_id=None):
                 grouped[breeder_name]["Zuchttiere"].append(cat)
             else:
                 # Group by litter
-                litter = cat.get('litter', 'Без помёта')
+                litter = cat.get('litter', 'No Litter')
                 if litter not in grouped[breeder_name]["litters"]:
                     grouped[breeder_name]["litters"][litter] = []
                 grouped[breeder_name]["litters"][litter].append(cat)
@@ -186,14 +182,14 @@ async def studbook_page_render(current_user=None, session_id=None):
         return {
             'lfd_nr': lfd_nr,
             'datum': datetime.now().strftime('%d.%m.%Y'),  # Current date as registration date
-            'tiername': tiername or 'Не указано',
-            'zb_nummer': zb_nummer or 'Не указан',
-            'microchip': cat.get('microchip', '') or 'Не указан',
-            'geburtsdatum': geburtsdatum or 'Не указана',
+            'tiername': tiername or 'Not specified',
+            'zb_nummer': zb_nummer or 'Not specified',
+            'microchip': cat.get('microchip', '') or 'Not specified',
+            'geburtsdatum': geburtsdatum or 'Not specified',
             'gender': gender,
-            'rasse': rasse or 'Не указана',
+            'rasse': rasse or 'Not specified',
             'ausgabe': ausgabe,
-            'besitzer': besitzer or 'Не указан',
+            'besitzer': besitzer or 'Not specified',
             'kommentar': kommentar,
             'wcf_sticker': wcf_sticker,
             'raw_data': cat  # Store full data for detail view
@@ -207,61 +203,60 @@ async def studbook_page_render(current_user=None, session_id=None):
         cat = cat_data['raw_data']
 
         with ui.dialog() as dialog, ui.card().classes('w-full max-w-4xl'):
-            ui.markdown(f"## 📋 Племенная книга - {cat.get('firstname', '')} {cat.get('surname', '')}")
+            ui.markdown(f"## 📋 Studbook - {cat.get('firstname', '')} {cat.get('surname', '')}")
 
             with ui.grid(columns=2):
                 # Basic Information
                 with ui.card():
-                    ui.markdown("### 🐱 Основная информация")
-                    ui.label(f"**Имя:** {cat.get('firstname', 'Не указано')} {cat.get('surname', '')}")
-                    ui.label(f"**Кличка:** {cat.get('callname', 'Не указана')}")
-                    ui.label(f"**Пол:** {cat.get('gender', 'Не указан')}")
-                    ui.label(f"**Дата рождения:** {cat.get('birthday', 'Не указана')}")
-                    ui.label(f"**Микрочип:** {cat.get('microchip', 'Не указан')}")
-                    ui.label(f"**EMS окрас:** {cat.get('colour', 'Не указан')}")
-                    ui.label(f"**Помёт:** {cat.get('litter', 'Не указан')}")
+                    ui.markdown("### 🐱 Basic Information")
+                    ui.label(f"**Name:** {cat.get('firstname', 'Not specified')} {cat.get('surname', '')}")
+                    ui.label(f"**Callname:** {cat.get('callname', 'Not specified')}")
+                    ui.label(f"**Gender:** {cat.get('gender', 'Not specified')}")
+                    ui.label(f"**Birthday:** {cat.get('birthday', 'Not specified')}")
+                    ui.label(f"**Microchip:** {cat.get('microchip', 'Not specified')}")
+                    ui.label(f"**EMS Color:** {cat.get('colour', 'Not specified')}")
+                    ui.label(f"**Litter:** {cat.get('litter', 'Not specified')}")
 
                 # Registration Information
                 with ui.card():
-                    ui.markdown("### 📜 Регистрационная информация")
-                    ui.label(f"**Регистрационный номер 1:** {cat.get('haritage_number', 'Не указан')}")
-                    ui.label(f"**Регистрационный номер 2:** {cat.get('haritage_number_2', 'Не указан')}")
-                    ui.label(f"**Племенное животное:** {'Да' if cat.get('breeding_animal') else 'Нет'}")
-                    ui.label(f"**Статус:** {cat.get('status', 'Не указан')}")
-                    ui.label(f"**Тип документа:** {'Stammbaum' if cat.get('breeding_animal') else 'Abschrift'}")
-                    ui.label(f"**WCF Sticker:** {'✓' if cat.get('wcf_sticker') else 'Нет'}")
+                    ui.markdown("### 📜 Registration Information")
+                    ui.label(f"**Registration Number 1:** {cat.get('haritage_number', 'Not specified')}")
+                    ui.label(f"**Registration Number 2:** {cat.get('haritage_number_2', 'Not specified')}")
+                    ui.label(f"**Breeding Animal:** {'Yes' if cat.get('breeding_animal') else 'No'}")
+                    ui.label(f"**Status:** {cat.get('status', 'Not specified')}")
+                    ui.label(f"**Document Type:** {'Stammbaum' if cat.get('breeding_animal') else 'Abschrift'}")
+                    ui.label(f"**WCF Sticker:** {'✓' if cat.get('wcf_sticker') else 'No'}")
 
                 # Breeder Information
                 with ui.card():
-                    ui.markdown("### 👨‍🌾 Информация о заводчике")
-                    ui.label(f"**Заводчик:** {cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}")
-                    ui.label(f"**Email:** {cat.get('breed_email', 'Не указан')}")
-                    ui.label(f"**Телефон:** {cat.get('breed_phone', 'Не указан')}")
-                    ui.label(f"**Страна:** {cat.get('breed_country', 'Не указана')}")
-                    ui.label(f"**Город:** {cat.get('breed_city', 'Не указан')}")
+                    ui.markdown("### 👨‍🌾 Breeder Information")
+                    ui.label(f"**Breeder:** {cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}")
+                    ui.label(f"**Email:** {cat.get('breed_email', 'Not specified')}")
+                    ui.label(f"**Phone:** {cat.get('breed_phone', 'Not specified')}")
+                    ui.label(f"**Country:** {cat.get('breed_country', 'Not specified')}")
+                    ui.label(f"**City:** {cat.get('breed_city', 'Not specified')}")
 
                 # Owner Information
                 with ui.card():
-                    ui.markdown("### 👤 Информация о владельце")
-                    ui.label(f"**Владелец:** {cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}")
-                    ui.label(f"**Email:** {cat.get('owner_email', 'Не указан')}")
-                    ui.label(f"**Страна:** {cat.get('owner_country', 'Не указана')}")
-                    ui.label(f"**Город:** {cat.get('owner_city', 'Не указан')}")
+                    ui.markdown("### 👤 Owner Information")
+                    ui.label(f"**Owner:** {cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}")
+                    ui.label(f"**Email:** {cat.get('owner_email', 'Not specified')}")
+                    ui.label(f"**Country:** {cat.get('owner_country', 'Not specified')}")
+                    ui.label(f"**City:** {cat.get('owner_city', 'Not specified')}")
 
             # Additional Information
             if cat.get('notes'):
                 with ui.card():
-                    ui.markdown("### 📝 Комментарии")
-                    ui.label(f"**Заметки:** {cat.get('notes', '')}")
+                    ui.markdown("### 📝 Comments")
+                    ui.label(f"**Notes:** {cat.get('notes', '')}")
 
-            # Parents Information
             if cat.get('dam') or cat.get('sire'):
                 with ui.card():
-                    ui.markdown("### 👨‍👩‍👧‍👦 Родители")
-                    ui.label(f"**Мать:** {cat.get('dam', 'Не указана')}")
-                    ui.label(f"**Отец:** {cat.get('sire', 'Не указан')}")
+                    ui.markdown("### 👨‍👩‍👧‍👦 Parents")
+                    ui.label(f"**Dam:** {cat.get('dam', 'Not specified')}")
+                    ui.label(f"**Sire:** {cat.get('sire', 'Not specified')}")
 
-            ui.button('Закрыть', on_click=dialog.close).props('color=primary')
+            ui.button('Close', on_click=dialog.close).props('color=primary')
 
         dialog.open()
 
@@ -313,47 +308,49 @@ async def studbook_page_render(current_user=None, session_id=None):
         # Render page
         get_header("Studbook")
 
-        ui.markdown("## 📚 Племенная книга (Studbook)")
-        ui.markdown("Официальный реестр зарегистрированных кошек и их помётов")
+        ui.markdown("## 📚 Studbook")
+        ui.markdown("Official registry of registered cats and their litters")
 
         # Filters section - compact design like cats_page
         with ui.card().classes('w-full q-pa-md q-mb-md'):
-            ui.label('🔍 Фильтры').classes('text-h6 q-mb-md')
+            ui.label('🔍 Filters').classes('text-h6 q-mb-md')
 
             with ui.grid(columns=4).classes('gap-4 w-full'):
                 # Search
-                filter_inputs['search_input'] = ui.input(label='Поиск (Имя, микрочип, ZB...)').props('outlined dense')
+                filter_inputs['search_input'] = ui.input(
+                    label='Search (Name, microchip, ZB...)'
+                ).props('outlined dense')
 
                 # Breeder filter
                 filter_inputs['breeder_filter'] = ui.select(
                     options=[''] + list(breeder_options.values()),
-                    label='Заводчик'
+                    label='Breeder'
                 ).props('outlined dense')
 
                 # Owner filter
                 filter_inputs['owner_filter_select'] = ui.select(
                     options=[''] + list(owner_options.values()),
-                    label='Владелец'
+                    label='Owner'
                 ).props('outlined dense')
 
                 # EMS color filter
                 filter_inputs['ems_color_filter'] = ui.select(
                     options=[''] + ems_color_options,
-                    label='EMS окрас'
+                    label='EMS Color'
                 ).props('outlined dense')
 
                 # Status filter
                 filter_inputs['status_filter'] = ui.select(
                     options=[''] + status_options,
-                    label='Статус'
+                    label='Status'
                 ).props('outlined dense')
 
                 # Birthday filters
-                filter_inputs['birthday_from'] = ui.input(label='Дата рождения от').props('type=date outlined dense')
-                filter_inputs['birthday_to'] = ui.input(label='Дата рождения до').props('type=date outlined dense')
+                filter_inputs['birthday_from'] = ui.input(label='Birthday From').props('type=date outlined dense')
+                filter_inputs['birthday_to'] = ui.input(label='Birthday To').props('type=date outlined dense')
 
                 # Clear filters button
-                clear_filters_btn = ui.button('Очистить все', icon='clear').props('color=secondary outline')
+                clear_filters_btn = ui.button('Clear All', icon='clear').props('color=secondary outline')
 
         # Set up event handlers for the newly created filters
         filter_inputs['search_input'].on_value_change(lambda: update_studbook_display())
@@ -389,7 +386,7 @@ async def studbook_page_render(current_user=None, session_id=None):
 
         # Update results counter
         if results_label:
-            results_label.text = f'Найдено записей: {len(filtered_cats)}'
+            results_label.text = f'Records found: {len(filtered_cats)}'
 
         # Clear and rebuild only the studbook structure
         if studbook_container:

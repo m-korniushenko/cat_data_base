@@ -12,7 +12,6 @@ async def add_permissions():
 
 
 def hash_password(password: str) -> str:
-    """Hash password using SHA-256"""
     return hashlib.sha256(password.encode()).hexdigest()
 
 
@@ -84,7 +83,6 @@ async def add_cat(owner_id, idx, gender, firstname, surname, birthday_year, micr
 
 
 async def add_breeds():
-    """Add test breeders"""
     try:
         await AsyncOrm.add_breed(
             breed_firstname="Elite",
