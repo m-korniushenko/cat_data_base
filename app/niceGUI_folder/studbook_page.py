@@ -57,7 +57,6 @@ async def studbook_page_render(current_user=None, session_id=None):
     ems_color_options = list(set([cat.get('colour') for cat in cats_data if cat.get('colour')]))
     status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
 
-    # Filter variables
     filter_inputs = {}
     results_label = None
     studbook_container = None
@@ -69,7 +68,6 @@ async def studbook_page_render(current_user=None, session_id=None):
 
         filtered_cats = cats_data.copy()
 
-        # Search filter
         if filter_inputs.get('search_input') and filter_inputs['search_input'].value:
             search_term = filter_inputs['search_input'].value.lower()
             filtered_cats = [
@@ -214,55 +212,50 @@ async def studbook_page_render(current_user=None, session_id=None):
             ui.markdown(f"## 📋 Studbook - {cat.get('firstname', '')} {cat.get('surname', '')}")
 
             with ui.grid(columns=2):
-                # Basic Information
                 with ui.card():
                     ui.markdown("### 🐱 Basic Information")
-                    ui.label(f"**Name:** {cat.get('firstname', 'Not specified')} {cat.get('surname', '')}")
-                    ui.label(f"**Callname:** {cat.get('callname', 'Not specified')}")
-                    ui.label(f"**Gender:** {cat.get('gender', 'Not specified')}")
-                    ui.label(f"**Birthday:** {cat.get('birthday', 'Not specified')}")
-                    ui.label(f"**Microchip:** {cat.get('microchip', 'Not specified')}")
-                    ui.label(f"**EMS Color:** {cat.get('colour', 'Not specified')}")
-                    ui.label(f"**Litter:** {cat.get('litter', 'Not specified')}")
+                    ui.label(f"Name: {cat.get('firstname', 'Not specified')} {cat.get('surname', '')}")
+                    ui.label(f"Callname: {cat.get('callname', 'Not specified')}")
+                    ui.label(f"Gender: {cat.get('gender', 'Not specified')}")
+                    ui.label(f"Birthday: {cat.get('birthday', 'Not specified')}")
+                    ui.label(f"Microchip: {cat.get('microchip', 'Not specified')}")
+                    ui.label(f"EMS Color: {cat.get('colour', 'Not specified')}")
+                    ui.label(f"Litter: {cat.get('litter', 'Not specified')}")
 
-                # Registration Information
                 with ui.card():
                     ui.markdown("### 📜 Registration Information")
-                    ui.label(f"**Registration Number 1:** {cat.get('haritage_number', 'Not specified')}")
-                    ui.label(f"**Registration Number 2:** {cat.get('haritage_number_2', 'Not specified')}")
-                    ui.label(f"**Breeding Animal:** {'Yes' if cat.get('breeding_animal') else 'No'}")
-                    ui.label(f"**Status:** {cat.get('status', 'Not specified')}")
-                    ui.label(f"**Document Type:** {'Stammbaum' if cat.get('breeding_animal') else 'Abschrift'}")
-                    ui.label(f"**WCF Sticker:** {'✓' if cat.get('wcf_sticker') else 'No'}")
+                    ui.label(f"Registration Number 1: {cat.get('haritage_number', 'Not specified')}")
+                    ui.label(f"Registration Number 2: {cat.get('haritage_number_2', 'Not specified')}")
+                    ui.label(f"Breeding Animal: {'Yes' if cat.get('breeding_animal') else 'No'}")
+                    ui.label(f"Status: {cat.get('status', 'Not specified')}")
+                    ui.label(f"Document Type: {'Stammbaum' if cat.get('breeding_animal') else 'Abschrift'}")
+                    ui.label(f"WCF Sticker: {'✓' if cat.get('wcf_sticker') else 'No'}")
 
-                # Breeder Information
                 with ui.card():
                     ui.markdown("### 👨‍🌾 Breeder Information")
-                    ui.label(f"**Breeder:** {cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}")
-                    ui.label(f"**Email:** {cat.get('breed_email', 'Not specified')}")
-                    ui.label(f"**Phone:** {cat.get('breed_phone', 'Not specified')}")
-                    ui.label(f"**Country:** {cat.get('breed_country', 'Not specified')}")
-                    ui.label(f"**City:** {cat.get('breed_city', 'Not specified')}")
+                    ui.label(f"Breeder: {cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}")
+                    ui.label(f"Email: {cat.get('breed_email', 'Not specified')}")
+                    ui.label(f"Phone: {cat.get('breed_phone', 'Not specified')}")
+                    ui.label(f"Country: {cat.get('breed_country', 'Not specified')}")
+                    ui.label(f"City: {cat.get('breed_city', 'Not specified')}")
 
-                # Owner Information
                 with ui.card():
                     ui.markdown("### 👤 Owner Information")
-                    ui.label(f"**Owner:** {cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}")
-                    ui.label(f"**Email:** {cat.get('owner_email', 'Not specified')}")
-                    ui.label(f"**Country:** {cat.get('owner_country', 'Not specified')}")
-                    ui.label(f"**City:** {cat.get('owner_city', 'Not specified')}")
+                    ui.label(f"Owner: {cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}")
+                    ui.label(f"Email: {cat.get('owner_email', 'Not specified')}")
+                    ui.label(f"Country: {cat.get('owner_country', 'Not specified')}")
+                    ui.label(f"City: {cat.get('owner_city', 'Not specified')}")
 
-            # Additional Information
             if cat.get('notes'):
                 with ui.card():
                     ui.markdown("### 📝 Comments")
-                    ui.label(f"**Notes:** {cat.get('notes', '')}")
+                    ui.label(f"Notes: {cat.get('notes', '')}")
 
             if cat.get('dam') or cat.get('sire'):
                 with ui.card():
                     ui.markdown("### 👨‍👩‍👧‍👦 Parents")
-                    ui.label(f"**Dam:** {cat.get('dam', 'Not specified')}")
-                    ui.label(f"**Sire:** {cat.get('sire', 'Not specified')}")
+                    ui.label(f"Dam: {cat.get('dam', 'Not specified')}")
+                    ui.label(f"Sire: {cat.get('sire', 'Not specified')}")
 
             ui.button('Close', on_click=dialog.close).props('color=primary')
 
@@ -494,7 +487,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         get_header("Studbook")
 
         ui.markdown("## 📚 Studbook")
-        ui.markdown("Official registry of registered cats and their litters")
+        ui.markdown("Registry of registered cats and their litters")
 
         # Filters section - compact design like cats_page
         with ui.card().classes('w-full q-pa-md q-mb-md'):
