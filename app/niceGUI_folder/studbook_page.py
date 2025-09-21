@@ -25,49 +25,23 @@ studbook_columns = [
 @require_auth(required_permission=2)
 async def studbook_page_render(current_user=None, session_id=None):
     """Render the Studbook page"""
-    print(f"studbook_page_render: current_user = {current_user}")
     
     # Load data for filters
-    try:
-        _, cats_data = await AsyncOrm.get_cat_info()
-        _, owners_data = await AsyncOrm.get_owner()
-        _, breeds_data = await AsyncOrm.get_breed()
-        print("Data loaded successfully")
-    except Exception as e:
-        print(f"Error loading data: {e}")
-        cats_data = []
-        owners_data = []
-        breeds_data = []
-    
-    # Debug: check data structure
-    print(f"Loaded {len(cats_data)} cats")
-    if cats_data:
-        print("First cat keys:", list(cats_data[0].keys()) if cats_data[0] else "No data")
-        print("First cat id:", cats_data[0].get('id') if cats_data[0] else "No id")
-        print("First cat data:", cats_data[0])
-    else:
-        print("No cats data loaded!")
+    _, cats_data = await AsyncOrm.get_cat_info()
+    _, owners_data = await AsyncOrm.get_owner()
+    _, breeds_data = await AsyncOrm.get_breed()
 
     # Apply user permission filter
     owner_filter = AuthService.get_user_cats_filter(current_user)
-    print(f"User permission filter: {owner_filter}")
     if owner_filter is not None:
         if owner_filter == -1:
             cats_data = []
-            print("No access: cats_data set to empty")
         else:
-            original_count = len(cats_data)
             cats_data = [cat for cat in cats_data if cat.get('owner_id') == owner_filter]
-            print(f"Filtered cats from {original_count} to {len(cats_data)}")
-    
-    # Debug: check data after user filter
-    print(f"After user filter: {len(cats_data)} cats")
-    if cats_data:
-        print("First cat after filter has id:", 'id' in cats_data[0])
 
     # Create filter options
     breeder_options = {
-        breed['id']: f"{breed['breed_firstname']} {breed['breed_surname']}"
+        breed['breed_id']: f"{breed['breed_firstname']} {breed['breed_surname']}"
         for breed in breeds_data
         if breed['breed_firstname'] and breed['breed_surname']
     }
@@ -85,24 +59,16 @@ async def studbook_page_render(current_user=None, session_id=None):
     owner_filter_select = ui.select(owner_options, label='Владелец', clearable=True).style('width: 200px')
     ems_color_filter = ui.select(ems_color_options, label='EMS окрас', clearable=True).style('width: 150px')
     status_filter = ui.select(status_options, label='Статус', clearable=True).style('width: 150px')
-    birthday_from = ui.input('Дата рождения от', type='date').style('width: 150px')
-    birthday_to = ui.input('Дата рождения до', type='date').style('width: 150px')
+    birthday_from = ui.input('Дата рождения от').style('width: 150px')
+    birthday_to = ui.input('Дата рождения до').style('width: 150px')
+
     
     def apply_filters():
         """Apply all filters to the data"""
-        print(f"apply_filters: starting with {len(cats_data)} cats")
-        
-        # Check if we have any data to filter
         if not cats_data:
-            print("apply_filters: No cats_data to filter")
             return []
             
         filtered_cats = cats_data.copy()
-        
-        # Debug: check if data has 'id' field
-        if filtered_cats and filtered_cats[0]:
-            print("apply_filters: first cat has id:", 'id' in filtered_cats[0])
-            print("apply_filters: first cat keys:", list(filtered_cats[0].keys()))
         
         # Search filter
         search_term = search_input.value.lower() if search_input.value else ''
@@ -156,10 +122,6 @@ async def studbook_page_render(current_user=None, session_id=None):
             except ValueError:
                 pass
         
-        print(f"apply_filters: returning {len(filtered_cats)} filtered cats")
-        if filtered_cats and filtered_cats[0]:
-            print("apply_filters: first filtered cat has id:", 'id' in filtered_cats[0])
-        
         return filtered_cats
 
     def clear_all_filters():
@@ -181,43 +143,27 @@ async def studbook_page_render(current_user=None, session_id=None):
         """Update the table with filtered data"""
         nonlocal table, results_label
         
-        print("update_table: starting")
-        
-        # Check if we have any cats data at all
         if not cats_data:
-            print("update_table: No cats_data available")
             return
             
         filtered_cats = apply_filters()
         
-        # Debug: check if we have data
+        # Create empty table if no data
         if not filtered_cats:
-            print("No cats data found in update_table")
-            # Create empty table if no data
             if table:
                 table.options['rowData'] = []
                 table.update()
             else:
                 table = ui.table(
                     columns=studbook_columns,
-                    rows=[],
-                    row_key='id'
+                    rows=[]
                 ).classes('w-full').style('height: 600px')
             return
-        
-        # Debug: print first cat data structure
-        if filtered_cats:
-            print("First cat data keys:", list(filtered_cats[0].keys()) if filtered_cats[0] else "No data")
         
         # Prepare rows for display
         display_rows = []
         for i, cat in enumerate(filtered_cats):
-            # Debug: check each cat data
-            if i == 0:  # Only for first cat to avoid spam
-                print(f"Processing cat {i}: has id = {'id' in cat}, cat keys = {list(cat.keys()) if cat else 'None'}")
-            
             if not cat or 'id' not in cat:
-                print(f"Cat {i} missing id field, skipping")
                 continue
             # Format breeder name
             breeder_name = f"{cat.get('breed_firstname', '')} {cat.get('breed_surname', '')}".strip()
@@ -242,8 +188,13 @@ async def studbook_page_render(current_user=None, session_id=None):
             # Format owner name
             owner_name = f"{cat.get('owner_firstname', '')} {cat.get('owner_surname', '')}".strip()
             
+            # Ensure we have an id field
+            cat_id = cat.get('id') or 0
+            if not cat_id:
+                cat_id = i
+            
             row = {
-                'id': cat.get('id') or 0,
+                'id': cat_id,
                 'birthday': birthday_display,
                 'breeder': breeder_name or 'Не указан',
                 'name': cat_name or 'Не указано',
@@ -265,8 +216,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         else:
             table = ui.table(
                 columns=studbook_columns,
-                rows=display_rows,
-                row_key='id'
+                rows=display_rows
             ).classes('w-full').style('height: 600px')
             
             # Set up table row click handler
@@ -281,7 +231,6 @@ async def studbook_page_render(current_user=None, session_id=None):
     async def show_cat_details(cat_data):
         """Show detailed cat information in modal"""
         if not cat_data or 'raw_data' not in cat_data:
-            print("No cat data provided to show_cat_details")
             return
             
         cat = cat_data['raw_data']
@@ -354,28 +303,27 @@ async def studbook_page_render(current_user=None, session_id=None):
     birthday_to.on_value_change(update_table)
 
     # Render page
-    with ui.page('/studbook'):
-        get_header()
-        
-        ui.markdown("## 📚 Племенная книга (Studbook)")
-        ui.markdown("Официальный реестр зарегистрированных кошек и их помётов")
-        
-        # Filters section
-        with ui.card():
-            ui.markdown("### 🔍 Фильтры и поиск")
-            with ui.grid(columns=4):
-                search_input
-                breeder_filter
-                owner_filter_select
-                ems_color_filter
-                status_filter
-                birthday_from
-                birthday_to
-                ui.button('Очистить все фильтры', on_click=clear_all_filters).props('color=secondary')
-        
-        # Results counter and table
-        results_label
-        table
-        
-        # Initial table update
-        await update_table()
+    get_header("Studbook")
+    
+    ui.markdown("## 📚 Племенная книга (Studbook)")
+    ui.markdown("Официальный реестр зарегистрированных кошек и их помётов")
+    
+    # Filters section
+    with ui.card():
+        ui.markdown("### 🔍 Фильтры и поиск")
+        with ui.grid(columns=4):
+            search_input
+            breeder_filter
+            owner_filter_select
+            ems_color_filter
+            status_filter
+            birthday_from
+            birthday_to
+            ui.button('Очистить все фильтры', on_click=clear_all_filters).props('color=secondary')
+    
+    # Results counter and table
+    results_label
+    table
+    
+    # Initial table update
+    await update_table()
