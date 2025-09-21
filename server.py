@@ -155,9 +155,20 @@ def start_db():
             log_error("Cannot connect to database")
             sys.exit()
     
-    if not check_db_connection():
-        log_error("Database connection error")
-        sys.exit()
+    # Wait for database to be fully ready
+    import time
+    max_retries = 5
+    for attempt in range(max_retries):
+        if check_db_connection():
+            log_success("Database connection verified")
+            break
+        else:
+            log_warning(f"Database connection attempt {attempt + 1}/{max_retries} failed")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+            else:
+                log_error("Database connection error - max retries exceeded")
+                sys.exit()
     
     log_success("Database ready")
     log_info("Loading test data...")
