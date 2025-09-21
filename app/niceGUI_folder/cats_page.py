@@ -101,23 +101,57 @@ async def cats_page_render(current_user=None, session_id=None):
         with ui.row().classes('q-pa-md'):
             ui.button('Add Cat', on_click=lambda: ui.navigate.to('/add_cat')).classes('q-mr-sm')
 
-    # Load data for filters
-    _, cats_data = await AsyncOrm.get_cat_info()
+    # Load data for filters (only metadata, not all data)
     _, owners_data = await AsyncOrm.get_owner()
     _, breeds_data = await AsyncOrm.get_breed()
 
+    # Pagination settings
+    PAGE_SIZE = 100
+    current_offset = 0
+    all_cats_data = []
+    loading_more = False
+    has_more_data = True
+
     # Apply user permission filter
     owner_filter = AuthService.get_user_cats_filter(current_user)
-    if owner_filter is not None:
-        if owner_filter == -1:
-            cats_data = []
-        else:
-            cats_data = [cat for cat in cats_data if cat.get('owner_id') == owner_filter]
+    if owner_filter is not None and owner_filter == -1:
+        cats_data = []
+    else:
+        cats_data = []
 
-    # Create filter options
+    async def load_cats_data(offset=0, limit=PAGE_SIZE, reset=False):
+        """Load cats data with pagination"""
+        nonlocal all_cats_data, has_more_data, loading_more
+        
+        if loading_more:
+            return []
+            
+        loading_more = True
+        
+        try:
+            # Load data from database with pagination
+            _, new_cats = await AsyncOrm.get_cat_info(limit=limit, offset=offset)
+            
+            # Apply user permission filter
+            if owner_filter is not None and owner_filter != -1:
+                new_cats = [cat for cat in new_cats if cat.get('owner_id') == owner_filter]
+            
+            if reset:
+                all_cats_data = new_cats
+            else:
+                all_cats_data.extend(new_cats)
+            
+            # Check if there's more data
+            has_more_data = len(new_cats) == limit
+            
+            return new_cats
+        finally:
+            loading_more = False
+
+    # Create filter options (will be updated after first load)
     gender_options = ['Male', 'Female']
-    eye_color_options = list(set([cat.get('eye_colour') for cat in cats_data if cat.get('eye_colour')]))
-    hair_type_options = list(set([cat.get('hair_type') for cat in cats_data if cat.get('hair_type')]))
+    eye_color_options = []
+    hair_type_options = []
     status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
     
     owner_options = {owner['owner_id']: f"{owner['owner_firstname']} {owner['owner_surname']}"
@@ -208,9 +242,16 @@ async def cats_page_render(current_user=None, session_id=None):
     # Table container
     table_container = ui.column()
 
-    def apply_filters():
-        """Apply all filters to the data"""
-        filtered_cats = cats_data.copy()
+    async def apply_filters(reset_pagination=True):
+        """Apply all filters to the data with pagination support"""
+        nonlocal current_offset, all_cats_data
+        
+        if reset_pagination:
+            current_offset = 0
+            # Load first batch with filters applied
+            await load_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
+        
+        filtered_cats = all_cats_data.copy()
         
         # Search filter
         search_term = search_input.value.lower() if search_input.value else ''
@@ -300,9 +341,23 @@ async def cats_page_render(current_user=None, session_id=None):
         
         return filtered_cats
 
+    async def load_more_data():
+        """Load more data when scrolling"""
+        nonlocal current_offset, loading_more
+        
+        if loading_more or not has_more_data:
+            return
+            
+        current_offset += PAGE_SIZE
+        new_cats = await load_cats_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
+        
+        if new_cats:
+            # Update table with new data
+            await update_table()
+
     async def update_table():
         """Update the table with filtered data"""
-        filtered_cats = apply_filters()
+        filtered_cats = await apply_filters(reset_pagination=False)
         
         # Prepare rows for display
         display_rows = []
@@ -347,16 +402,27 @@ async def cats_page_render(current_user=None, session_id=None):
             if display_rows:
                 table = ui.table(columns=cats_column, rows=display_rows, row_key='id').classes('q-pa-md')
                 table.add_slot('body', get_edit_button_vue(current_user))
+                
+                # Add load more button if there's more data
+                if has_more_data:
+                    with ui.row().classes('q-pa-md justify-center'):
+                        load_more_btn = ui.button('Load More', icon='expand_more',
+                                                  on_click=load_more_data).props('color=primary outline')
+                        if loading_more:
+                            load_more_btn.props('loading')
+                elif len(display_rows) > 0:
+                    with ui.row().classes('q-pa-md justify-center'):
+                        ui.label('All records loaded').classes('text-grey-6')
             else:
                 ui.label('No cats found matching the criteria').classes('text-center q-py-xl text-grey-6')
 
-    def export_to_xlsx():
+    async def export_to_xlsx():
         """Export filtered cats data to XLSX file"""
         try:
             ui.notify('Export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = apply_filters()
+            filtered_cats = await apply_filters(reset_pagination=False)
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -460,13 +526,13 @@ async def cats_page_render(current_user=None, session_id=None):
             print(f"Export error: {e}")
             ui.notify(f'Export failed: {str(e)}', type='negative', position='top')
 
-    def export_to_pdf():
+    async def export_to_pdf():
         """Export filtered cats data to PDF file"""
         try:
             ui.notify('PDF export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = apply_filters()
+            filtered_cats = await apply_filters(reset_pagination=False)
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -588,7 +654,7 @@ async def cats_page_render(current_user=None, session_id=None):
             print(f"PDF export error: {e}")
             ui.notify(f'PDF export failed: {str(e)}', type='negative', position='top')
 
-    def clear_all_filters():
+    async def clear_all_filters():
         """Clear all filter inputs"""
         search_input.value = ''
         gender_filter.value = ''
@@ -604,7 +670,7 @@ async def cats_page_render(current_user=None, session_id=None):
         weight_max.value = None
         breeding_animal_filter.value = ''
         breeding_lock_filter.value = ''
-        update_table()
+        await update_table()
 
     # Set up event handlers
     search_input.on_value_change(lambda e: update_table())
@@ -626,4 +692,5 @@ async def cats_page_render(current_user=None, session_id=None):
     export_pdf_btn.on_click(export_to_pdf)
 
     # Initial load
+    await load_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
     await update_table()

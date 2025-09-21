@@ -34,16 +34,52 @@ studbook_table_columns = [
 async def studbook_page_render(current_user=None, session_id=None):
     """Render the Studbook page with grouped structure by breeder and litter"""
 
-    _, cats_data = await AsyncOrm.get_cat_info()
+    # Load metadata for filters
     _, owners_data = await AsyncOrm.get_owner()
     _, breeds_data = await AsyncOrm.get_breed()
 
+    # Pagination settings
+    PAGE_SIZE = 100
+    current_offset = 0
+    all_cats_data = []
+    loading_more = False
+    has_more_data = True
+
+    # Apply user permission filter
     owner_filter = AuthService.get_user_cats_filter(current_user)
-    if owner_filter is not None:
-        if owner_filter == -1:
-            cats_data = []
-        else:
-            cats_data = [cat for cat in cats_data if cat.get('owner_id') == owner_filter]
+    if owner_filter is not None and owner_filter == -1:
+        cats_data = []
+    else:
+        cats_data = []
+
+    async def load_cats_data(offset=0, limit=PAGE_SIZE, reset=False):
+        """Load cats data with pagination"""
+        nonlocal all_cats_data, has_more_data, loading_more
+        
+        if loading_more:
+            return []
+            
+        loading_more = True
+        
+        try:
+            # Load data from database with pagination
+            _, new_cats = await AsyncOrm.get_cat_info(limit=limit, offset=offset)
+            
+            # Apply user permission filter
+            if owner_filter is not None and owner_filter != -1:
+                new_cats = [cat for cat in new_cats if cat.get('owner_id') == owner_filter]
+            
+            if reset:
+                all_cats_data = new_cats
+            else:
+                all_cats_data.extend(new_cats)
+            
+            # Check if there's more data
+            has_more_data = len(new_cats) == limit
+            
+            return new_cats
+        finally:
+            loading_more = False
     breeder_options = {
         breed['breed_id']: f"{breed['breed_firstname']} {breed['breed_surname']}"
         for breed in breeds_data
@@ -61,12 +97,16 @@ async def studbook_page_render(current_user=None, session_id=None):
     results_label = None
     studbook_container = None
 
-    def apply_filters():
-        """Apply all filters to the data"""
-        if not cats_data:
-            return []
-
-        filtered_cats = cats_data.copy()
+    async def apply_filters(reset_pagination=True):
+        """Apply all filters to the data with pagination support"""
+        nonlocal current_offset, all_cats_data
+        
+        if reset_pagination:
+            current_offset = 0
+            # Load first batch with filters applied
+            await load_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
+        
+        filtered_cats = all_cats_data.copy()
 
         if filter_inputs.get('search_input') and filter_inputs['search_input'].value:
             search_term = filter_inputs['search_input'].value.lower()
@@ -123,6 +163,22 @@ async def studbook_page_render(current_user=None, session_id=None):
                 print(f"DEBUG: Error parsing birthday_to: {e}")
 
         return filtered_cats
+
+    async def load_more_data():
+        """Load more data when button is clicked"""
+        nonlocal current_offset, loading_more
+        
+        if loading_more or not has_more_data:
+            return
+            
+        current_offset += PAGE_SIZE
+        new_cats = await load_cats_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
+        
+        if new_cats:
+            # Apply current filters to new data
+            await apply_filters(reset_pagination=False)
+            # Update table with new data
+            await update_studbook_display()
 
     def group_cats_by_breeder_and_litter(filtered_cats):
         """Group cats by breeder and then by litter"""
@@ -263,7 +319,7 @@ async def studbook_page_render(current_user=None, session_id=None):
 
     async def render_studbook_structure():
         """Render the grouped studbook structure"""
-        filtered_cats = apply_filters()
+        filtered_cats = await apply_filters(reset_pagination=False)
         grouped_data = group_cats_by_breeder_and_litter(filtered_cats)
 
         lfd_nr_counter = 1
@@ -297,13 +353,24 @@ async def studbook_page_render(current_user=None, session_id=None):
                         # Set up table row click handler
                         table.on('rowClick', lambda e: show_cat_details(e.args[1]))
 
+        # Add load more button if there's more data
+        if has_more_data:
+            with ui.row().classes('q-pa-md justify-center'):
+                load_more_btn = ui.button('Load More', icon='expand_more',
+                                          on_click=load_more_data).props('color=primary outline')
+                if loading_more:
+                    load_more_btn.props('loading')
+        elif len(filtered_cats) > 0:
+            with ui.row().classes('q-pa-md justify-center'):
+                ui.label('All records loaded').classes('text-grey-6')
+
     async def export_to_xlsx():
         """Export filtered studbook data to XLSX file"""
         try:
             ui.notify('Export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = apply_filters()
+            filtered_cats = await apply_filters(reset_pagination=False)
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -384,7 +451,7 @@ async def studbook_page_render(current_user=None, session_id=None):
             ui.notify('PDF export started...', type='info', position='top')
             
             # Get current filtered data
-            filtered_cats = apply_filters()
+            filtered_cats = await apply_filters(reset_pagination=False)
             
             if not filtered_cats:
                 ui.notify('No data to export', type='warning', position='top')
@@ -554,13 +621,14 @@ async def studbook_page_render(current_user=None, session_id=None):
         nonlocal studbook_container
         studbook_container = ui.column().classes('w-full')
 
-        # Initial update
+        # Initial load
+        await load_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
         await update_studbook_display()
 
     async def update_studbook_display():
         """Update the studbook display without full page reload"""
         # Update only the results section, not the entire page
-        filtered_cats = apply_filters()
+        filtered_cats = await apply_filters(reset_pagination=False)
 
         # Debug: print filter values
         print("DEBUG: Filter values:")

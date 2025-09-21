@@ -283,7 +283,9 @@ class AsyncOrm:
                         owner_firstname: str | None = None,
                         owner_surname: str | None = None,
                         owner_email: str | None = None,
-                        owner_permission: str | None = None):
+                        owner_permission: str | None = None,
+                        limit: int | None = None,
+                        offset: int = 0):
         query = select(Owner)
         if owner_id is not None:
             query = query.filter_by(owner_id=owner_id)
@@ -295,6 +297,12 @@ class AsyncOrm:
             query = query.filter_by(owner_email=owner_email)
         if owner_permission is not None:
             query = query.filter_by(owner_permission=owner_permission)
+
+        # Add pagination
+        if limit is not None:
+            query = query.limit(limit)
+        if offset > 0:
+            query = query.offset(offset)
 
         async with async_session() as session:
             result = await session.execute(query)
@@ -646,6 +654,8 @@ class AsyncOrm:
         owner_firstname: str | None = None,
         owner_surname: str | None = None,
         owner_email: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ):
         # Create aliases for parent cats
         Dam = aliased(Cat)
@@ -685,6 +695,12 @@ class AsyncOrm:
             query = query.where(Owner.owner_surname == owner_surname)
         if owner_email:
             query = query.where(Owner.owner_email == owner_email)
+
+        # Add pagination
+        if limit is not None:
+            query = query.limit(limit)
+        if offset > 0:
+            query = query.offset(offset)
 
         async with async_session() as session:
             result = await session.execute(query)
@@ -748,7 +764,7 @@ class AsyncOrm:
 
     @log_function_call
     @staticmethod
-    async def get_cat_info_like(search: str | None = None):
+    async def get_cat_info_like(search: str | None = None, limit: int | None = None, offset: int = 0):
         # Create aliases for parent cats
         Dam = aliased(Cat)
         Sire = aliased(Cat)
@@ -799,6 +815,12 @@ class AsyncOrm:
                     BreedAlias.breed_email.ilike(pattern),
                 )
             )
+
+        # Add pagination
+        if limit is not None:
+            query = query.limit(limit)
+        if offset > 0:
+            query = query.offset(offset)
 
         async with async_session() as session:
             result = await session.execute(query)
@@ -896,7 +918,9 @@ class AsyncOrm:
     async def get_breed(breed_id: int = None,
                         breed_firstname: str = None,
                         breed_surname: str = None,
-                        breed_email: str = None):
+                        breed_email: str = None,
+                        limit: int | None = None,
+                        offset: int = 0):
         query = select(Breed)
         if breed_id is not None:
             query = query.filter_by(breed_id=breed_id)
@@ -906,6 +930,12 @@ class AsyncOrm:
             query = query.filter_by(breed_surname=breed_surname)
         if breed_email is not None:
             query = query.filter_by(breed_email=breed_email)
+
+        # Add pagination
+        if limit is not None:
+            query = query.limit(limit)
+        if offset > 0:
+            query = query.offset(offset)
 
         async with async_session() as session:
             result = await session.execute(query)
