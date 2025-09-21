@@ -42,24 +42,36 @@ def create_sync_engine():
 
 def postgres_check_and_create_database(import_model):
     print(f"Download: {import_model.__name__}")
-    engine = create_sync_engine()
-    if not database_exists(engine.url):
-        create_database(engine.url)
-        with engine.begin() as conn:
-            Base.metadata.create_all(bind=conn)
-        print(f'Created database: "{engine.url}"')
-    else:
-        print(f'Database "{engine.url}" already exists')
+    try:
+        engine = create_sync_engine()
+        if not database_exists(engine.url):
+            create_database(engine.url)
+            with engine.begin() as conn:
+                Base.metadata.create_all(bind=conn)
+            print(f'Created database: "{engine.url}"')
+        else:
+            print(f'Database "{engine.url}" already exists')
+            try:
+                with engine.begin() as conn:
+                    Base.metadata.create_all(bind=conn)
+                print('Tables verified/created successfully')
+            except Exception as e:
+                print(f'Warning: Could not verify tables: {e}')
+    except Exception as e:
+        print(f'Error in postgres_check_and_create_database: {e}')
+        raise
 
 
 def drop_database_if_exists():
-    admin_url = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/postgres"
-    engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        conn.execute(
-            text("SELECT pg_terminate_backend(pid) "
-                 "FROM pg_stat_activity WHERE datname = :dbname"),
-            {"dbname": settings.DB_NAME})
-        conn.execute(text(f'DROP DATABASE IF EXISTS "{settings.DB_NAME}"'))
-
-    print(f'Database "{settings.DB_NAME}" dropped (if it existed)')
+    try:
+        admin_url = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/postgres"
+        engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
+        with engine.connect() as conn:
+            conn.execute(
+                text("SELECT pg_terminate_backend(pid) "
+                     "FROM pg_stat_activity WHERE datname = :dbname AND pid <> pg_backend_pid()"),
+                {"dbname": settings.DB_NAME})
+            conn.execute(text(f'DROP DATABASE IF EXISTS "{settings.DB_NAME}"'))
+        print(f'Database "{settings.DB_NAME}" dropped (if it existed)')
+    except Exception as e:
+        print(f'Warning: Could not drop database "{settings.DB_NAME}": {e}')

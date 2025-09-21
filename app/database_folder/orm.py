@@ -71,10 +71,25 @@ class AsyncOrm:
     # @log_function_call
     @staticmethod
     async def add_cat(owner_id: int, cat_firstname: str, cat_surname: str, cat_gender: str,
-                      cat_birthday: datetime, cat_microchip_number: str,
-                      cat_EMS_colour: str, cat_litter: str, cat_breed_id: int = None,
+                      cat_birthday: datetime, cat_microchip_number: str = None,
+                      cat_EMS_colour: str = None, cat_litter: str = None, cat_breed_id: int = None,
                       cat_haritage_number: str = None, cat_dam_id: int = None, cat_sire_id: int = None,
-                      cat_photos: list = None, cat_files: list = None):
+                      cat_photos: list = None, cat_files: list = None,
+                      cat_callname: str = None, cat_title: list = None, cat_haritage_number_2: str = None,
+                      cat_eye_colour: str = None, cat_hair_type: str = None,
+                      cat_tests: str = None, cat_litter_size_male: int = None,
+                      cat_litter_size_female: int = None, cat_blood_group: str = None,
+                      cat_gencode: str = None, cat_features: str = None,
+                      cat_notes: str = None, cat_show_results: str = None,
+                      cat_breeding_lock: bool = False, cat_breeding_lock_date: date = None,
+                      cat_breeding_animal: bool = False, cat_birth_country: str = None,
+                      cat_location: str = None, cat_weight: float = None,
+                      cat_birth_weight: float = None, cat_transfer_weight: float = None,
+                      cat_faults_deviations: str = None, cat_association: str = None,
+                      cat_jaw_fault: str = None, cat_hernia: str = None,
+                      cat_testicles: str = None, cat_death_date: date = None,
+                      cat_death_cause: str = None, cat_status: str = None,
+                      cat_kitten_transfer: bool = False):
         cat_breed_id = int(cat_breed_id) if cat_breed_id else None
         cat_dam_id = int(cat_dam_id) if cat_dam_id else None
         cat_sire_id = int(cat_sire_id) if cat_sire_id else None
@@ -83,6 +98,7 @@ class AsyncOrm:
                 owner_id=owner_id,
                 cat_firstname=cat_firstname,
                 cat_surname=cat_surname,
+                cat_callname=cat_callname,
                 cat_gender=cat_gender,
                 cat_birthday=cat_birthday,
                 cat_microchip_number=cat_microchip_number,
@@ -90,10 +106,39 @@ class AsyncOrm:
                 cat_EMS_colour=cat_EMS_colour,
                 cat_litter=cat_litter,
                 cat_haritage_number=cat_haritage_number,
+                cat_haritage_number_2=cat_haritage_number_2,
+                cat_eye_colour=cat_eye_colour,
+                cat_hair_type=cat_hair_type,
+                cat_tests=cat_tests,
+                cat_litter_size_male=cat_litter_size_male,
+                cat_litter_size_female=cat_litter_size_female,
+                cat_blood_group=cat_blood_group,
+                cat_gencode=cat_gencode,
+                cat_features=cat_features,
+                cat_notes=cat_notes,
+                cat_show_results=cat_show_results,
+                cat_breeding_lock=cat_breeding_lock,
+                cat_breeding_lock_date=cat_breeding_lock_date,
+                cat_breeding_animal=cat_breeding_animal,
+                cat_birth_country=cat_birth_country,
+                cat_location=cat_location,
+                cat_weight=cat_weight,
+                cat_birth_weight=cat_birth_weight,
+                cat_transfer_weight=cat_transfer_weight,
+                cat_faults_deviations=cat_faults_deviations,
+                cat_association=cat_association,
+                cat_jaw_fault=cat_jaw_fault,
+                cat_hernia=cat_hernia,
+                cat_testicles=cat_testicles,
+                cat_death_date=cat_death_date,
+                cat_death_cause=cat_death_cause,
+                cat_status=cat_status,
+                cat_kitten_transfer=cat_kitten_transfer,
                 cat_dam_id=cat_dam_id,
                 cat_sire_id=cat_sire_id,
                 cat_photos=cat_photos or [],
-                cat_files=cat_files or []
+                cat_files=cat_files or [],
+                cat_title=cat_title
             )
             session.add(new_cat)
             await session.commit()
@@ -104,26 +149,71 @@ class AsyncOrm:
                          birthday: datetime, microchip: str = None, colour: str = None,
                          litter: str = None, haritage_number: str = None, owner_id: int = None,
                          breed_id: int = None, dam_id: int = None, sire_id: int = None,
-                         cat_photos: list = None, cat_files: list = None) -> bool:
+                         cat_photos: list = None, cat_files: list = None,
+                         callname: str = None, cat_title: list = None, haritage_number_2: str = None,
+                         eye_colour: str = None, hair_type: str = None,
+                         tests: str = None, litter_size_male: int = None,
+                         litter_size_female: int = None, blood_group: str = None,
+                         gencode: str = None, features: str = None,
+                         notes: str = None, show_results: str = None,
+                         breeding_lock: bool = None, breeding_lock_date: date = None,
+                         breeding_animal: bool = None, birth_country: str = None,
+                         location: str = None, weight: float = None,
+                         birth_weight: float = None, transfer_weight: float = None,
+                         faults_deviations: str = None, association: str = None,
+                         jaw_fault: str = None, hernia: str = None,
+                         testicles: str = None, death_date: date = None,
+                         death_cause: str = None, status: str = None,
+                         kitten_transfer: bool = None) -> bool:
         """Update cat information"""
         try:
             async with async_session() as session:
-                # Get the cat to update
                 result = await session.execute(select(Cat).filter_by(cat_id=cat_id))
                 cat = result.scalar_one_or_none()
                 
                 if not cat:
                     return False
                 
-                # Update fields
                 cat.cat_firstname = firstname
                 cat.cat_surname = surname
+                cat.cat_callname = callname
                 cat.cat_gender = gender
                 cat.cat_birthday = birthday
                 cat.cat_microchip_number = microchip
                 cat.cat_EMS_colour = colour
                 cat.cat_litter = litter
                 cat.cat_haritage_number = haritage_number
+                cat.cat_haritage_number_2 = haritage_number_2
+                cat.cat_eye_colour = eye_colour
+                cat.cat_hair_type = hair_type
+                cat.cat_tests = tests
+                cat.cat_litter_size_male = litter_size_male
+                cat.cat_litter_size_female = litter_size_female
+                cat.cat_blood_group = blood_group
+                cat.cat_gencode = gencode
+                cat.cat_features = features
+                cat.cat_notes = notes
+                cat.cat_show_results = show_results
+                if breeding_lock is not None:
+                    cat.cat_breeding_lock = breeding_lock
+                cat.cat_breeding_lock_date = breeding_lock_date
+                if breeding_animal is not None:
+                    cat.cat_breeding_animal = breeding_animal
+                cat.cat_birth_country = birth_country
+                cat.cat_location = location
+                cat.cat_weight = weight
+                cat.cat_birth_weight = birth_weight
+                cat.cat_transfer_weight = transfer_weight
+                cat.cat_faults_deviations = faults_deviations
+                cat.cat_association = association
+                cat.cat_jaw_fault = jaw_fault
+                cat.cat_hernia = hernia
+                cat.cat_testicles = testicles
+                cat.cat_death_date = death_date
+                cat.cat_death_cause = death_cause
+                cat.cat_status = status
+                if kitten_transfer is not None:
+                    cat.cat_kitten_transfer = kitten_transfer
                 cat.owner_id = owner_id
                 cat.cat_breed_id = breed_id
                 cat.cat_dam_id = dam_id
@@ -132,7 +222,9 @@ class AsyncOrm:
                     cat.cat_photos = cat_photos
                 if cat_files is not None:
                     cat.cat_files = cat_files
-                
+                if cat_title is not None:
+                    cat.cat_title = cat_title
+
                 await session.commit()
                 return True
                 
@@ -602,13 +694,43 @@ class AsyncOrm:
                     'id': c.cat_id,
                     'firstname': c.cat_firstname,
                     'surname': c.cat_surname,
+                    'callname': c.cat_callname,
                     'gender': c.cat_gender,
                     'birthday': c.cat_birthday,
                     'microchip': c.cat_microchip_number,
+                    'title': c.cat_title,
+                    'haritage_number': c.cat_haritage_number,
+                    'haritage_number_2': c.cat_haritage_number_2,
+                    'eye_colour': c.cat_eye_colour,
+                    'hair_type': c.cat_hair_type,
+                    'tests': c.cat_tests,
+                    'litter_size_male': c.cat_litter_size_male,
+                    'litter_size_female': c.cat_litter_size_female,
+                    'blood_group': c.cat_blood_group,
+                    'gencode': c.cat_gencode,
+                    'features': c.cat_features,
+                    'notes': c.cat_notes,
+                    'show_results': c.cat_show_results,
+                    'breeding_lock': c.cat_breeding_lock,
+                    'breeding_lock_date': c.cat_breeding_lock_date,
+                    'breeding_animal': c.cat_breeding_animal,
+                    'birth_country': c.cat_birth_country,
+                    'location': c.cat_location,
+                    'weight': c.cat_weight,
+                    'birth_weight': c.cat_birth_weight,
+                    'transfer_weight': c.cat_transfer_weight,
+                    'faults_deviations': c.cat_faults_deviations,
+                    'association': c.cat_association,
+                    'jaw_fault': c.cat_jaw_fault,
+                    'hernia': c.cat_hernia,
+                    'testicles': c.cat_testicles,
+                    'death_date': c.cat_death_date,
+                    'death_cause': c.cat_death_cause,
+                    'status': c.cat_status,
+                    'kitten_transfer': c.cat_kitten_transfer,
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
-                    'haritage_number': c.cat_haritage_number,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,
@@ -646,11 +768,29 @@ class AsyncOrm:
                 or_(
                     Cat.cat_firstname.ilike(pattern),
                     Cat.cat_surname.ilike(pattern),
+                    Cat.cat_callname.ilike(pattern),
                     Cat.cat_gender.ilike(pattern),
                     Cat.cat_microchip_number.ilike(pattern),
                     Cat.cat_EMS_colour.ilike(pattern),
                     Cat.cat_litter.ilike(pattern),
                     Cat.cat_haritage_number.ilike(pattern),
+                    Cat.cat_haritage_number_2.ilike(pattern),
+                    Cat.cat_eye_colour.ilike(pattern),
+                    Cat.cat_hair_type.ilike(pattern),
+                    Cat.cat_tests.ilike(pattern),
+                    Cat.cat_blood_group.ilike(pattern),
+                    Cat.cat_gencode.ilike(pattern),
+                    Cat.cat_features.ilike(pattern),
+                    Cat.cat_notes.ilike(pattern),
+                    Cat.cat_show_results.ilike(pattern),
+                    Cat.cat_birth_country.ilike(pattern),
+                    Cat.cat_location.ilike(pattern),
+                    Cat.cat_association.ilike(pattern),
+                    Cat.cat_jaw_fault.ilike(pattern),
+                    Cat.cat_hernia.ilike(pattern),
+                    Cat.cat_testicles.ilike(pattern),
+                    Cat.cat_death_cause.ilike(pattern),
+                    Cat.cat_status.ilike(pattern),
                     Owner.owner_firstname.ilike(pattern),
                     Owner.owner_surname.ilike(pattern),
                     Owner.owner_email.ilike(pattern),
@@ -668,13 +808,43 @@ class AsyncOrm:
                     'id': c.cat_id,
                     'firstname': c.cat_firstname,
                     'surname': c.cat_surname,
+                    'callname': c.cat_callname,
                     'gender': c.cat_gender,
                     'birthday': c.cat_birthday,
                     'microchip': c.cat_microchip_number,
+                    'title': c.cat_title,
+                    'haritage_number': c.cat_haritage_number,
+                    'haritage_number_2': c.cat_haritage_number_2,
+                    'eye_colour': c.cat_eye_colour,
+                    'hair_type': c.cat_hair_type,
+                    'tests': c.cat_tests,
+                    'litter_size_male': c.cat_litter_size_male,
+                    'litter_size_female': c.cat_litter_size_female,
+                    'blood_group': c.cat_blood_group,
+                    'gencode': c.cat_gencode,
+                    'features': c.cat_features,
+                    'notes': c.cat_notes,
+                    'show_results': c.cat_show_results,
+                    'breeding_lock': c.cat_breeding_lock,
+                    'breeding_lock_date': c.cat_breeding_lock_date,
+                    'breeding_animal': c.cat_breeding_animal,
+                    'birth_country': c.cat_birth_country,
+                    'location': c.cat_location,
+                    'weight': c.cat_weight,
+                    'birth_weight': c.cat_birth_weight,
+                    'transfer_weight': c.cat_transfer_weight,
+                    'faults_deviations': c.cat_faults_deviations,
+                    'association': c.cat_association,
+                    'jaw_fault': c.cat_jaw_fault,
+                    'hernia': c.cat_hernia,
+                    'testicles': c.cat_testicles,
+                    'death_date': c.cat_death_date,
+                    'death_cause': c.cat_death_cause,
+                    'status': c.cat_status,
+                    'kitten_transfer': c.cat_kitten_transfer,
                     'breed': c.cat_breed_id,
                     'colour': c.cat_EMS_colour,
                     'litter': c.cat_litter,
-                    'haritage_number': c.cat_haritage_number,
                     'owner_id': c.owner_id,
                     'owner_firstname': o.owner_firstname,
                     'owner_surname': o.owner_surname,

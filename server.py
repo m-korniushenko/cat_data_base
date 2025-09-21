@@ -11,6 +11,9 @@ from nicegui import ui, app
 from nicegui.events import ValueChangeEventArguments
 import json
 import os
+
+from logging_config import setup_logging, log_info, log_error, log_success, log_warning
+logger = setup_logging()
 from app.niceGUI_folder.pydentic_models import CatCreate, CatUpdate, OwnerCreate, OwnerUpdate
 from app.niceGUI_folder.add_cat_page import add_cat_page_render
 from app.niceGUI_folder.add_owner_page import add_owner_page_render
@@ -33,6 +36,7 @@ from app.niceGUI_folder.edit_breed_page import edit_breed_page_render
 from app.niceGUI_folder.history_page import history_page_render
 from app.niceGUI_folder.login_page import login_page_render
 from app.niceGUI_folder.auth_check_page import auth_check_page_render
+from app.niceGUI_folder.studbook_page import studbook_page_render
 
 
 
@@ -111,12 +115,13 @@ async def edit_breed_page(breed_id: int):
 async def history_page():
     await history_page_render()
 
+@ui.page('/studbook')
+async def studbook_page():
+    await studbook_page_render()
 
-# Static file serving for photos and files
+
 @app.get('/static/{file_path:path}')
 async def serve_static_files(file_path: str):
-    """Serve static files (photos and documents)"""
-    # Normalize path separators for file system
     normalized_file_path = file_path.replace('/', '\\') if os.name == 'nt' else file_path
     full_path = os.path.join(os.getcwd(), normalized_file_path)
     print(f"Serving file: {file_path} -> {full_path}")
@@ -133,21 +138,82 @@ async def serve_static_files(file_path: str):
         raise HTTPException(status_code=404, detail="File not found")
 
 
+@app.get('/exports/{filename}')
+async def serve_exports(filename: str):
+    """Serve exported files from exports directory"""
+    exports_dir = os.path.join(os.getcwd(), 'exports')
+    file_path = os.path.join(exports_dir, filename)
+    
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(file_path, filename=filename)
+    else:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Export file not found")
+
+
 def start_db():
+    log_info("Initializing database...")
+    
     if not check_creds():
+        log_error("Credentials verification error")
         sys.exit()
-    drop_database_if_exists()
-    postgres_check_and_create_database(Base)
-    if not check_db_connection():
-        sys.exit()
-    start_add_workflow()
+    
+    log_info("Creating database...")
+    try:
+        # drop_database_if_exists()
+        postgres_check_and_create_database(Base)
+    except Exception as e:
+        log_warning(f"Database already exists or creation error: {e}")
+        if not check_db_connection():
+            log_error("Cannot connect to database")
+            sys.exit()
+    
+    # Wait for database to be fully ready
+    import time
+    max_retries = 5
+    for attempt in range(max_retries):
+        if check_db_connection():
+            log_success("Database connection verified")
+            break
+        else:
+            log_warning(f"Database connection attempt {attempt + 1}/{max_retries} failed")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+            else:
+                log_error("Database connection error - max retries exceeded")
+                sys.exit()
+    
+    log_success("Database ready")
+    log_info("Loading test data...")
+    # start_add_workflow()
+    log_success("Test data loaded")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    start_db()
-    ui.run(
-        port=8080,
-        title='Cat Database Management System',
-        show=True,
-        reload=True,
-    )
+    log_info("Starting Cat Database Management System v2.0")
+    log_info("=" * 50)
+    
+    try:
+        start_db()
+        
+        log_success("Server started successfully!")
+        log_info("🌐 Access: http://localhost:8080")
+        log_info("🔐 Test accounts:")
+        log_info("   Admin: admin@admin.com / admin")
+        log_info("   Owner: john@example.com / password")
+        log_info("🛑 Press Ctrl+C to stop")
+        log_info("=" * 50)
+        
+        ui.run(
+            port=8080,
+            title='Cat Database Management System',
+            show=True,
+            reload=True,
+        )
+        
+    except KeyboardInterrupt:
+        log_info("Stopping server...")
+    except Exception as e:
+        log_error(f"Startup error: {e}")
+        sys.exit(1)

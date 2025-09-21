@@ -51,35 +51,129 @@ async def add_cat_page_render(current_user=None, session_id=None):
         with ui.card().classes('w-full max-w-2xl q-pa-lg'):
             ui.label('Add a new cat').classes('text-h6 q-mb-md')
 
+            # Basic Information Section
+            ui.label('🐱 Basic Information').classes('text-h6 q-mb-md')
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
-                firstname = ui.input(label='Cat Firstname').props('outlined dense').classes('w-full')
-                surname = ui.input(label='Cat Surname').props('outlined dense').classes('w-full')
-
-                gender = ui.select(['Male', 'Female'], label='Cat Gender') \
+                firstname = ui.input(label='Name *').props('outlined dense').classes('w-full')
+                surname = ui.input(label='Surname').props('outlined dense').classes('w-full')
+                callname = ui.input(label='Callname').props('outlined dense').classes('w-full')
+                
+                gender = ui.select(['Male', 'Female'], label='Gender *') \
                     .props('outlined dense') \
                     .classes('w-full')
-                birthday = ui.input(label='Cat Birthday') \
+                birthday = ui.input(label='Birthday *') \
                     .props('type=date outlined dense') \
                     .classes('w-full')
-                microchip = ui.input(label='Cat Microchip Number') \
+                microchip = ui.input(label='Chip Number') \
                     .props('outlined dense') \
-                    .classes('w-full md:col-span-2')
-                breed = ui.select(dict(breed_map), label='Cat Breed').props('outlined dense').classes('w-full')
+                    .classes('w-full')
+                
+                title = ui.select(['', 'Champion', 'Grand Champion', 'Supreme Grand Champion'], 
+                                label='Title').props('outlined dense').classes('w-full')
+                haritage_number = ui.input(label='Studbook Number 1').props('outlined dense').classes('w-full')
+                haritage_number_2 = ui.input(label='Studbook Number 2').props('outlined dense').classes('w-full')
+
+            # Breed and Color Information
+            ui.separator().classes('q-my-md')
+            ui.label('🎨 Breed & Color Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                breed = ui.select(dict(breed_map), label='Breed *').props('outlined dense').classes('w-full')
                 add_breed_btn = ui.button('Add New Breed', on_click=lambda: ui.navigate.to('/add_breed'))
                 add_breed_btn.props('flat size=sm').classes('q-mt-xs')
-                colour = ui.input(label='Cat Colour').props('outlined dense').classes('w-full')
-
-                litter = ui.input(label='Cat Litter').props('outlined dense').classes('w-full')
-                haritage_number = ui.input(label='Cat Haritage Number').props('outlined dense').classes('w-full')
-                owner = ui.select(dict(owner_map), label='Owner').props('outlined dense').classes('w-full')
-                add_owner_btn = ui.button('Add New Owner', on_click=lambda: ui.navigate.to('/add_owner'))
-                add_owner_btn.props('flat size=sm').classes('q-mt-xs')
                 
-                # Parent selection fields
+                colour = ui.input(label='Color').props('outlined dense').classes('w-full')
+                eye_colour = ui.select(['', 'Blue', 'Green', 'Yellow', 'Orange', 'Heterochromatic'], 
+                                     label='Eye Color').props('outlined dense').classes('w-full')
+                hair_type = ui.select(['', 'Short Hair', 'Long Hair', 'Semi-Long Hair'], 
+                                    label='Hair Type').props('outlined dense').classes('w-full')
+
+            # Family Information
+            ui.separator().classes('q-my-md')
+            ui.label('👨‍👩‍👧‍👦 Family Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
                 dam = ui.select(dict(dam_map), label='Dam (Mother)') \
                     .props('outlined dense clearable').classes('w-full')
                 sire = ui.select(dict(sire_map), label='Sire (Father)') \
                     .props('outlined dense clearable').classes('w-full')
+                
+                litter = ui.input(label='Litter').props('outlined dense').classes('w-full')
+                litter_size_male = ui.number(label='Litter Size (Male)', value=0, min=0, max=20) \
+                    .props('outlined dense').classes('w-full')
+                litter_size_female = ui.number(label='Litter Size (Female)', value=0, min=0, max=20) \
+                    .props('outlined dense').classes('w-full')
+
+            # Owner and Breeder Information
+            ui.separator().classes('q-my-md')
+            ui.label('👤 Owner & Breeder Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                owner = ui.select(dict(owner_map), label='Owner *').props('outlined dense').classes('w-full')
+                add_owner_btn = ui.button('Add New Owner', on_click=lambda: ui.navigate.to('/add_owner'))
+                add_owner_btn.props('flat size=sm').classes('q-mt-xs')
+
+            # Health and Medical Information
+            ui.separator().classes('q-my-md')
+            ui.label('🏥 Health & Medical Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                tests = ui.input(label='Tests').props('outlined dense').classes('w-full')
+                blood_group = ui.input(label='Blood Group').props('outlined dense').classes('w-full')
+                gencode = ui.input(label='Gencode').props('outlined dense').classes('w-full')
+                
+                weight = ui.number(label='Weight (kg)', value=0.0, min=0.0, max=50.0, step=0.1) \
+                    .props('outlined dense').classes('w-full')
+                birth_weight = ui.number(label='Birth Weight (g)', value=0.0, min=0.0, max=200.0, step=0.1) \
+                    .props('outlined dense').classes('w-full')
+                transfer_weight = ui.number(label='Transfer Weight (g)', value=0.0, min=0.0, max=200.0, step=0.1) \
+                    .props('outlined dense').classes('w-full')
+
+            # Breeding Information
+            ui.separator().classes('q-my-md')
+            ui.label('🐾 Breeding Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                breeding_lock = ui.checkbox('Breeding Lock')
+                breeding_lock_date = ui.input(label='Breeding Lock Date') \
+                    .props('type=date outlined dense') \
+                    .classes('w-full')
+                breeding_animal = ui.checkbox('Breeding Animal')
+                kitten_transfer = ui.checkbox('Kitten Transfer')
+
+            # Location and Association
+            ui.separator().classes('q-my-md')
+            ui.label('📍 Location & Association').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                birth_country = ui.input(label='Birth Country').props('outlined dense').classes('w-full')
+                location = ui.input(label='Location').props('outlined dense').classes('w-full')
+                association = ui.input(label='Association').props('outlined dense').classes('w-full')
+
+            # Health Issues
+            ui.separator().classes('q-my-md')
+            ui.label('⚠️ Health Issues').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                faults_deviations = ui.input(label='Faults / Deviations').props('outlined dense').classes('w-full')
+                jaw_fault = ui.select(['', 'None', 'Overbite', 'Underbite', 'Crossbite'], 
+                                    label='Jaw Fault').props('outlined dense').classes('w-full')
+                hernia = ui.select(['', 'None', 'Umbilical', 'Inguinal', 'Diaphragmatic'], 
+                                 label='Hernia').props('outlined dense').classes('w-full')
+                testicles = ui.select(['', 'Normal', 'Cryptorchid', 'Monorchid'], 
+                                    label='Testicles').props('outlined dense').classes('w-full')
+
+            # Death Information
+            ui.separator().classes('q-my-md')
+            ui.label('💀 Death Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                death_date = ui.input(label='Death Date') \
+                    .props('type=date outlined dense') \
+                    .classes('w-full')
+                death_cause = ui.input(label='Death Cause').props('outlined dense').classes('w-full')
+                status = ui.select(['', 'Alive', 'Deceased', 'Missing', 'Transferred'], 
+                                 label='Status').props('outlined dense').classes('w-full')
+
+            # Additional Information
+            ui.separator().classes('q-my-md')
+            ui.label('📝 Additional Information').classes('text-h6 q-mb-md')
+            with ui.grid().classes('grid-cols-1 gap-4 w-full'):
+                features = ui.textarea(label='Features').props('outlined dense').classes('w-full')
+                notes = ui.textarea(label='Notes').props('outlined dense').classes('w-full')
+                show_results = ui.textarea(label='Show Results').props('outlined dense').classes('w-full')
 
             # Photos section
             ui.separator().classes('q-my-md')
@@ -213,35 +307,67 @@ async def add_cat_page_render(current_user=None, session_id=None):
 
             async def handle_submit():
                 try:
-                    # Проверяем, что все обязательные поля заполнены
                     required_fields = [
-                        firstname.value, surname.value, microchip.value, 
-                        owner.value, breed.value
+                        firstname.value, owner.value, breed.value
                     ]
                     if not all(required_fields):
                         ui.notify('Please fill in all required fields', color='negative', position='top')
                         return
 
-                    # Проверяем формат даты
                     if not birthday.value:
                         ui.notify('Please select a birthday', color='negative', position='top')
                         return
 
-                    await AsyncOrm.add_cat(cat_firstname=firstname.value,
-                                           cat_surname=surname.value,
-                                           cat_gender=gender.value,
-                                           cat_birthday=datetime.strptime(birthday.value, '%Y-%m-%d').date(),
-                                           cat_microchip_number=microchip.value,
-                                           cat_breed_id=breed.value,
-                                           cat_EMS_colour=colour.value,
-                                           cat_litter=litter.value,
-                                           cat_haritage_number=haritage_number.value,
-                                           owner_id=owner.value,
-                                           cat_dam_id=dam.value,
-                                           cat_sire_id=sire.value,
-                                           cat_photos=uploaded_photos,
-                                           cat_files=uploaded_files
-                                           )
+                    # Convert date strings to date objects
+                    birthday_date = datetime.strptime(birthday.value, '%Y-%m-%d').date() if birthday.value else None
+                    breeding_lock_date_obj = datetime.strptime(breeding_lock_date.value, '%Y-%m-%d').date() if breeding_lock_date.value else None
+                    death_date_obj = datetime.strptime(death_date.value, '%Y-%m-%d').date() if death_date.value else None
+
+                    await AsyncOrm.add_cat(
+                        cat_firstname=firstname.value,
+                        cat_surname=surname.value,
+                        cat_callname=callname.value,
+                        cat_gender=gender.value,
+                        cat_birthday=birthday_date,
+                        cat_microchip_number=microchip.value,
+                        cat_breed_id=breed.value,
+                        cat_EMS_colour=colour.value,
+                        cat_litter=litter.value,
+                        cat_haritage_number=haritage_number.value,
+                        cat_haritage_number_2=haritage_number_2.value,
+                        cat_eye_colour=eye_colour.value,
+                        cat_hair_type=hair_type.value,
+                        cat_tests=tests.value,
+                        cat_litter_size_male=int(litter_size_male.value) if litter_size_male.value else None,
+                        cat_litter_size_female=int(litter_size_female.value) if litter_size_female.value else None,
+                        cat_blood_group=blood_group.value,
+                        cat_gencode=gencode.value,
+                        cat_features=features.value,
+                        cat_notes=notes.value,
+                        cat_show_results=show_results.value,
+                        cat_breeding_lock=breeding_lock.value,
+                        cat_breeding_lock_date=breeding_lock_date_obj,
+                        cat_breeding_animal=breeding_animal.value,
+                        cat_birth_country=birth_country.value,
+                        cat_location=location.value,
+                        cat_weight=float(weight.value) if weight.value else None,
+                        cat_birth_weight=float(birth_weight.value) if birth_weight.value else None,
+                        cat_transfer_weight=float(transfer_weight.value) if transfer_weight.value else None,
+                        cat_faults_deviations=faults_deviations.value,
+                        cat_association=association.value,
+                        cat_jaw_fault=jaw_fault.value,
+                        cat_hernia=hernia.value,
+                        cat_testicles=testicles.value,
+                        cat_death_date=death_date_obj,
+                        cat_death_cause=death_cause.value,
+                        cat_status=status.value,
+                        cat_kitten_transfer=kitten_transfer.value,
+                        owner_id=owner.value,
+                        cat_dam_id=dam.value,
+                        cat_sire_id=sire.value,
+                        cat_photos=uploaded_photos,
+                        cat_files=uploaded_files
+                    )
                     ui.notify('Cat added successfully!', color='positive', position='top')
                     ui.navigate.to('/cats')
                 except ValidationError as e:

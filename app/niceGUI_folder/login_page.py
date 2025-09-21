@@ -16,8 +16,12 @@ def login_page_render():
             ui.label('🐱 Cat Database Login').classes('text-h4 text-center mb-6 text-blue-600')
             
             # Login form
-            email_input = ui.input('Email', placeholder='Enter your email').props('outlined dense').classes('w-full mb-4')
-            password_input = ui.input('Password', placeholder='Enter your password').props('outlined dense type=password').classes('w-full mb-6')
+            email_input = ui.input('Email', placeholder='Enter your email').props(
+                'outlined dense'
+            ).classes('w-full mb-4')
+            password_input = ui.input('Password', placeholder='Enter your password').props(
+                'outlined dense type=password'
+            ).classes('w-full mb-6')
             
             # Login button
             async def handle_login():
@@ -28,7 +32,15 @@ def login_page_render():
                     ui.notify('Please enter both email and password', type='negative', position='top')
                     return
                 
+                # Disable button and show loading state
+                login_button.props('loading')
+                ui.notify('Authenticating...', type='info', position='top')
+                
                 try:
+                    # Wait a moment for database to be ready if it's still initializing
+                    import asyncio
+                    await asyncio.sleep(0.5)
+                    
                     # Authenticate user
                     user_data = await AuthService.authenticate_user(email, password)
                     
@@ -51,9 +63,13 @@ def login_page_render():
                         ui.notify('Invalid email or password', type='negative', position='top')
                         
                 except Exception as e:
-                    ui.notify(f'Login error: {str(e)}', type='negative', position='top')
+                    print(f"Login error: {e}")
+                    ui.notify('Login failed. Please try again.', type='negative', position='top')
+                finally:
+                    # Re-enable button
+                    login_button.props('')
             
-            ui.button('Login', on_click=handle_login, color='primary').classes('w-full mb-4')
+            login_button = ui.button('Login', on_click=handle_login, color='primary').classes('w-full mb-4')
             
             # Info about permissions
             with ui.expansion('Permission Levels', icon='info').classes('w-full'):

@@ -188,30 +188,121 @@ async def cat_profile_page_render(cat_id: int, current_user=None, session_id=Non
                 
                 ui.button('📄 Generate PDF', on_click=quick_generate_pdf, color='primary').props('icon=description')
             
-            with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
-                # Basic information
-                with ui.column():
-                    ui.label('Basic Information').classes('text-h6 q-mb-sm')
-                    ui.label(f'Gender: {cat.cat_gender}').classes('q-mb-xs')
-                    ui.label(f'Birthday: {cat.cat_birthday}').classes('q-mb-xs')
-                    ui.label(f'Microchip: {cat.cat_microchip_number}').classes('q-mb-xs')
-                    ui.label(f'Colour: {cat.cat_EMS_colour or "Not specified"}').classes('q-mb-xs')
-                    ui.label(f'Litter: {cat.cat_litter or "Not specified"}').classes('q-mb-xs')
-                    ui.label(f'Heritage Number: {cat.cat_haritage_number or "Not specified"}').classes('q-mb-xs')
-                
-                # Owner and breed information
-                with ui.column():
-                    ui.label('Owner & Breed Information').classes('text-h6 q-mb-sm')
-                    if owner:
-                        ui.label(f'Owner: {owner.owner_firstname} {owner.owner_surname}').classes('q-mb-xs')
-                        ui.label(f'Email: {owner.owner_email}').classes('q-mb-xs')
-                        if owner.owner_phone:
-                            ui.label(f'Phone: {owner.owner_phone}').classes('q-mb-xs')
-                    if breed:
-                        ui.label(f'Breeder: {breed.breed_firstname} {breed.breed_surname}').classes('q-mb-xs')
-                        ui.label(f'Breeder Email: {breed.breed_email}').classes('q-mb-xs')
-                        if breed.breed_phone:
-                            ui.label(f'Breeder Phone: {breed.breed_phone}').classes('q-mb-xs')
+            # Basic Information Section
+            with ui.card().classes('w-full q-pa-md q-mb-md'):
+                ui.label('🐱 Basic Information').classes('text-h6 q-mb-md')
+                with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                    with ui.column():
+                        ui.label(f'Name: {cat.cat_firstname} {cat.cat_surname}').classes('q-mb-xs')
+                        ui.label(f'Callname: {cat.cat_callname or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Gender: {cat.cat_gender}').classes('q-mb-xs')
+                        ui.label(f'Birthday: {cat.cat_birthday}').classes('q-mb-xs')
+                        ui.label(f'Chip Number: {cat.cat_microchip_number or "Not specified"}').classes('q-mb-xs')
+                    
+                    with ui.column():
+                        ui.label(f'Title: {cat.cat_title or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Studbook Number 1: {cat.cat_haritage_number or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Studbook Number 2: {cat.cat_haritage_number_2 or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Eye Color: {cat.cat_eye_colour or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Hair Type: {cat.cat_hair_type or "Not specified"}').classes('q-mb-xs')
+
+            # Breed and Color Information
+            with ui.card().classes('w-full q-pa-md q-mb-md'):
+                ui.label('🎨 Breed & Color Information').classes('text-h6 q-mb-md')
+                with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                    with ui.column():
+                        ui.label(f'Color: {cat.cat_EMS_colour or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Litter: {cat.cat_litter or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Litter Size (Male): {cat.cat_litter_size_male or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Litter Size (Female): {cat.cat_litter_size_female or "Not specified"}').classes('q-mb-xs')
+                    
+                    with ui.column():
+                        if breed:
+                            ui.label(f'Breeder: {breed.breed_firstname} {breed.breed_surname}').classes('q-mb-xs')
+                            ui.label(f'Breeder Email: {breed.breed_email}').classes('q-mb-xs')
+                            if breed.breed_phone:
+                                ui.label(f'Breeder Phone: {breed.breed_phone}').classes('q-mb-xs')
+                        else:
+                            ui.label('Breeder: Not specified').classes('q-mb-xs')
+
+            # Health and Medical Information
+            with ui.card().classes('w-full q-pa-md q-mb-md'):
+                ui.label('🏥 Health & Medical Information').classes('text-h6 q-mb-md')
+                with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                    with ui.column():
+                        ui.label(f'Tests: {cat.cat_tests or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Blood Group: {cat.cat_blood_group or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Gencode: {cat.cat_gencode or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Weight: {cat.cat_weight or "Not specified"} kg').classes('q-mb-xs')
+                        ui.label(f'Birth Weight: {cat.cat_birth_weight or "Not specified"} g').classes('q-mb-xs')
+                    
+                    with ui.column():
+                        ui.label(f'Transfer Weight: {cat.cat_transfer_weight or "Not specified"} g').classes('q-mb-xs')
+                        ui.label(f'Jaw Fault: {cat.cat_jaw_fault or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Hernia: {cat.cat_hernia or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Testicles: {cat.cat_testicles or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Faults/Deviations: {cat.cat_faults_deviations or "Not specified"}').classes('q-mb-xs')
+
+            # Breeding Information
+            with ui.card().classes('w-full q-pa-md q-mb-md'):
+                ui.label('🐾 Breeding Information').classes('text-h6 q-mb-md')
+                with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                    with ui.column():
+                        ui.label(f'Breeding Lock: {"Yes" if cat.cat_breeding_lock else "No"}').classes('q-mb-xs')
+                        ui.label(f'Breeding Lock Date: {cat.cat_breeding_lock_date or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Breeding Animal: {"Yes" if cat.cat_breeding_animal else "No"}').classes('q-mb-xs')
+                        ui.label(f'Kitten Transfer: {"Yes" if cat.cat_kitten_transfer else "No"}').classes('q-mb-xs')
+                    
+                    with ui.column():
+                        ui.label(f'Birth Country: {cat.cat_birth_country or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Location: {cat.cat_location or "Not specified"}').classes('q-mb-xs')
+                        ui.label(f'Association: {cat.cat_association or "Not specified"}').classes('q-mb-xs')
+
+            # Death Information
+            if cat.cat_death_date or cat.cat_death_cause or cat.cat_status:
+                with ui.card().classes('w-full q-pa-md q-mb-md'):
+                    ui.label('💀 Death Information').classes('text-h6 q-mb-md')
+                    with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                        with ui.column():
+                            ui.label(f'Death Date: {cat.cat_death_date or "Not specified"}').classes('q-mb-xs')
+                            ui.label(f'Death Cause: {cat.cat_death_cause or "Not specified"}').classes('q-mb-xs')
+                            ui.label(f'Status: {cat.cat_status or "Not specified"}').classes('q-mb-xs')
+
+            # Owner Information
+            with ui.card().classes('w-full q-pa-md q-mb-md'):
+                ui.label('👤 Owner Information').classes('text-h6 q-mb-md')
+                if owner:
+                    with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
+                        with ui.column():
+                            ui.label(f'Owner: {owner.owner_firstname} {owner.owner_surname}').classes('q-mb-xs')
+                            ui.label(f'Email: {owner.owner_email}').classes('q-mb-xs')
+                            if owner.owner_phone:
+                                ui.label(f'Phone: {owner.owner_phone}').classes('q-mb-xs')
+                        with ui.column():
+                            if owner.owner_address:
+                                ui.label(f'Address: {owner.owner_address}').classes('q-mb-xs')
+                            if owner.owner_city:
+                                ui.label(f'City: {owner.owner_city}').classes('q-mb-xs')
+                            if owner.owner_country:
+                                ui.label(f'Country: {owner.owner_country}').classes('q-mb-xs')
+                            if owner.owner_zip:
+                                ui.label(f'ZIP: {owner.owner_zip}').classes('q-mb-xs')
+                else:
+                    ui.label('Owner: Not specified').classes('q-mb-xs')
+
+            # Additional Information
+            if cat.cat_features or cat.cat_notes or cat.cat_show_results:
+                with ui.card().classes('w-full q-pa-md q-mb-md'):
+                    ui.label('📝 Additional Information').classes('text-h6 q-mb-md')
+                    if cat.cat_features:
+                        ui.label('Features:').classes('text-subtitle2 q-mb-xs')
+                        ui.label(cat.cat_features).classes('q-mb-md')
+                    if cat.cat_notes:
+                        ui.label('Notes:').classes('text-subtitle2 q-mb-xs')
+                        ui.label(cat.cat_notes).classes('q-mb-md')
+                    if cat.cat_show_results:
+                        ui.label('Show Results:').classes('text-subtitle2 q-mb-xs')
+                        ui.label(cat.cat_show_results).classes('q-mb-md')
         
         # Photos section
         if cat.cat_photos and len(cat.cat_photos) > 0:

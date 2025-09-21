@@ -30,8 +30,24 @@ class AuthService:
         Returns user data if successful, None otherwise
         """
         try:
-            # Get all owners
-            _, owners = await AsyncOrm.get_owner()
+            # Get all owners with retry logic
+            owners = []
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    _, owners = await AsyncOrm.get_owner()
+                    break
+                except Exception as e:
+                    print(f"Database access attempt {attempt + 1} failed: {e}")
+                    if attempt < max_retries - 1:
+                        import asyncio
+                        await asyncio.sleep(1)  # Wait 1 second before retry
+                    else:
+                        raise e
+            
+            if not owners:
+                print("No owners found in database")
+                return None
             
             # Find owner by email
             owner = None
@@ -41,11 +57,13 @@ class AuthService:
                     break
             
             if not owner:
+                print(f"No owner found with email: {email}")
                 return None
             
             # Check password (assuming password is already hashed in database)
             hashed_password = cls.hash_password(password)
             if owner.get('owner_hashed_password') != hashed_password:
+                print(f"Password mismatch for email: {email}")
                 return None
             
             # Return user data

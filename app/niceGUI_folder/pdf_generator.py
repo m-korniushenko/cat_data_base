@@ -75,25 +75,69 @@ class CatPDFGenerator:
         
         # Prepare data for compact table
         cat_data = [
-            ['🐱 Cat Info', '', '👤 Owner Info', ''],
+            ['🐱 Basic Information', '', '', ''],
             ['Name:', f"{cat_info['cat'].cat_firstname} {cat_info['cat'].cat_surname}",
-             'Name:', f"{cat_info['owner'].owner_firstname} {cat_info['owner'].owner_surname}" 
-             if cat_info['owner'] else 'Not specified'],
+             'Callname:', cat_info['cat'].cat_callname or 'Not specified'],
             ['Gender:', cat_info['cat'].cat_gender,
-             'Email:', cat_info['owner'].owner_email if cat_info['owner'] else 'Not specified'],
+             'Title:', cat_info['cat'].cat_title[0] if cat_info['cat'].cat_title else 'Not specified'],
             ['Birthday:', str(cat_info['cat'].cat_birthday),
-             'Phone:', cat_info['owner'].owner_phone or 'Not specified' 
-             if cat_info['owner'] else 'Not specified'],
-            ['Microchip:', cat_info['cat'].cat_microchip_number or 'Not specified',
-             'Address:', cat_info['owner'].owner_address or 'Not specified' 
-             if cat_info['owner'] else 'Not specified'],
+             'Chip Number:', cat_info['cat'].cat_microchip_number or 'Not specified'],
+            ['Studbook #1:', cat_info['cat'].cat_haritage_number or 'Not specified',
+             'Studbook #2:', cat_info['cat'].cat_haritage_number_2 or 'Not specified'],
+            ['Eye Color:', cat_info['cat'].cat_eye_colour or 'Not specified',
+             'Hair Type:', cat_info['cat'].cat_hair_type or 'Not specified'],
             ['Color:', cat_info['cat'].cat_EMS_colour or 'Not specified',
-             'City:', cat_info['owner'].owner_city or 'Not specified' 
-             if cat_info['owner'] else 'Not specified'],
-            ['Litter:', cat_info['cat'].cat_litter or 'Not specified',
-             'Country:', cat_info['owner'].owner_country or 'Not specified' 
-             if cat_info['owner'] else 'Not specified'],
-            ['Heritage:', cat_info['cat'].cat_haritage_number or 'Not specified',
+             'Litter:', cat_info['cat'].cat_litter or 'Not specified'],
+            ['Litter Size (M):', (str(cat_info['cat'].cat_litter_size_male)
+                                 if cat_info['cat'].cat_litter_size_male else 'Not specified'),
+             'Litter Size (F):', (str(cat_info['cat'].cat_litter_size_female) 
+                                 if cat_info['cat'].cat_litter_size_female else 'Not specified')],
+            
+            ['🏥 Health Information', '', '', ''],
+            ['Tests:', cat_info['cat'].cat_tests or 'Not specified',
+             'Blood Group:', cat_info['cat'].cat_blood_group or 'Not specified'],
+            ['Gencode:', cat_info['cat'].cat_gencode or 'Not specified',
+             'Weight:', f"{cat_info['cat'].cat_weight} kg" if cat_info['cat'].cat_weight else 'Not specified'],
+            ['Birth Weight:', (f"{cat_info['cat'].cat_birth_weight} g" 
+                              if cat_info['cat'].cat_birth_weight else 'Not specified'),
+             'Transfer Weight:', (f"{cat_info['cat'].cat_transfer_weight} g" 
+                                if cat_info['cat'].cat_transfer_weight else 'Not specified')],
+            ['Jaw Fault:', cat_info['cat'].cat_jaw_fault or 'Not specified',
+             'Hernia:', cat_info['cat'].cat_hernia or 'Not specified'],
+            ['Testicles:', cat_info['cat'].cat_testicles or 'Not specified',
+             'Faults/Deviations:', cat_info['cat'].cat_faults_deviations or 'Not specified'],
+            
+            ['🐾 Breeding Information', '', '', ''],
+            ['Breeding Lock:', 'Yes' if cat_info['cat'].cat_breeding_lock else 'No',
+             'Breeding Lock Date:', (str(cat_info['cat'].cat_breeding_lock_date) 
+                                    if cat_info['cat'].cat_breeding_lock_date else 'Not specified')],
+            ['Breeding Animal:', 'Yes' if cat_info['cat'].cat_breeding_animal else 'No',
+             'Kitten Transfer:', 'Yes' if cat_info['cat'].cat_kitten_transfer else 'No'],
+            ['Birth Country:', cat_info['cat'].cat_birth_country or 'Not specified',
+             'Location:', cat_info['cat'].cat_location or 'Not specified'],
+            ['Association:', cat_info['cat'].cat_association or 'Not specified',
+             '', ''],
+            
+            ['💀 Death Information', '', '', ''],
+            ['Death Date:', str(cat_info['cat'].cat_death_date) if cat_info['cat'].cat_death_date else 'Not specified',
+             'Death Cause:', cat_info['cat'].cat_death_cause or 'Not specified'],
+            ['Status:', cat_info['cat'].cat_status or 'Not specified',
+             '', ''],
+            
+            ['👤 Owner Information', '', '', ''],
+            ['Name:', (f"{cat_info['owner'].owner_firstname} {cat_info['owner'].owner_surname}" 
+                      if cat_info['owner'] else 'Not specified'),
+             'Email:', cat_info['owner'].owner_email if cat_info['owner'] else 'Not specified'],
+            ['Phone:', (cat_info['owner'].owner_phone or 'Not specified' 
+                       if cat_info['owner'] else 'Not specified'),
+             'Address:', (cat_info['owner'].owner_address or 'Not specified' 
+                         if cat_info['owner'] else 'Not specified')],
+            ['City:', (cat_info['owner'].owner_city or 'Not specified' 
+                      if cat_info['owner'] else 'Not specified'),
+             'Country:', (cat_info['owner'].owner_country or 'Not specified' 
+                         if cat_info['owner'] else 'Not specified')],
+            ['ZIP:', (cat_info['owner'].owner_zip or 'Not specified' 
+                     if cat_info['owner'] else 'Not specified'),
              '', '']
         ]
         
@@ -162,6 +206,26 @@ class CatPDFGenerator:
         
         story.append(compact_table)
         story.append(Spacer(1, 15))
+        
+        # Additional Information section
+        additional_info = []
+        if cat_info['cat'].cat_features:
+            additional_info.append(['Features:', cat_info['cat'].cat_features])
+        if cat_info['cat'].cat_notes:
+            additional_info.append(['Notes:', cat_info['cat'].cat_notes])
+        if cat_info['cat'].cat_show_results:
+            additional_info.append(['Show Results:', cat_info['cat'].cat_show_results])
+        
+        if additional_info:
+            story.append(Paragraph("📝 Additional Information", self.styles['CustomHeading']))
+            story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkblue))
+            
+            for info in additional_info:
+                story.append(Paragraph(f"<b>{info[0]}</b>", self.styles['CustomSubHeading']))
+                story.append(Paragraph(info[1], self.styles['Normal']))
+                story.append(Spacer(1, 8))
+            
+            story.append(Spacer(1, 10))
         
         # Photos section
         if cat_info['cat'].cat_photos and len(cat_info['cat'].cat_photos) > 0:

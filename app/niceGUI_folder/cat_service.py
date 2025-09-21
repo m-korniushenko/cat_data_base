@@ -170,13 +170,6 @@ class CatService:
                 error_msg = "; ".join(validation_result.errors)
                 return False, f"Validation failed: {error_msg}"
             
-            # Convert birthday string to date object
-            from datetime import datetime
-            try:
-                birthday_date = datetime.strptime(data['birthday'], '%Y-%m-%d').date()
-            except ValueError:
-                return False, "Invalid birthday format. Use YYYY-MM-DD"
-            
             # Update cat in database
             print(f"Updating cat {cat_id} with data: {data}")
             success = await self.orm.update_cat(
@@ -184,7 +177,7 @@ class CatService:
                 firstname=data['firstname'],
                 surname=data['surname'],
                 gender=data['gender'],
-                birthday=birthday_date,
+                birthday=data['birthday'],
                 microchip=data.get('microchip'),
                 colour=data.get('colour'),
                 litter=data.get('litter'),
@@ -194,7 +187,36 @@ class CatService:
                 dam_id=data.get('dam_id'),
                 sire_id=data.get('sire_id'),
                 cat_photos=data.get('cat_photos'),
-                cat_files=data.get('cat_files')
+                cat_files=data.get('cat_files'),
+                callname=data.get('callname'),
+                haritage_number_2=data.get('haritage_number_2'),
+                eye_colour=data.get('eye_colour'),
+                hair_type=data.get('hair_type'),
+                tests=data.get('tests'),
+                litter_size_male=data.get('litter_size_male'),
+                litter_size_female=data.get('litter_size_female'),
+                blood_group=data.get('blood_group'),
+                gencode=data.get('gencode'),
+                features=data.get('features'),
+                notes=data.get('notes'),
+                show_results=data.get('show_results'),
+                breeding_lock=data.get('breeding_lock'),
+                breeding_lock_date=data.get('breeding_lock_date'),
+                breeding_animal=data.get('breeding_animal'),
+                birth_country=data.get('birth_country'),
+                location=data.get('location'),
+                weight=data.get('weight'),
+                birth_weight=data.get('birth_weight'),
+                transfer_weight=data.get('transfer_weight'),
+                faults_deviations=data.get('faults_deviations'),
+                association=data.get('association'),
+                jaw_fault=data.get('jaw_fault'),
+                hernia=data.get('hernia'),
+                testicles=data.get('testicles'),
+                death_date=data.get('death_date'),
+                death_cause=data.get('death_cause'),
+                status=data.get('status'),
+                kitten_transfer=data.get('kitten_transfer')
             )
             print(f"Update result: {success}")
             
