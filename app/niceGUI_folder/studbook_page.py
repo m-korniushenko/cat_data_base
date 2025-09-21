@@ -159,7 +159,7 @@ async def studbook_page_render(current_user=None, session_id=None):
         zb_nummer = ', '.join(reg_numbers) if reg_numbers else ''
 
         # Format birthday
-        geburtsdatum = cat.get('birthday').strftime('%d.%m.%Y') if cat.get('birthday') else ''
+        geburtsdatum = cat.get('birthday').strftime('%Y-%m-%d') if cat.get('birthday') else ''
 
         # Format gender (w/m)
         gender = 'w' if cat.get('gender') == 'Female' else 'm' if cat.get('gender') == 'Male' else ''
@@ -181,7 +181,7 @@ async def studbook_page_render(current_user=None, session_id=None):
 
         return {
             'lfd_nr': lfd_nr,
-            'datum': datetime.now().strftime('%d.%m.%Y'),  # Current date as registration date
+            'datum': datetime.now().strftime('%Y-%m-%d'),
             'tiername': tiername or 'Not specified',
             'zb_nummer': zb_nummer or 'Not specified',
             'microchip': cat.get('microchip', '') or 'Not specified',
