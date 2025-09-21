@@ -70,6 +70,7 @@ class Cat(Base):
     cat_description = Column(String, nullable=True)
     cat_photos = Column(ARRAY(String))
     cat_files = Column(ARRAY(String))
+    wcf_sticker = Column(String, nullable=True)
 
 
 class History(Base):

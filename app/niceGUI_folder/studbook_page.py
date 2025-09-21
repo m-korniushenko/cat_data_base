@@ -238,8 +238,8 @@ async def studbook_page_render(current_user=None, session_id=None):
         # Get comments
         kommentar = cat.get('notes', '') or ''
 
-        # WCF Sticker (placeholder for future implementation)
-        wcf_sticker = '✓' if cat.get('wcf_sticker') else ''
+        # WCF Sticker (now a string field)
+        wcf_sticker = cat.get('wcf_sticker', '') or ''
 
         return {
             'lfd_nr': lfd_nr,
@@ -285,7 +285,7 @@ async def studbook_page_render(current_user=None, session_id=None):
                     ui.label(f"Breeding Animal: {'Yes' if cat.get('breeding_animal') else 'No'}")
                     ui.label(f"Status: {cat.get('status', 'Not specified')}")
                     ui.label(f"Document Type: {'Stammbaum' if cat.get('breeding_animal') else 'Abschrift'}")
-                    ui.label(f"WCF Sticker: {'✓' if cat.get('wcf_sticker') else 'No'}")
+                    ui.label(f"WCF Sticker: {cat.get('wcf_sticker', 'Not specified')}")
 
                 with ui.card():
                     ui.markdown("### 👨‍🌾 Breeder Information")
@@ -570,13 +570,13 @@ async def studbook_page_render(current_user=None, session_id=None):
                 filter_inputs['breeder_filter'] = ui.select(
                     options=[''] + list(breeder_options.values()),
                     label='Breeder'
-                ).props('outlined dense')
+                ).props('outlined dense use-input')
 
                 # Owner filter
                 filter_inputs['owner_filter_select'] = ui.select(
                     options=[''] + list(owner_options.values()),
                     label='Owner'
-                ).props('outlined dense')
+                ).props('outlined dense use-input')
 
                 # EMS color filter
                 filter_inputs['ems_color_filter'] = ui.select(

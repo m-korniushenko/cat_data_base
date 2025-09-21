@@ -35,7 +35,7 @@ async def add_cat(owner_id, idx, gender, firstname, surname, birthday_year, micr
                   weight=None, birth_weight=None, transfer_weight=None,
                   faults_deviations=None, association=None, jaw_fault=None,
                   hernia=None, testicles=None, death_date=None, death_cause=None,
-                  status=None, kitten_transfer=False):
+                  status=None, kitten_transfer=False, wcf_sticker=None, description=None):
     return await AsyncOrm.add_cat(
         owner_id=owner_id, 
         cat_firstname=firstname, 
@@ -76,6 +76,8 @@ async def add_cat(owner_id, idx, gender, firstname, surname, birthday_year, micr
         cat_death_cause=death_cause,
         cat_status=status,
         cat_kitten_transfer=kitten_transfer,
+        wcf_sticker=wcf_sticker,
+        cat_description=description,
         cat_dam_id=dam_id,
         cat_sire_id=sire_id,
         cat_breed_id=breed_id
@@ -214,8 +216,119 @@ def get_random_cat_data(idx):
         "death_date": death_date,
         "death_cause": death_cause,
         "status": status,
-        "kitten_transfer": kitten_transfer
+        "kitten_transfer": kitten_transfer,
+        "wcf_sticker": f"WCF{random.randint(100000, 999999)}" if random.random() < 0.3 else None,
+        "description": f"This is a beautiful {eye_color.lower()} eyed cat with {hair_type.lower()} from {country}." if random.random() < 0.4 else None
     }
+
+
+async def add_fully_detailed_cats():
+    """Add 5 cats with fully filled fields for testing"""
+    try:
+        # Cat 1: Champion with both parents, alive
+        await add_cat(
+            owner_id=1, idx=1001, gender="Female", firstname="Champion", surname="Princess",
+            birthday_year=2020, microchip="CHAMP001", colour="silver", litter="Champion-A",
+            dam_id=None, sire_id=None, breed_id=1,
+            callname="Champy", title="Champion", eye_colour="Blue", hair_type="Long Hair",
+            tests="DNA001, HCM-", litter_size_male=3, litter_size_female=2,
+            blood_group="Type A", gencode="GEN001", 
+            features="Beautiful silver coat with white markings on chest and paws",
+            notes="Excellent show cat with perfect temperament. Very friendly and social.",
+            show_results="Best in Show 2023, Champion of Champions 2022",
+            breeding_lock=False, breeding_lock_date=None, breeding_animal=True,
+            birth_country="Germany", location="Elite Cattery Munich",
+            weight=4.2, birth_weight=95.0, transfer_weight=110.0,
+            faults_deviations="None", association="WCF", jaw_fault="None",
+            hernia="None", testicles=None, death_date=None, death_cause=None,
+            status="Alive", kitten_transfer=False, wcf_sticker="178070", 
+            description="This is a magnificent silver Persian cat with stunning blue eyes. She has won multiple championships and is an excellent breeding animal."
+        )
+        
+        # Cat 2: Male with deceased status
+        await add_cat(
+            owner_id=2, idx=1002, gender="Male", firstname="Royal", surname="King",
+            birthday_year=2018, microchip="ROYAL001", colour="black", litter="Royal-B",
+            dam_id=None, sire_id=None, breed_id=2,
+            callname="King", title="Grand Champion", eye_colour="Green", hair_type="Short Hair",
+            tests="DNA002, PKD-, HCM-", litter_size_male=4, litter_size_female=3,
+            blood_group="Type B", gencode="GEN002",
+            features="Large muscular build with glossy black coat",
+            notes="Was a magnificent breeding male. Produced many champion offspring.",
+            show_results="Grand Champion 2021, Best Male 2020, 2021",
+            breeding_lock=False, breeding_lock_date=None, breeding_animal=True,
+            birth_country="USA", location="Royal Cattery New York",
+            weight=6.8, birth_weight=105.0, transfer_weight=125.0,
+            faults_deviations="Minor ear asymmetry", association="CFA", jaw_fault="None",
+            hernia="None", testicles="Normal", death_date=date(2023, 8, 15), 
+            death_cause="Kidney failure", status="Deceased", kitten_transfer=False,
+            wcf_sticker="234567", description="This was an exceptional black Maine Coon male who sired many champion cats. He had a gentle temperament despite his large size."
+        )
+        
+        # Cat 3: Female with both parents
+        await add_cat(
+            owner_id=3, idx=1003, gender="Female", firstname="Elegant", surname="Grace",
+            birthday_year=2021, microchip="ELEG001", colour="cream", litter="Grace-C",
+            dam_id=1001, sire_id=1002, breed_id=1,  # Daughter of Champion and Royal
+            callname="Ellie", title=None, eye_colour="Heterochromatic", hair_type="Semi-Long Hair",
+            tests="DNA003, HCM-, PKD-", litter_size_male=2, litter_size_female=4,
+            blood_group="Type A", gencode="GEN003",
+            features="Cream coat with one blue eye and one green eye",
+            notes="Beautiful cat with unique heterochromatic eyes. Very playful and intelligent.",
+            show_results="Best Kitten 2022, Reserve Best in Show 2023",
+            breeding_lock=False, breeding_lock_date=None, breeding_animal=False,
+            birth_country="Germany", location="Grace Cattery Berlin",
+            weight=3.5, birth_weight=85.0, transfer_weight=100.0,
+            faults_deviations="None", association="FIFe", jaw_fault="None",
+            hernia="None", testicles=None, death_date=None, death_cause=None,
+            status="Alive", kitten_transfer=True, wcf_sticker="345678",
+            description="This is a stunning cream-colored cat with one blue and one green eye. She is the daughter of Champion Princess and Royal King."
+        )
+        
+        # Cat 4: Male with extensive show results
+        await add_cat(
+            owner_id=4, idx=1004, gender="Male", firstname="Show", surname="Star",
+            birthday_year=2019, microchip="SHOW001", colour="orange", litter="Star-D",
+            dam_id=None, sire_id=None, breed_id=2,
+            callname="Starry", title="Supreme Grand Champion", eye_colour="Orange", hair_type="Long Hair",
+            tests="DNA004, HCM-, PKD-, FIV-, FeLV-", litter_size_male=5, litter_size_female=2,
+            blood_group="Type AB", gencode="GEN004",
+            features="Stunning orange tabby with perfect markings",
+            notes="Exceptional show cat with perfect conformation. Has won every major show.",
+            show_results="Supreme Grand Champion 2023, Best in Show 2022, 2023, Champion of Champions 2021, 2022, 2023",
+            breeding_lock=False, breeding_lock_date=None, breeding_animal=True,
+            birth_country="UK", location="Star Cattery London",
+            weight=5.2, birth_weight=100.0, transfer_weight=115.0,
+            faults_deviations="None", association="GCCF", jaw_fault="None",
+            hernia="None", testicles="Normal", death_date=None, death_cause=None,
+            status="Alive", kitten_transfer=False, wcf_sticker="456789",
+            description="This is the most decorated show cat in our cattery. He has won every possible title and continues to produce champion offspring."
+        )
+        
+        # Cat 5: Female with health issues
+        await add_cat(
+            owner_id=5, idx=1005, gender="Female", firstname="Gentle", surname="Soul",
+            birthday_year=2017, microchip="GENT001", colour="white", litter="Soul-E",
+            dam_id=1003, sire_id=1004, breed_id=1,  # Daughter of Elegant and Show Star
+            callname="Soulie", title="Champion", eye_colour="Blue", hair_type="Long Hair",
+            tests="DNA005, HCM+, PKD-, FIV-, FeLV-", litter_size_male=1, litter_size_female=3,
+            blood_group="Type A", gencode="GEN005",
+            features="Pure white coat with blue eyes",
+            notes="Sweet and gentle cat despite health challenges. Loved by everyone.",
+            show_results="Champion 2021, Best Female 2020",
+            breeding_lock=True, breeding_lock_date=date(2022, 1, 1), breeding_animal=False,
+            birth_country="Germany", location="Soul Cattery Hamburg",
+            weight=3.8, birth_weight=90.0, transfer_weight=105.0,
+            faults_deviations="HCM positive, requires regular monitoring", association="WCF", jaw_fault="None",
+            hernia="None", testicles=None, death_date=None, death_cause=None,
+            status="Alive", kitten_transfer=False, wcf_sticker="567890",
+            description="This is a gentle white cat with a heart condition. Despite her health challenges, she has a wonderful personality and has produced beautiful kittens."
+        )
+        
+        print("Successfully added 5 fully detailed cats for testing")
+        
+    except Exception as e:
+        print(f"Error adding fully detailed cats: {e}")
 
 
 async def add_family_tree_test_data():
@@ -456,15 +569,17 @@ async def main_add_workflow():
         await add_permissions()
         await add_test_owners()
         await add_breeds()  # Add breeders
+        await add_fully_detailed_cats()  # Add 5 cats with fully filled fields
         await add_family_tree_test_data()
         await add_diverse_test_cats()  # Add diverse cats for filter testing
         print("✅ Database initialization completed successfully!")
         print("📊 Test data summary:")
         print("  - 6 Owners (1 admin, 5 regular users)")
         print("  - 5 Breeders (Elite Cattery, Royal Breeders, Golden Paws, Silver Whiskers, Diamond Cats)")
+        print("  - 5 Fully detailed cats (Champion Princess, Royal King, Elegant Grace, Show Star, Gentle Soul)")
         print("  - 200 Family tree cats")
         print("  - 50 Diverse test cats")
-        print("  - Total: 250 cats with extensive filter data!")
+        print("  - Total: 255 cats with extensive filter data!")
     except Exception as e:
         print(f"❌ Error during database initialization: {e}")
         raise
