@@ -54,13 +54,15 @@ async def studbook_page_render(current_user=None, session_id=None):
     status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
 
     # Filter variables
-    search_input = ui.input('Поиск', placeholder='По имени, микрочипу, номеру ZB...').style('width: 300px')
-    breeder_filter = ui.select(breeder_options, label='Заводчик', clearable=True).style('width: 200px')
-    owner_filter_select = ui.select(owner_options, label='Владелец', clearable=True).style('width: 200px')
-    ems_color_filter = ui.select(ems_color_options, label='EMS окрас', clearable=True).style('width: 150px')
-    status_filter = ui.select(status_options, label='Статус', clearable=True).style('width: 150px')
-    birthday_from = ui.input('Дата рождения от').style('width: 150px')
-    birthday_to = ui.input('Дата рождения до').style('width: 150px')
+    search_input = None
+    breeder_filter = None
+    owner_filter_select = None
+    ems_color_filter = None
+    status_filter = None
+    birthday_from = None
+    birthday_to = None
+    results_label = None
+    studbook_container = None
 
     def apply_filters():
         """Apply all filters to the data"""
@@ -70,8 +72,8 @@ async def studbook_page_render(current_user=None, session_id=None):
         filtered_cats = cats_data.copy()
 
         # Search filter
-        search_term = search_input.value.lower() if search_input.value else ''
-        if search_term:
+        if search_input and search_input.value:
+            search_term = search_input.value.lower()
             filtered_cats = [
                 cat for cat in filtered_cats
                 if (search_term in str(cat.get('firstname', '') or '').lower() or
@@ -83,29 +85,29 @@ async def studbook_page_render(current_user=None, session_id=None):
             ]
 
         # Breeder filter
-        if breeder_filter.value:
+        if breeder_filter and breeder_filter.value:
             selected_breeder_name = breeder_filter.value
             selected_breeder_id = next((k for k, v in breeder_options.items() if v == selected_breeder_name), None)
             if selected_breeder_id:
                 filtered_cats = [cat for cat in filtered_cats if cat.get('breed') == selected_breeder_id]
 
         # Owner filter
-        if owner_filter_select.value:
+        if owner_filter_select and owner_filter_select.value:
             selected_owner_name = owner_filter_select.value
             selected_owner_id = next((k for k, v in owner_options.items() if v == selected_owner_name), None)
             if selected_owner_id:
                 filtered_cats = [cat for cat in filtered_cats if cat.get('owner_id') == selected_owner_id]
 
         # EMS color filter
-        if ems_color_filter.value:
+        if ems_color_filter and ems_color_filter.value:
             filtered_cats = [cat for cat in filtered_cats if cat.get('colour') == ems_color_filter.value]
 
         # Status filter
-        if status_filter.value:
+        if status_filter and status_filter.value:
             filtered_cats = [cat for cat in filtered_cats if cat.get('status') == status_filter.value]
 
         # Birthday range filter
-        if birthday_from.value:
+        if birthday_from and birthday_from.value:
             try:
                 from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
@@ -113,7 +115,7 @@ async def studbook_page_render(current_user=None, session_id=None):
             except ValueError:
                 pass
 
-        if birthday_to.value:
+        if birthday_to and birthday_to.value:
             try:
                 to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
@@ -304,15 +306,21 @@ async def studbook_page_render(current_user=None, session_id=None):
 
     async def clear_all_filters():
         """Clear all filter inputs"""
-        search_input.value = ''
-        breeder_filter.value = None
-        owner_filter_select.value = None
-        ems_color_filter.value = None
-        status_filter.value = None
-        birthday_from.value = ''
-        birthday_to.value = ''
-        ui.clear()
-        await render_page_content()
+        if search_input:
+            search_input.value = ''
+        if breeder_filter:
+            breeder_filter.value = ''
+        if owner_filter_select:
+            owner_filter_select.value = ''
+        if ems_color_filter:
+            ems_color_filter.value = ''
+        if status_filter:
+            status_filter.value = ''
+        if birthday_from:
+            birthday_from.value = ''
+        if birthday_to:
+            birthday_to.value = ''
+        await update_studbook_display()
 
     async def render_page_content():
         """Render the main page content"""
@@ -322,34 +330,80 @@ async def studbook_page_render(current_user=None, session_id=None):
         ui.markdown("## 📚 Племенная книга (Studbook)")
         ui.markdown("Официальный реестр зарегистрированных кошек и их помётов")
 
-        # Filters section
-        with ui.card():
-            ui.markdown("### 🔍 Фильтры и поиск")
-            with ui.grid(columns=4):
-                search_input
-                breeder_filter
-                owner_filter_select
-                ems_color_filter
-                status_filter
-                birthday_from
-                birthday_to
-                ui.button('Очистить все фильтры', on_click=clear_all_filters).props('color=secondary')
+        # Filters section - compact design like cats_page
+        with ui.card().classes('w-full q-pa-md q-mb-md'):
+            ui.label('🔍 Фильтры').classes('text-h6 q-mb-md')
+
+            with ui.grid(columns=4).classes('gap-4 w-full'):
+                # Search
+                search_input = ui.input(label='Поиск (Имя, микрочип, ZB...)').props('outlined dense')
+
+                # Breeder filter
+                breeder_filter = ui.select(
+                    options=[''] + list(breeder_options.values()),
+                    label='Заводчик'
+                ).props('outlined dense')
+
+                # Owner filter
+                owner_filter_select = ui.select(
+                    options=[''] + list(owner_options.values()),
+                    label='Владелец'
+                ).props('outlined dense')
+
+                # EMS color filter
+                ems_color_filter = ui.select(
+                    options=[''] + ems_color_options,
+                    label='EMS окрас'
+                ).props('outlined dense')
+
+                # Status filter
+                status_filter = ui.select(
+                    options=[''] + status_options,
+                    label='Статус'
+                ).props('outlined dense')
+
+                # Birthday filters
+                birthday_from = ui.input(label='Дата рождения от').props('outlined dense')
+                birthday_to = ui.input(label='Дата рождения до').props('outlined dense')
+
+                # Clear filters button
+                clear_filters_btn = ui.button('Очистить все', icon='clear').props('color=secondary outline')
+
+        # Set up event handlers for the newly created filters
+        search_input.on_value_change(lambda: update_studbook_display())
+        breeder_filter.on_value_change(lambda: update_studbook_display())
+        owner_filter_select.on_value_change(lambda: update_studbook_display())
+        ems_color_filter.on_value_change(lambda: update_studbook_display())
+        status_filter.on_value_change(lambda: update_studbook_display())
+        birthday_from.on_value_change(lambda: update_studbook_display())
+        birthday_to.on_value_change(lambda: update_studbook_display())
+        clear_filters_btn.on_click(clear_all_filters)
 
         # Results counter
+        nonlocal results_label
+        results_label = ui.label().classes('q-mb-md')
+
+        # Studbook container
+        nonlocal studbook_container
+        studbook_container = ui.column().classes('w-full')
+
+        # Initial update
+        await update_studbook_display()
+
+    async def update_studbook_display():
+        """Update the studbook display without full page reload"""
+        # Update only the results section, not the entire page
         filtered_cats = apply_filters()
-        ui.label(f'Найдено записей: {len(filtered_cats)}')
 
-        # Studbook structure
-        await render_studbook_structure()
+        # Update results counter
+        if results_label:
+            results_label.text = f'Найдено записей: {len(filtered_cats)}'
 
-    # Set up event handlers
-    search_input.on_value_change(lambda: ui.clear() or render_page_content())
-    breeder_filter.on_value_change(lambda: ui.clear() or render_page_content())
-    owner_filter_select.on_value_change(lambda: ui.clear() or render_page_content())
-    ems_color_filter.on_value_change(lambda: ui.clear() or render_page_content())
-    status_filter.on_value_change(lambda: ui.clear() or render_page_content())
-    birthday_from.on_value_change(lambda: ui.clear() or render_page_content())
-    birthday_to.on_value_change(lambda: ui.clear() or render_page_content())
+        # Clear and rebuild only the studbook structure
+        if studbook_container:
+            studbook_container.clear()
+            with studbook_container:
+                await render_studbook_structure()
 
     # Initial render
     await render_page_content()
