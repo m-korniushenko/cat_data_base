@@ -54,13 +54,7 @@ async def studbook_page_render(current_user=None, session_id=None):
     status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
 
     # Filter variables
-    search_input = None
-    breeder_filter = None
-    owner_filter_select = None
-    ems_color_filter = None
-    status_filter = None
-    birthday_from = None
-    birthday_to = None
+    filter_inputs = {}
     results_label = None
     studbook_container = None
 
@@ -72,8 +66,8 @@ async def studbook_page_render(current_user=None, session_id=None):
         filtered_cats = cats_data.copy()
 
         # Search filter
-        if search_input and search_input.value:
-            search_term = search_input.value.lower()
+        if filter_inputs.get('search_input') and filter_inputs['search_input'].value:
+            search_term = filter_inputs['search_input'].value.lower()
             filtered_cats = [
                 cat for cat in filtered_cats
                 if (search_term in str(cat.get('firstname', '') or '').lower() or
@@ -85,39 +79,40 @@ async def studbook_page_render(current_user=None, session_id=None):
             ]
 
         # Breeder filter
-        if breeder_filter and breeder_filter.value:
-            selected_breeder_name = breeder_filter.value
+        if filter_inputs.get('breeder_filter') and filter_inputs['breeder_filter'].value:
+            selected_breeder_name = filter_inputs['breeder_filter'].value
             selected_breeder_id = next((k for k, v in breeder_options.items() if v == selected_breeder_name), None)
             if selected_breeder_id:
                 filtered_cats = [cat for cat in filtered_cats if cat.get('breed') == selected_breeder_id]
 
         # Owner filter
-        if owner_filter_select and owner_filter_select.value:
-            selected_owner_name = owner_filter_select.value
+        if filter_inputs.get('owner_filter_select') and filter_inputs['owner_filter_select'].value:
+            selected_owner_name = filter_inputs['owner_filter_select'].value
             selected_owner_id = next((k for k, v in owner_options.items() if v == selected_owner_name), None)
             if selected_owner_id:
                 filtered_cats = [cat for cat in filtered_cats if cat.get('owner_id') == selected_owner_id]
 
         # EMS color filter
-        if ems_color_filter and ems_color_filter.value:
-            filtered_cats = [cat for cat in filtered_cats if cat.get('colour') == ems_color_filter.value]
+        if filter_inputs.get('ems_color_filter') and filter_inputs['ems_color_filter'].value:
+            filtered_cats = [cat for cat in filtered_cats
+                             if cat.get('colour') == filter_inputs['ems_color_filter'].value]
 
         # Status filter
-        if status_filter and status_filter.value:
-            filtered_cats = [cat for cat in filtered_cats if cat.get('status') == status_filter.value]
+        if filter_inputs.get('status_filter') and filter_inputs['status_filter'].value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('status') == filter_inputs['status_filter'].value]
 
         # Birthday range filter
-        if birthday_from and birthday_from.value:
+        if filter_inputs.get('birthday_from') and filter_inputs['birthday_from'].value:
             try:
-                from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
+                from_date = datetime.strptime(filter_inputs['birthday_from'].value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
                                  if cat.get('birthday') and cat.get('birthday') >= from_date]
             except ValueError:
                 pass
 
-        if birthday_to and birthday_to.value:
+        if filter_inputs.get('birthday_to') and filter_inputs['birthday_to'].value:
             try:
-                to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
+                to_date = datetime.strptime(filter_inputs['birthday_to'].value, '%Y-%m-%d').date()
                 filtered_cats = [cat for cat in filtered_cats
                                  if cat.get('birthday') and cat.get('birthday') <= to_date]
             except ValueError:
@@ -306,20 +301,9 @@ async def studbook_page_render(current_user=None, session_id=None):
 
     async def clear_all_filters():
         """Clear all filter inputs"""
-        if search_input:
-            search_input.value = ''
-        if breeder_filter:
-            breeder_filter.value = ''
-        if owner_filter_select:
-            owner_filter_select.value = ''
-        if ems_color_filter:
-            ems_color_filter.value = ''
-        if status_filter:
-            status_filter.value = ''
-        if birthday_from:
-            birthday_from.value = ''
-        if birthday_to:
-            birthday_to.value = ''
+        for key, input_widget in filter_inputs.items():
+            if input_widget:
+                input_widget.value = ''
         await update_studbook_display()
 
     async def render_page_content():
@@ -336,47 +320,47 @@ async def studbook_page_render(current_user=None, session_id=None):
 
             with ui.grid(columns=4).classes('gap-4 w-full'):
                 # Search
-                search_input = ui.input(label='Поиск (Имя, микрочип, ZB...)').props('outlined dense')
+                filter_inputs['search_input'] = ui.input(label='Поиск (Имя, микрочип, ZB...)').props('outlined dense')
 
                 # Breeder filter
-                breeder_filter = ui.select(
+                filter_inputs['breeder_filter'] = ui.select(
                     options=[''] + list(breeder_options.values()),
                     label='Заводчик'
                 ).props('outlined dense')
 
                 # Owner filter
-                owner_filter_select = ui.select(
+                filter_inputs['owner_filter_select'] = ui.select(
                     options=[''] + list(owner_options.values()),
                     label='Владелец'
                 ).props('outlined dense')
 
                 # EMS color filter
-                ems_color_filter = ui.select(
+                filter_inputs['ems_color_filter'] = ui.select(
                     options=[''] + ems_color_options,
                     label='EMS окрас'
                 ).props('outlined dense')
 
                 # Status filter
-                status_filter = ui.select(
+                filter_inputs['status_filter'] = ui.select(
                     options=[''] + status_options,
                     label='Статус'
                 ).props('outlined dense')
 
                 # Birthday filters
-                birthday_from = ui.input(label='Дата рождения от').props('outlined dense')
-                birthday_to = ui.input(label='Дата рождения до').props('outlined dense')
+                filter_inputs['birthday_from'] = ui.input(label='Дата рождения от').props('outlined dense')
+                filter_inputs['birthday_to'] = ui.input(label='Дата рождения до').props('outlined dense')
 
                 # Clear filters button
                 clear_filters_btn = ui.button('Очистить все', icon='clear').props('color=secondary outline')
 
         # Set up event handlers for the newly created filters
-        search_input.on_value_change(lambda: update_studbook_display())
-        breeder_filter.on_value_change(lambda: update_studbook_display())
-        owner_filter_select.on_value_change(lambda: update_studbook_display())
-        ems_color_filter.on_value_change(lambda: update_studbook_display())
-        status_filter.on_value_change(lambda: update_studbook_display())
-        birthday_from.on_value_change(lambda: update_studbook_display())
-        birthday_to.on_value_change(lambda: update_studbook_display())
+        filter_inputs['search_input'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['breeder_filter'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['owner_filter_select'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['ems_color_filter'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['status_filter'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['birthday_from'].on_value_change(lambda: update_studbook_display())
+        filter_inputs['birthday_to'].on_value_change(lambda: update_studbook_display())
         clear_filters_btn.on_click(clear_all_filters)
 
         # Results counter
@@ -394,6 +378,12 @@ async def studbook_page_render(current_user=None, session_id=None):
         """Update the studbook display without full page reload"""
         # Update only the results section, not the entire page
         filtered_cats = apply_filters()
+
+        # Debug: print filter values
+        print("DEBUG: Filter values:")
+        for key, widget in filter_inputs.items():
+            if widget:
+                print(f"  {key}: '{widget.value}'")
 
         # Update results counter
         if results_label:
