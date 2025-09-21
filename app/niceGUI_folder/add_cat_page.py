@@ -238,9 +238,9 @@ async def add_cat_page_render(current_user=None, session_id=None):
             
             # Initial gallery display
             update_photo_gallery()
-        
-        # Files section
-        with ui.card().classes('w-full q-pa-md'):
+            
+            # Files section
+            ui.separator().classes('q-my-md')
             ui.label('Files').classes('text-h6 q-mb-md')
             
             # File upload area
