@@ -17,10 +17,10 @@ def hash_password(password: str) -> str:
 
 async def add_owner():
     return await AsyncOrm.add_owner(
-        owner_firstname="admin",
+        owner_firstname="Alexandra",
         owner_surname="admin",
-        owner_email="admin@admin.com",
-        owner_hashed_password=hash_password("admin"),
+        owner_email="ces.verein@gmail.com",
+        owner_hashed_password=hash_password("catDb057195password!"),
         owner_permission=1
     )
 

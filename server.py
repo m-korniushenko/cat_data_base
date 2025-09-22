@@ -22,7 +22,7 @@ from app.database_folder.orm import AsyncOrm
 from app.database_folder.postgres import (check_db_connection,
                                           postgres_check_and_create_database,
                                           drop_database_if_exists)
-from app.database_folder.insert_info import start_add_workflow
+from app.database_folder.insert_info import start_add_workflow, add_owner
 from app.database_folder.model import Base
 from system_functions_folder.check_cread import check_creds
 from app.niceGUI_folder.main_page import main_page_render
@@ -270,8 +270,10 @@ def start_db():
     
     log_info("Creating database...")
     try:
-        # drop_database_if_exists()
-        postgres_check_and_create_database(Base)
+        drop_database_if_exists()
+        if postgres_check_and_create_database(Base):
+            asyncio.run(add_owner())
+            log_success("Admin user added")
     except Exception as e:
         log_warning(f"Database already exists or creation error: {e}")
         if not check_db_connection():
@@ -308,9 +310,6 @@ if __name__ in {"__main__", "__mp_main__"}:
         
         log_success("Server started successfully!")
         log_info("🌐 Access: http://localhost:8080")
-        log_info("🔐 Test accounts:")
-        log_info("   Admin: admin@admin.com / admin")
-        log_info("   Owner: john@example.com / password")
         log_info("🛑 Press Ctrl+C to stop")
         log_info("=" * 50)
         
@@ -318,7 +317,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             port=8080,
             title='Cat Database Management System',
             show=True,
-            reload=True,
+            reload=False,
         )
         
     except KeyboardInterrupt:
