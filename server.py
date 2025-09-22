@@ -196,7 +196,7 @@ async def login_post(email: str = Form(...), password: str = Form(...)):
                 key="session_id",
                 value=session_id,
                 httponly=True,
-                secure=False,
+                secure=True,
                 samesite="lax",
                 max_age=86400  # 24 часа
             )
@@ -269,7 +269,9 @@ def start_db():
     
     log_info("Creating database...")
     try:
-        drop_database_if_exists()
+        ###########
+        ########### drop_database_if_exists()
+        ###########
         if postgres_check_and_create_database(Base):
             asyncio.run(add_owner())
             log_success("Admin user added")
@@ -294,7 +296,9 @@ def start_db():
     
     log_success("Database ready")
     log_info("Loading test data...")
-    # start_add_workflow()
+    ###########
+    ########### start_add_workflow()
+    ###########
     log_success("Test data loaded")
 
 
@@ -311,10 +315,13 @@ if __name__ in {"__main__", "__mp_main__"}:
         log_info("=" * 50)
         
         ui.run(
-            port=8080,
-            title='Cat Database Management System',
+            host="0.0.0.0",
+            port=8443,
+            title="Cat Database Management System",
             show=True,
             reload=False,
+            ssl_certfile="/root/ssl/cert.pem",
+            ssl_keyfile="/root/ssl/key.pem",
         )
         
     except KeyboardInterrupt:

@@ -2,6 +2,7 @@ from nicegui import ui
 from pydantic import ValidationError
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
+import hashlib
 from datetime import date
 from fastapi import Request
 
@@ -72,7 +73,7 @@ async def add_owner_page_render(request: Request):
                         owner_zip=zip_code.value if zip_code.value else None,
                         owner_birthday=birthday_date,
                         owner_phone=phone.value if phone.value else None,
-                        owner_hashed_password=password.value,
+                        owner_hashed_password=hashlib.sha256(password.value.encode()).hexdigest(),
                         owner_permission=permission.value if permission.value else 1
                     )
                     ui.notify('Owner added successfully!', color='positive')
