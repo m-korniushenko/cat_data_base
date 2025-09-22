@@ -1,16 +1,15 @@
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
+from fastapi import Request
 from app.database_folder.orm import AsyncOrm
 
 
-@require_auth(required_permission=2)  # Require at least owner permission
-async def main_page_render(current_user=None, session_id=None):
+async def main_page_render(request: Request):
     len_owners, owners = await AsyncOrm.get_owner()
     len_cats, cats = await AsyncOrm.get_cat()
     len_breeds = await AsyncOrm.get_breed_count()
     # Header
-    get_header('Cat Database Management System')
+    get_header('Cat Database Management System', request)
 
     with ui.column().classes('q-pa-md'):
         ui.label('Welcome to Cat Database Management System').classes('text-h4 q-mb-lg')

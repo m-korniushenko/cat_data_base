@@ -3,11 +3,12 @@ History page for displaying user actions
 """
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
+from fastapi import Request
 
 
-async def history_page_render():
+async def history_page_render(request: Request):
     """Render the history page"""
-    get_header('History Page')
+    get_header('History Page', request)
     
     with ui.column().classes('w-full p-4'):
         ui.label('User Action History').classes('text-h4 q-mb-md')

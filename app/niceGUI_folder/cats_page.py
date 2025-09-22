@@ -8,10 +8,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
+from fastapi import Request
 
 cats_column = [
     {'name': 'id', 'label': 'ID', 'field': 'id', 'align': 'left'},
@@ -122,9 +122,15 @@ async def get_cats_rows(cats_rows):
     return safe_rows
 
 
-@require_auth(required_permission=2)
-async def cats_page_render(current_user=None, session_id=None):
-    get_header('🐱 Cats')
+async def cats_page_render(request: Request):
+    # Get user from session
+    from app.niceGUI_folder.session_manager import SessionManager
+    session_id = request.cookies.get("session_id")
+    current_user = None
+    if session_id:
+        current_user = SessionManager.get_current_user(session_id)
+    
+    get_header('🐱 Cats', request)
 
     # Add Cat button for admins
     if current_user and current_user.get('owner_permission') == 1:
@@ -178,11 +184,126 @@ async def cats_page_render(current_user=None, session_id=None):
         finally:
             loading_more = False
 
-    # Create filter options (will be updated after first load)
+    async def load_filtered_cats_data(offset=0, limit=PAGE_SIZE, reset=False):
+        """Load cats data with filters applied at database level"""
+        nonlocal all_cats_data, has_more_data, loading_more
+        
+        if loading_more:
+            return []
+            
+        loading_more = True
+        
+        try:
+            # Build filter parameters for database query
+            filter_params = {}
+            
+            # Gender filter
+            if gender_filter.value:
+                filter_params['cat_gender'] = gender_filter.value
+            
+            # Owner filter
+            if owner_filter_select.value:
+                selected_owner_name = owner_filter_select.value
+                selected_owner_id = next((k for k, v in owner_options.items() if v == selected_owner_name), None)
+                if selected_owner_id:
+                    filter_params['owner_id'] = selected_owner_id
+            
+            # Breed filter
+            if breeder_filter.value:
+                selected_breeder_name = breeder_filter.value
+                selected_breeder_id = next((k for k, v in breed_options.items() if v == selected_breeder_name), None)
+                if selected_breeder_id:
+                    filter_params['cat_breed_id'] = selected_breeder_id
+            
+            # Color filter (supported by database)
+            if color_filter.value:
+                filter_params['cat_EMS_colour'] = color_filter.value
+            
+            # Birthday range filter (supported by database)
+            if birthday_from.value:
+                try:
+                    from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
+                    filter_params['cat_birthday'] = from_date
+                except ValueError:
+                    pass
+            
+            # Apply user permission filter
+            if owner_filter is not None and owner_filter != -1:
+                filter_params['owner_id'] = owner_filter
+            
+            # Load data from database with filters
+            if search_input.value:
+                # Use search function for text search
+                _, new_cats = await AsyncOrm.get_cat_info_like(search=search_input.value, limit=limit, offset=offset)
+                # Apply additional filters to search results
+                for key, value in filter_params.items():
+                    if key == 'owner_id':
+                        new_cats = [cat for cat in new_cats if cat.get('owner_id') == value]
+                    elif key == 'cat_gender':
+                        new_cats = [cat for cat in new_cats if cat.get('gender') == value]
+                    elif key == 'cat_breed_id':
+                        new_cats = [cat for cat in new_cats if cat.get('breed') == value]
+                    elif key == 'cat_eye_colour':
+                        new_cats = [cat for cat in new_cats if cat.get('eye_colour') == value]
+                    elif key == 'cat_hair_type':
+                        new_cats = [cat for cat in new_cats if cat.get('hair_type') == value]
+                    elif key == 'cat_status':
+                        new_cats = [cat for cat in new_cats if cat.get('status') == value]
+                    elif key == 'cat_EMS_colour':
+                        new_cats = [cat for cat in new_cats if cat.get('colour') == value]
+                    elif key == 'cat_breeding_animal':
+                        new_cats = [cat for cat in new_cats if cat.get('breeding_animal') == value]
+                    elif key == 'cat_breeding_lock':
+                        new_cats = [cat for cat in new_cats if cat.get('breeding_lock') == value]
+            else:
+                # Use regular filter function
+                _, new_cats = await AsyncOrm.get_cat_info(limit=limit, offset=offset, **filter_params)
+            
+            if reset:
+                all_cats_data = new_cats
+            else:
+                all_cats_data.extend(new_cats)
+            
+            # Check if there's more data
+            has_more_data = len(new_cats) == limit
+            
+            return new_cats
+        finally:
+            loading_more = False
+
+    # Load filter options from database
+    async def load_filter_options():
+        """Load all unique values for filter options from database"""
+        nonlocal eye_color_options, hair_type_options, status_options, color_options
+        
+        # Load all cats data to get unique values
+        _, all_cats = await AsyncOrm.get_cat_info(limit=10000)  # Load all data for filter options
+        
+        # Apply user permission filter
+        if owner_filter is not None and owner_filter != -1:
+            all_cats = [cat for cat in all_cats if cat.get('owner_id') == owner_filter]
+        
+        # Extract unique values
+        eye_color_options = list(set([cat.get('eye_colour') for cat in all_cats if cat.get('eye_colour')]))
+        hair_type_options = list(set([cat.get('hair_type') for cat in all_cats if cat.get('hair_type')]))
+        status_options = list(set([cat.get('status') for cat in all_cats if cat.get('status')]))
+        color_options = list(set([cat.get('colour') for cat in all_cats if cat.get('colour')]))
+        
+        # Sort options alphabetically
+        eye_color_options.sort()
+        hair_type_options.sort()
+        status_options.sort()
+        color_options.sort()
+
+    # Create filter options
     gender_options = ['Male', 'Female']
     eye_color_options = []
     hair_type_options = []
-    status_options = list(set([cat.get('status') for cat in cats_data if cat.get('status')]))
+    status_options = []
+    color_options = []
+    
+    # Load filter options
+    await load_filter_options()
     
     owner_options = {owner['owner_id']: f"{owner['owner_firstname']} {owner['owner_surname']}"
                      for owner in owners_data}
@@ -234,7 +355,6 @@ async def cats_page_render(current_user=None, session_id=None):
             ).props('outlined dense clearable')
             
             # Color filter
-            color_options = list(set([cat.get('colour') for cat in cats_data if cat.get('colour')]))
             color_filter = ui.select(
                 options=[''] + color_options,
                 label='Color'
@@ -278,45 +398,13 @@ async def cats_page_render(current_user=None, session_id=None):
         
         if reset_pagination:
             current_offset = 0
-            # Load first batch with filters applied
-            await load_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
+            # Load filtered data from database instead of applying filters to loaded data
+            await load_filtered_cats_data(offset=0, limit=PAGE_SIZE, reset=True)
         
+        # Apply database-level filters first, then client-side filters
         filtered_cats = all_cats_data.copy()
         
-        # Search filter
-        search_term = search_input.value.lower() if search_input.value else ''
-        if search_term:
-            filtered_cats = [
-                cat for cat in filtered_cats
-                if (search_term in str(cat.get('firstname', '') or '').lower() or
-                    search_term in str(cat.get('surname', '') or '').lower() or
-                    search_term in str(cat.get('microchip', '') or '').lower() or
-                    search_term in str(cat.get('callname', '') or '').lower() or
-                    search_term in str(cat.get('haritage_number', '') or '').lower() or
-                    search_term in str(cat.get('owner_firstname', '') or '').lower() or
-                    search_term in str(cat.get('owner_surname', '') or '').lower() or
-                    search_term in str(cat.get('breed_firstname', '') or '').lower() or
-                    search_term in str(cat.get('breed_surname', '') or '').lower())
-            ]
-        
-        # Gender filter
-        if gender_filter.value:
-            filtered_cats = [cat for cat in filtered_cats if cat.get('gender') == gender_filter.value]
-        
-        # Owner filter
-        if owner_filter_select.value:
-            selected_owner_name = owner_filter_select.value
-            selected_owner_id = next((k for k, v in owner_options.items() if v == selected_owner_name), None)
-            if selected_owner_id:
-                filtered_cats = [cat for cat in filtered_cats if cat.get('owner_id') == selected_owner_id]
-        
-        # Breeder filter
-        if breeder_filter.value:
-            selected_breeder_name = breeder_filter.value
-            selected_breeder_id = next((k for k, v in breed_options.items() if v == selected_breeder_name), None)
-            if selected_breeder_id:
-                filtered_cats = [cat for cat in filtered_cats if cat.get('breed') == selected_breeder_id]
-        
+        # Apply client-side filters that are not supported by database
         # Eye color filter
         if eye_color_filter.value:
             filtered_cats = [cat for cat in filtered_cats if cat.get('eye_colour') == eye_color_filter.value]
@@ -329,26 +417,15 @@ async def cats_page_render(current_user=None, session_id=None):
         if status_filter.value:
             filtered_cats = [cat for cat in filtered_cats if cat.get('status') == status_filter.value]
         
-        # Color filter
-        if color_filter.value:
-            filtered_cats = [cat for cat in filtered_cats if cat.get('colour') == color_filter.value]
+        # Breeding animal filter
+        if breeding_animal_filter.value:
+            breeding_value = breeding_animal_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_animal') == breeding_value]
         
-        # Birthday range filter
-        if birthday_from.value:
-            try:
-                from_date = datetime.strptime(birthday_from.value, '%Y-%m-%d').date()
-                filtered_cats = [cat for cat in filtered_cats
-                                 if cat.get('birthday') and cat.get('birthday') >= from_date]
-            except ValueError:
-                pass
-        
-        if birthday_to.value:
-            try:
-                to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
-                filtered_cats = [cat for cat in filtered_cats
-                                 if cat.get('birthday') and cat.get('birthday') <= to_date]
-            except ValueError:
-                pass
+        # Breeding lock filter
+        if breeding_lock_filter.value:
+            lock_value = breeding_lock_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_lock') == lock_value]
         
         # Weight range filter
         if weight_min.value is not None:
@@ -359,15 +436,14 @@ async def cats_page_render(current_user=None, session_id=None):
             filtered_cats = [cat for cat in filtered_cats
                              if cat.get('weight') and cat.get('weight') <= weight_max.value]
         
-        # Breeding animal filter
-        if breeding_animal_filter.value:
-            breeding_value = breeding_animal_filter.value == 'Yes'
-            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_animal') == breeding_value]
-        
-        # Breeding lock filter
-        if breeding_lock_filter.value:
-            lock_value = breeding_lock_filter.value == 'Yes'
-            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_lock') == lock_value]
+        # Birthday range filter (to date only, from date is handled by database)
+        if birthday_to.value:
+            try:
+                to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
+                filtered_cats = [cat for cat in filtered_cats
+                                 if cat.get('birthday') and cat.get('birthday') <= to_date]
+            except ValueError:
+                pass
         
         return filtered_cats
 
@@ -379,16 +455,87 @@ async def cats_page_render(current_user=None, session_id=None):
             return
             
         current_offset += PAGE_SIZE
-        new_cats = await load_cats_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
+        
+        # Check if we have any active filters
+        has_filters = any([
+            search_input.value,
+            gender_filter.value,
+            owner_filter_select.value,
+            breeder_filter.value,
+            eye_color_filter.value,
+            hair_type_filter.value,
+            status_filter.value,
+            color_filter.value,
+            birthday_from.value,
+            birthday_to.value,
+            weight_min.value is not None,
+            weight_max.value is not None,
+            breeding_animal_filter.value,
+            breeding_lock_filter.value
+        ])
+        
+        if has_filters:
+            # Use filtered loading
+            new_cats = await load_filtered_cats_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
+        else:
+            # Use regular loading
+            new_cats = await load_cats_data(offset=current_offset, limit=PAGE_SIZE, reset=False)
         
         if new_cats:
-            # Update table with new data
-            await update_table()
+            # Update table with new data without resetting pagination
+            await update_table_without_reset()
 
-    async def update_table():
-        """Update the table with filtered data"""
-        filtered_cats = await apply_filters(reset_pagination=False)
+    async def update_table_without_reset():
+        """Update the table with current data without resetting pagination"""
+        # Apply client-side filters to current data
+        filtered_cats = all_cats_data.copy()
         
+        # Apply client-side filters that are not supported by database
+        # Eye color filter
+        if eye_color_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('eye_colour') == eye_color_filter.value]
+        
+        # Hair type filter
+        if hair_type_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('hair_type') == hair_type_filter.value]
+        
+        # Status filter
+        if status_filter.value:
+            filtered_cats = [cat for cat in filtered_cats if cat.get('status') == status_filter.value]
+        
+        # Breeding animal filter
+        if breeding_animal_filter.value:
+            breeding_value = breeding_animal_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_animal') == breeding_value]
+        
+        # Breeding lock filter
+        if breeding_lock_filter.value:
+            lock_value = breeding_lock_filter.value == 'Yes'
+            filtered_cats = [cat for cat in filtered_cats if cat.get('breeding_lock') == lock_value]
+        
+        # Weight range filter
+        if weight_min.value is not None:
+            filtered_cats = [cat for cat in filtered_cats
+                             if cat.get('weight') and cat.get('weight') >= weight_min.value]
+        
+        if weight_max.value is not None:
+            filtered_cats = [cat for cat in filtered_cats
+                             if cat.get('weight') and cat.get('weight') <= weight_max.value]
+        
+        # Apply birthday range filter (to date only, from date is handled by database)
+        if birthday_to.value:
+            try:
+                to_date = datetime.strptime(birthday_to.value, '%Y-%m-%d').date()
+                filtered_cats = [cat for cat in filtered_cats
+                                 if cat.get('birthday') and cat.get('birthday') <= to_date]
+            except ValueError:
+                pass
+        
+        # Update the table display
+        await display_table(filtered_cats)
+
+    async def display_table(filtered_cats):
+        """Display the table with given data"""
         # Prepare rows for display
         display_rows = []
         for cat in filtered_cats:
@@ -475,6 +622,11 @@ async def cats_page_render(current_user=None, session_id=None):
                         ui.label('All records loaded').classes('text-grey-6')
             else:
                 ui.label('No cats found matching the criteria').classes('text-center q-py-xl text-grey-6')
+
+    async def update_table():
+        """Update the table with filtered data"""
+        filtered_cats = await apply_filters(reset_pagination=True)
+        await display_table(filtered_cats)
 
     async def export_to_xlsx():
         """Export filtered cats data to XLSX file"""
@@ -730,6 +882,7 @@ async def cats_page_render(current_user=None, session_id=None):
         weight_max.value = None
         breeding_animal_filter.value = ''
         breeding_lock_filter.value = ''
+        
         await update_table()
 
     # Set up event handlers

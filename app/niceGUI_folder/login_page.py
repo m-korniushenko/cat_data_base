@@ -2,74 +2,52 @@
 Login page for user authentication
 """
 from nicegui import ui
-from app.niceGUI_folder.auth_service import AuthService
-from app.niceGUI_folder.session_manager import SessionManager
+from fastapi import Request
 
 
-def login_page_render():
-    """Render login page"""
+def login_page_render(request: Request):
+    """Render login page with HTML form"""
     ui.page_title('Login - Cat Database')
+    
+    # Check for error messages in URL parameters
+    error_message = ""
+    if hasattr(request, 'query_params'):
+        if request.query_params.get('error') == 'invalid_credentials':
+            error_message = "Invalid email or password"
+        elif request.query_params.get('error') == 'server_error':
+            error_message = "Server error. Please try again."
     
     # Center the login form
     with ui.column().classes('w-full h-screen flex items-center justify-center bg-gray-100'):
         with ui.card().classes('w-full max-w-md p-8 shadow-lg'):
             ui.label('🐱 Cat Database Login').classes('text-h4 text-center mb-6 text-blue-600')
             
-            # Login form
-            email_input = ui.input('Email', placeholder='Enter your email').props(
-                'outlined dense'
-            ).classes('w-full mb-4')
-            password_input = ui.input('Password', placeholder='Enter your password').props(
-                'outlined dense type=password'
-            ).classes('w-full mb-6')
+            # Show error message if any
+            if error_message:
+                ui.label(error_message).classes('text-red-500 text-center mb-4')
             
-            # Login button
-            async def handle_login():
-                email = email_input.value.strip()
-                password = password_input.value.strip()
-                
-                if not email or not password:
-                    ui.notify('Please enter both email and password', type='negative', position='top')
-                    return
-                
-                # Disable button and show loading state
-                login_button.props('loading')
-                ui.notify('Authenticating...', type='info', position='top')
-                
-                try:
-                    # Wait a moment for database to be ready if it's still initializing
-                    import asyncio
-                    await asyncio.sleep(0.5)
-                    
-                    # Authenticate user
-                    user_data = await AuthService.authenticate_user(email, password)
-                    
-                    if user_data:
-                        # Create session
-                        session_id = AuthService.create_session(user_data)
-                        
-                        # Store session in SessionManager
-                        SessionManager.set_current_user(user_data, session_id)
-                        
-                        # Store session in browser (using localStorage)
-                        ui.run_javascript(f'localStorage.setItem("session_id", "{session_id}")')
-                        
-                        # Show success message
-                        ui.notify(f'Welcome, {user_data["owner_firstname"]}!', type='positive', position='top')
-                        
-                        # Redirect to dashboard
-                        ui.navigate.to('/dashboard')
-                    else:
-                        ui.notify('Invalid email or password', type='negative', position='top')
-                        
-                except Exception as e:
-                    print(f"Login error: {e}")
-                    ui.notify('Login failed. Please try again.', type='negative', position='top')
-                finally:
-                    # Re-enable button
-                    login_button.props('')
-            
-            login_button = ui.button('Login', on_click=handle_login, color='primary').classes('w-full mb-4')
+            # HTML form with POST method
+            with ui.html('''
+                <form action="/login" method="post" class="w-full">
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" name="email" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" name="password" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter your password">
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                        Login
+                    </button>
+                </form>
+            ''').classes('w-full mb-4'):
+                pass
             
             # Info about permissions
             with ui.expansion('Permission Levels', icon='info').classes('w-full'):

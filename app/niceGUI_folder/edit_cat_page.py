@@ -11,8 +11,8 @@ from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.cat_service import CatService
 from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
-from app.niceGUI_folder.auth_middleware import require_auth
 from app.database_folder.orm import AsyncOrm
+from fastapi import Request
 
 
 class EditCatPage:
@@ -708,10 +708,9 @@ class EditCatPage:
             ui.notify(f"Error deleting cat: {str(e)}", type='error')
 
 
-@require_auth(required_permission=1)
-async def edit_cat_page_render(cat_id: int, current_user=None, session_id=None):
+async def edit_cat_page_render(request: Request):
     """Render edit cat page"""
-    get_header('✏️ Edit Cat')
+    get_header('✏️ Edit Cat', request)
     page = EditCatPage(cat_id)
     if await page.load_data():
         page.create_form()

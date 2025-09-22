@@ -3,10 +3,11 @@ from pydantic import ValidationError
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from datetime import date
+from fastapi import Request
 
 
-async def add_breed_page_render():
-    get_header('Add Breed Page')
+async def add_breed_page_render(request: Request):
+    get_header('Add Breed Page', request)
 
     with ui.column().classes('w-full items-center q-py-xl'):
         with ui.card().classes('w-full max-w-4xl q-pa-lg'):

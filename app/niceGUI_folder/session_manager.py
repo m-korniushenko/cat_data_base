@@ -1,40 +1,32 @@
 """
-Simple session manager for storing current user data
+Session manager for storing multiple user sessions
 """
 from typing import Optional, Dict, Any
 
-_current_user: Optional[Dict[str, Any]] = None
-_session_id: Optional[str] = None
+# Хранилище сессий: session_id -> user_data
+sessions: Dict[str, Dict[str, Any]] = {}
 
 
 class SessionManager:
-    """Simple session manager"""
+    """Session manager for multiple user sessions"""
 
     @staticmethod
     def set_current_user(user_data: Dict[str, Any], session_id: str):
-        """Set current user data"""
-        global _current_user, _session_id
-        _current_user = user_data
-        _session_id = session_id
+        """Set user data for specific session"""
+        sessions[session_id] = user_data
 
     @staticmethod
-    def get_current_user() -> Optional[Dict[str, Any]]:
-        """Get current user data"""
-        return _current_user
+    def get_current_user(session_id: str) -> Optional[Dict[str, Any]]:
+        """Get user data by session_id"""
+        return sessions.get(session_id)
 
     @staticmethod
-    def get_session_id() -> Optional[str]:
-        """Get current session ID"""
-        return _session_id
+    def is_authenticated(session_id: str) -> bool:
+        """Check if session_id exists and is valid"""
+        return session_id in sessions and sessions[session_id] is not None
 
     @staticmethod
-    def clear_session():
-        """Clear current session"""
-        global _current_user, _session_id
-        _current_user = None
-        _session_id = None
-
-    @staticmethod
-    def is_authenticated() -> bool:
-        """Check if user is authenticated"""
-        return _current_user is not None
+    def clear_session(session_id: str):
+        """Clear session by session_id"""
+        if session_id in sessions:
+            del sessions[session_id]
