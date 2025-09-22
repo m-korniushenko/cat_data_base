@@ -193,7 +193,7 @@ async def login_post(email: str = Form(...), password: str = Form(...)):
                 key="session_id",
                 value=session_id,
                 httponly=True,
-                secure=False,  # локальная разработка
+                secure=False,
                 samesite="lax",
                 max_age=86400  # 24 часа
             )
