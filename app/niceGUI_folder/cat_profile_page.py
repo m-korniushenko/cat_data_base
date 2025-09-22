@@ -6,7 +6,7 @@ from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
 from app.niceGUI_folder.auth_service import AuthService
 from fastapi import Request
-from app.niceGUI_folder.auth_middleware import require_auth
+
 
 
 def render_family_tree_node(cat_data, depth=0):

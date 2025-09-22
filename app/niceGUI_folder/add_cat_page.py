@@ -7,11 +7,9 @@ from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
 from datetime import datetime
 from fastapi import Request
-from app.niceGUI_folder.auth_middleware import require_auth
 # import geonamescache
 
 
-@require_auth(required_permission=1)  # Only admins can add cats
 async def add_cat_page_render(request: Request):
     get_header('Add Cat Page', request)
     
@@ -69,8 +67,8 @@ async def add_cat_page_render(request: Request):
                     .props('outlined dense') \
                     .classes('w-full')
                 
-                title = ui.select(['', 'Champion', 'Grand Champion', 'Supreme Grand Champion'], 
-                                label='Title').props('outlined dense').classes('w-full')
+                title_select = ui.select(['', 'Champion', 'Grand Champion', 'Supreme Grand Champion'], 
+                                         label='Title').props('outlined dense').classes('w-full')
                 haritage_number = ui.input(label='Studbook Number 1').props('outlined dense').classes('w-full')
                 haritage_number_2 = ui.input(label='Studbook Number 2').props('outlined dense').classes('w-full')
 
@@ -84,9 +82,9 @@ async def add_cat_page_render(request: Request):
                 
                 colour = ui.input(label='Color').props('outlined dense').classes('w-full')
                 eye_colour = ui.select(['', 'Blue', 'Green', 'Yellow', 'Orange', 'Heterochromatic'], 
-                                     label='Eye Color').props('outlined dense').classes('w-full')
+                                       label='Eye Color').props('outlined dense').classes('w-full')
                 hair_type = ui.select(['', 'Short Hair', 'Long Hair', 'Semi-Long Hair'], 
-                                    label='Hair Type').props('outlined dense').classes('w-full')
+                                      label='Hair Type').props('outlined dense').classes('w-full')
 
             # Family Information
             ui.separator().classes('q-my-md')
@@ -152,11 +150,11 @@ async def add_cat_page_render(request: Request):
             with ui.grid().classes('grid-cols-1 md:grid-cols-2 gap-4 w-full'):
                 faults_deviations = ui.input(label='Faults / Deviations').props('outlined dense').classes('w-full')
                 jaw_fault = ui.select(['', 'None', 'Overbite', 'Underbite', 'Crossbite'], 
-                                    label='Jaw Fault').props('outlined dense').classes('w-full')
+                                      label='Jaw Fault').props('outlined dense').classes('w-full')
                 hernia = ui.select(['', 'None', 'Umbilical', 'Inguinal', 'Diaphragmatic'], 
-                                 label='Hernia').props('outlined dense').classes('w-full')
+                                   label='Hernia').props('outlined dense').classes('w-full')
                 testicles = ui.select(['', 'Normal', 'Cryptorchid', 'Monorchid'], 
-                                    label='Testicles').props('outlined dense').classes('w-full')
+                                      label='Testicles').props('outlined dense').classes('w-full')
 
             # Death Information
             ui.separator().classes('q-my-md')
@@ -167,7 +165,7 @@ async def add_cat_page_render(request: Request):
                     .classes('w-full')
                 death_cause = ui.input(label='Death Cause').props('outlined dense').classes('w-full')
                 status = ui.select(['', 'Alive', 'Deceased', 'Missing', 'Transferred'], 
-                                 label='Status').props('outlined dense').classes('w-full')
+                                   label='Status').props('outlined dense').classes('w-full')
 
             # Additional Information
             ui.separator().classes('q-my-md')
@@ -258,7 +256,8 @@ async def add_cat_page_render(request: Request):
                     
                     # Save file (we need microchip, but it might not be set yet)
                     if not microchip.value:
-                        ui.notify('Please enter microchip number before uploading files', color='negative', position='top')
+                        ui.notify('Please enter microchip number before uploading files', 
+                                  color='negative', position='top')
                         return
                     
                     success, message, file_path = FileService.save_file(microchip.value, e)
@@ -323,8 +322,10 @@ async def add_cat_page_render(request: Request):
 
                     # Convert date strings to date objects
                     birthday_date = datetime.strptime(birthday.value, '%Y-%m-%d').date() if birthday.value else None
-                    breeding_lock_date_obj = datetime.strptime(breeding_lock_date.value, '%Y-%m-%d').date() if breeding_lock_date.value else None
-                    death_date_obj = datetime.strptime(death_date.value, '%Y-%m-%d').date() if death_date.value else None
+                    breeding_lock_date_obj = (datetime.strptime(breeding_lock_date.value, '%Y-%m-%d').date() 
+                                              if breeding_lock_date.value else None)
+                    death_date_obj = (datetime.strptime(death_date.value, '%Y-%m-%d').date() 
+                                      if death_date.value else None)
 
                     await AsyncOrm.add_cat(
                         cat_firstname=firstname.value,
@@ -338,6 +339,7 @@ async def add_cat_page_render(request: Request):
                         cat_litter=litter.value,
                         cat_haritage_number=haritage_number.value,
                         cat_haritage_number_2=haritage_number_2.value,
+                        cat_title=title_select.value,
                         cat_eye_colour=eye_colour.value,
                         cat_hair_type=hair_type.value,
                         cat_tests=tests.value,
