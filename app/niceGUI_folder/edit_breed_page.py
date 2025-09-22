@@ -61,17 +61,17 @@ async def edit_breed_page_render(request: Request, breed_id: int):
                                 return
                         
                         breed_update_data = {
-                            'breed_firstname': firstname.value.strip(),
-                            'breed_lastname': lastname.value.strip(),
-                            'breed_email': email.value.strip(),
-                            'breed_phone': phone.value.strip(),
+                            'breed_firstname': firstname.value.strip() if firstname.value else None,
+                            'breed_lastname': lastname.value.strip() if lastname.value else None,
+                            'breed_email': email.value.strip() if email.value else None,
+                            'breed_phone': phone.value.strip() if phone.value else None,
                             'breed_gender': gender.value,
                             'breed_birthday': birthday_date,
-                            'breed_address': address.value.strip(),
-                            'breed_city': city.value.strip(),
-                            'breed_country': country.value.strip(),
-                            'breed_zip': zip_code.value.strip(),
-                            'breed_description': description.value.strip()
+                            'breed_address': address.value.strip() if address.value else None,
+                            'breed_city': city.value.strip() if city.value else None,
+                            'breed_country': country.value.strip() if country.value else None,
+                            'breed_zip': zip_code.value.strip() if zip_code.value else None,
+                            'breed_description': description.value.strip() if description.value else None
                         }
                         
                         # Update breed
