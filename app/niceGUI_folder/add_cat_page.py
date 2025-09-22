@@ -7,7 +7,6 @@ from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
 from datetime import datetime
 from fastapi import Request
-# import geonamescache
 
 
 async def add_cat_page_render(request: Request):

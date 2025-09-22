@@ -1,16 +1,19 @@
 import sys
 import asyncio
+import os
+import time
+import uuid
 from typing import Any, List
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, Form, Query, APIRouter, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
 from nicegui import ui, app
 from nicegui.events import ValueChangeEventArguments
 import json
-import os
+
 
 from logging_config import setup_logging, log_info, log_error, log_success, log_warning
 logger = setup_logging()
@@ -39,7 +42,7 @@ from app.niceGUI_folder.auth_check_page import auth_check_page_render
 from app.niceGUI_folder.studbook_page import studbook_page_render
 from app.niceGUI_folder.auth_service import AuthService
 from app.niceGUI_folder.session_manager import SessionManager
-import uuid
+
 
 
 
@@ -239,10 +242,8 @@ async def serve_static_files(file_path: str):
     print(f"Is file: {os.path.isfile(full_path) if os.path.exists(full_path) else 'N/A'}")
     
     if os.path.exists(full_path) and os.path.isfile(full_path):
-        from fastapi.responses import FileResponse
         return FileResponse(full_path)
     else:
-        from fastapi import HTTPException
         print(f"File not found: {full_path}")
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -254,10 +255,8 @@ async def serve_exports(filename: str):
     file_path = os.path.join(exports_dir, filename)
     
     if os.path.exists(file_path) and os.path.isfile(file_path):
-        from fastapi.responses import FileResponse
         return FileResponse(file_path, filename=filename)
     else:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Export file not found")
 
 
@@ -279,9 +278,7 @@ def start_db():
         if not check_db_connection():
             log_error("Cannot connect to database")
             sys.exit()
-    
-    # Wait for database to be fully ready
-    import time
+
     max_retries = 5
     for attempt in range(max_retries):
         if check_db_connection():

@@ -12,6 +12,7 @@ from app.niceGUI_folder.auth_service import AuthService
 from fastapi import Request
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
+from app.niceGUI_folder.session_manager import SessionManager
 
 
 studbook_table_columns = [
@@ -32,9 +33,6 @@ studbook_table_columns = [
 
 async def studbook_page_render(request: Request):
     """Render the Studbook page with grouped structure by breeder and litter"""
-    
-    # Get user from session
-    from app.niceGUI_folder.session_manager import SessionManager
     session_id = request.cookies.get("session_id")
     current_user = None
     if session_id:

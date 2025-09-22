@@ -2,6 +2,7 @@ from app.database_folder.orm import AsyncOrm
 import asyncio
 from datetime import date
 import hashlib
+import random
 
 
 async def add_permissions():
@@ -139,7 +140,6 @@ async def add_cat_with_random_data(owner_id, idx, gender, firstname, surname, bi
 
 def get_random_cat_data(idx):
     """Generate random cat data for testing filters"""
-    import random
     
     # Colors
     colors = ["black", "white", "orange", "gray", "brown", "cream", "silver", "blue", "red", "chocolate"]
