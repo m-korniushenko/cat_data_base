@@ -17,3 +17,4 @@ requirements.txt
 *.txt
 *.log
 *.log.*
+*.bash

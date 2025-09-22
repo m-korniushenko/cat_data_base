@@ -2,6 +2,7 @@ from app.database_folder.orm import AsyncOrm
 import asyncio
 from datetime import date
 import hashlib
+import random
 
 
 async def add_permissions():
@@ -17,10 +18,10 @@ def hash_password(password: str) -> str:
 
 async def add_owner():
     return await AsyncOrm.add_owner(
-        owner_firstname="admin",
+        owner_firstname="Alexandra",
         owner_surname="admin",
-        owner_email="admin@admin.com",
-        owner_hashed_password=hash_password("admin"),
+        owner_email="ces.verein@gmail.com",
+        owner_hashed_password=hash_password("catDb057195password!"),
         owner_permission=1
     )
 
@@ -139,7 +140,6 @@ async def add_cat_with_random_data(owner_id, idx, gender, firstname, surname, bi
 
 def get_random_cat_data(idx):
     """Generate random cat data for testing filters"""
-    import random
     
     # Colors
     colors = ["black", "white", "orange", "gray", "brown", "cream", "silver", "blue", "red", "chocolate"]

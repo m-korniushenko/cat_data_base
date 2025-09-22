@@ -1,16 +1,19 @@
 import sys
 import asyncio
+import os
+import time
+import uuid
 from typing import Any, List
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, Form, Query, APIRouter, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
 from nicegui import ui, app
 from nicegui.events import ValueChangeEventArguments
 import json
-import os
+
 
 from logging_config import setup_logging, log_info, log_error, log_success, log_warning
 logger = setup_logging()
@@ -22,7 +25,7 @@ from app.database_folder.orm import AsyncOrm
 from app.database_folder.postgres import (check_db_connection,
                                           postgres_check_and_create_database,
                                           drop_database_if_exists)
-from app.database_folder.insert_info import start_add_workflow
+from app.database_folder.insert_info import start_add_workflow, add_owner
 from app.database_folder.model import Base
 from system_functions_folder.check_cread import check_creds
 from app.niceGUI_folder.main_page import main_page_render
@@ -39,7 +42,7 @@ from app.niceGUI_folder.auth_check_page import auth_check_page_render
 from app.niceGUI_folder.studbook_page import studbook_page_render
 from app.niceGUI_folder.auth_service import AuthService
 from app.niceGUI_folder.session_manager import SessionManager
-import uuid
+
 
 
 
@@ -239,10 +242,8 @@ async def serve_static_files(file_path: str):
     print(f"Is file: {os.path.isfile(full_path) if os.path.exists(full_path) else 'N/A'}")
     
     if os.path.exists(full_path) and os.path.isfile(full_path):
-        from fastapi.responses import FileResponse
         return FileResponse(full_path)
     else:
-        from fastapi import HTTPException
         print(f"File not found: {full_path}")
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -254,10 +255,8 @@ async def serve_exports(filename: str):
     file_path = os.path.join(exports_dir, filename)
     
     if os.path.exists(file_path) and os.path.isfile(file_path):
-        from fastapi.responses import FileResponse
         return FileResponse(file_path, filename=filename)
     else:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Export file not found")
 
 
@@ -270,16 +269,16 @@ def start_db():
     
     log_info("Creating database...")
     try:
-        # drop_database_if_exists()
-        postgres_check_and_create_database(Base)
+        drop_database_if_exists()
+        if postgres_check_and_create_database(Base):
+            asyncio.run(add_owner())
+            log_success("Admin user added")
     except Exception as e:
         log_warning(f"Database already exists or creation error: {e}")
         if not check_db_connection():
             log_error("Cannot connect to database")
             sys.exit()
-    
-    # Wait for database to be fully ready
-    import time
+
     max_retries = 5
     for attempt in range(max_retries):
         if check_db_connection():
@@ -308,9 +307,6 @@ if __name__ in {"__main__", "__mp_main__"}:
         
         log_success("Server started successfully!")
         log_info("🌐 Access: http://localhost:8080")
-        log_info("🔐 Test accounts:")
-        log_info("   Admin: admin@admin.com / admin")
-        log_info("   Owner: john@example.com / password")
         log_info("🛑 Press Ctrl+C to stop")
         log_info("=" * 50)
         
@@ -318,7 +314,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             port=8080,
             title='Cat Database Management System',
             show=True,
-            reload=True,
+            reload=False,
         )
         
     except KeyboardInterrupt:

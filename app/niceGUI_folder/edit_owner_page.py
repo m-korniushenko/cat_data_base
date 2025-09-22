@@ -59,14 +59,14 @@ async def edit_owner_page_render(request: Request, owner_id: int):
                                 return
                         
                         owner_update_data = {
-                            'owner_firstname': firstname.value.strip(),
-                            'owner_lastname': lastname.value.strip(),
-                            'owner_email': email.value.strip(),
-                            'owner_phone': phone.value.strip(),
-                            'owner_address': address.value.strip(),
-                            'owner_city': city.value.strip(),
-                            'owner_country': country.value.strip(),
-                            'owner_zip': zip_code.value.strip(),
+                            'owner_firstname': firstname.value.strip() if firstname.value else None,
+                            'owner_lastname': lastname.value.strip() if lastname.value else None,
+                            'owner_email': email.value.strip() if email.value else None,
+                            'owner_phone': phone.value.strip() if phone.value else None,
+                            'owner_address': address.value.strip() if address.value else None,
+                            'owner_city': city.value.strip() if city.value else None,
+                            'owner_country': country.value.strip() if country.value else None,
+                            'owner_zip': zip_code.value.strip() if zip_code.value else None,
                             'owner_birthday': birthday_date
                         }
                         

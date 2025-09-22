@@ -49,6 +49,7 @@ def postgres_check_and_create_database(import_model):
             with engine.begin() as conn:
                 Base.metadata.create_all(bind=conn)
             print(f'Created database: "{engine.url}"')
+            return True
         else:
             print(f'Database "{engine.url}" already exists')
             try:
