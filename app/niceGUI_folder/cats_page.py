@@ -8,10 +8,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
+from fastapi import Request
 
 cats_column = [
     {'name': 'id', 'label': 'ID', 'field': 'id', 'align': 'left'},
@@ -122,9 +122,15 @@ async def get_cats_rows(cats_rows):
     return safe_rows
 
 
-@require_auth(required_permission=2)
-async def cats_page_render(current_user=None, session_id=None):
-    get_header('🐱 Cats')
+async def cats_page_render(request: Request):
+    # Get user from session
+    from app.niceGUI_folder.session_manager import SessionManager
+    session_id = request.cookies.get("session_id")
+    current_user = None
+    if session_id:
+        current_user = SessionManager.get_current_user(session_id)
+    
+    get_header('🐱 Cats', request)
 
     # Add Cat button for admins
     if current_user and current_user.get('owner_permission') == 1:

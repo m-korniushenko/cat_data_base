@@ -8,9 +8,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
+from fastapi import Request
 
 
 columns = [
@@ -80,9 +80,8 @@ def breed_to_row(b):
 
 
 @ui.page('/breeds')
-@require_auth(required_permission=1)
-async def breeds_page_render(current_user=None, session_id=None):
-    get_header('🐱 Breeds')
+async def breeds_page_render(request: Request):
+    get_header('🐱 Breeds', request)
 
     # Pagination settings
     PAGE_SIZE = 100

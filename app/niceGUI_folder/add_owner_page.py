@@ -3,10 +3,11 @@ from pydantic import ValidationError
 from app.database_folder.orm import AsyncOrm
 from app.niceGUI_folder.header import get_header
 from datetime import date
+from fastapi import Request
 
 
-async def add_owner_page_render():
-    get_header('Add Owner Page')
+async def add_owner_page_render(request: Request):
+    get_header('Add Owner Page', request)
 
     # Получаем список разрешений для выбора
     _, permissions = await AsyncOrm.get_owner_permission()

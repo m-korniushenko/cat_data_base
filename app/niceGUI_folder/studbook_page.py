@@ -8,8 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
+from fastapi import Request
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
 
@@ -30,9 +30,15 @@ studbook_table_columns = [
 ]
 
 
-@require_auth(required_permission=2)
-async def studbook_page_render(current_user=None, session_id=None):
+async def studbook_page_render(request: Request):
     """Render the Studbook page with grouped structure by breeder and litter"""
+    
+    # Get user from session
+    from app.niceGUI_folder.session_manager import SessionManager
+    session_id = request.cookies.get("session_id")
+    current_user = None
+    if session_id:
+        current_user = SessionManager.get_current_user(session_id)
 
     # Load metadata for filters
     _, owners_data = await AsyncOrm.get_owner()
@@ -551,7 +557,7 @@ async def studbook_page_render(current_user=None, session_id=None):
     async def render_page_content():
         """Render the main page content"""
         # Render page
-        get_header("Studbook")
+        get_header("Studbook", request)
 
         ui.markdown("## 📚 Studbook")
         ui.markdown("Registry of registered cats and their litters")

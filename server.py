@@ -3,7 +3,7 @@ import asyncio
 from typing import Any, List
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, Form, Query, APIRouter, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
@@ -37,7 +37,18 @@ from app.niceGUI_folder.history_page import history_page_render
 from app.niceGUI_folder.login_page import login_page_render
 from app.niceGUI_folder.auth_check_page import auth_check_page_render
 from app.niceGUI_folder.studbook_page import studbook_page_render
+from app.niceGUI_folder.auth_service import AuthService
+from app.niceGUI_folder.session_manager import SessionManager
+import uuid
 
+
+
+def require_auth(request: Request):
+    """Check if user is authenticated and return user data"""
+    session_id = request.cookies.get("session_id")
+    if not session_id or not SessionManager.is_authenticated(session_id):
+        return None
+    return SessionManager.get_current_user(session_id)
 
 
 @app.exception_handler(Exception)
@@ -49,75 +60,173 @@ async def swallow_disconnects(request: Request, exc: Exception):
 
 
 @ui.page('/')
-async def root_page():
-    auth_check_page_render()
+async def root_page(request: Request):
+    auth_check_page_render(request)
 
 @ui.page('/dashboard')
-async def main_page():
-    await main_page_render()
+async def main_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await main_page_render(request)
 
 @ui.page('/login')
-async def login_page():
-    login_page_render()
+async def login_page(request: Request):
+    login_page_render(request)
 
 
 @ui.page('/cats')
-async def cats_page():
-    await cats_page_render()
+async def cats_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await cats_page_render(request)
 
 
 @ui.page('/owners')
-async def owners_page():
-    await owners_page_render()
+async def owners_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await owners_page_render(request)
 
 
 @ui.page('/breeds')
-async def breeds_page():
-    await breeds_page_render()
+async def breeds_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await breeds_page_render(request)
 
 
 @ui.page('/add_cat')
-async def add_cat_page():
-    await add_cat_page_render()
+async def add_cat_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await add_cat_page_render(request)
 
 
 @ui.page('/add_owner')
-async def add_owner_page():
-    await add_owner_page_render()
+async def add_owner_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await add_owner_page_render(request)
 
 
 @ui.page('/add_breed')
-async def add_breed_page():
-    await add_breed_page_render()
+async def add_breed_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await add_breed_page_render(request)
 
 
 @ui.page('/cat_profile/{cat_id}')
-async def cat_profile_page(cat_id: int):
-    await cat_profile_page_render(cat_id)
+async def cat_profile_page(request: Request, cat_id: int):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await cat_profile_page_render(request, cat_id)
 
 
 @ui.page('/edit_cat/{cat_id}')
-async def edit_cat_page(cat_id: int):
-    await edit_cat_page_render(cat_id)
+async def edit_cat_page(request: Request, cat_id: int):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await edit_cat_page_render(cat_id, request)
 
 
 @ui.page('/edit_owner/{owner_id}')
-async def edit_owner_page(owner_id: int):
-    await edit_owner_page_render(owner_id)
+async def edit_owner_page(request: Request, owner_id: int):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await edit_owner_page_render(request, owner_id)
 
 
 @ui.page('/edit_breed/{breed_id}')
-async def edit_breed_page(breed_id: int):
-    await edit_breed_page_render(breed_id)
+async def edit_breed_page(request: Request, breed_id: int):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await edit_breed_page_render(request, breed_id)
 
 
 @ui.page('/history')
-async def history_page():
-    await history_page_render()
+async def history_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await history_page_render(request)
 
 @ui.page('/studbook')
-async def studbook_page():
-    await studbook_page_render()
+async def studbook_page(request: Request):
+    user = require_auth(request)
+    if not user:
+        return RedirectResponse(url='/login', status_code=303)
+    await studbook_page_render(request)
+
+
+# Authentication routes
+@app.post('/login')
+async def login_post(email: str = Form(...), password: str = Form(...)):
+    """Handle login form submission"""
+    try:
+        # Authenticate user
+        user_data = await AuthService.authenticate_user(email, password)
+        
+        if user_data:
+            # Generate unique session_id
+            session_id = str(uuid.uuid4())
+            
+            # Store session in SessionManager
+            SessionManager.set_current_user(user_data, session_id)
+            
+            # Create response with redirect to dashboard
+            response = RedirectResponse(url='/dashboard', status_code=303)
+            
+            # Set cookie with session_id
+            response.set_cookie(
+                key="session_id",
+                value=session_id,
+                httponly=True,
+                secure=False,  # локальная разработка
+                samesite="lax",
+                max_age=86400  # 24 часа
+            )
+            
+            return response
+        else:
+            # Authentication failed, redirect back to login
+            return RedirectResponse(url='/login?error=invalid_credentials', status_code=303)
+            
+    except Exception as e:
+        print(f"Login error: {e}")
+        return RedirectResponse(url='/login?error=server_error', status_code=303)
+
+
+@app.post('/logout')
+async def logout_post(request: Request):
+    """Handle logout"""
+    try:
+        session_id = request.cookies.get("session_id")
+        if session_id:
+            # Clear session from SessionManager
+            SessionManager.clear_session(session_id)
+        
+        # Create response with redirect to login
+        response = RedirectResponse(url='/login', status_code=303)
+        
+        # Delete cookie
+        response.delete_cookie("session_id")
+        
+        return response
+    except Exception as e:
+        print(f"Logout error: {e}")
+        return RedirectResponse(url='/login', status_code=303)
 
 
 @app.get('/static/{file_path:path}')

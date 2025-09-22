@@ -4,8 +4,9 @@ from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.pdf_generator import generate_cat_pdf_file
 from app.niceGUI_folder.photo_service import PhotoService
 from app.niceGUI_folder.file_service import FileService
-from app.niceGUI_folder.auth_middleware import require_auth
 from app.niceGUI_folder.auth_service import AuthService
+from fastapi import Request
+from app.niceGUI_folder.auth_middleware import require_auth
 
 
 def render_family_tree_node(cat_data, depth=0):
@@ -136,9 +137,15 @@ def render_family_tree(family_tree, depth=0, max_depth=3, line_type="both"):
                                             render_family_tree_node(family_tree['sire']['sire']['sire'], depth + 3)
 
 
-@require_auth(required_permission=2)  # Require at least owner permission
-async def cat_profile_page_render(cat_id: int, current_user=None, session_id=None):
-    get_header('Cat Profile')
+async def cat_profile_page_render(request: Request, cat_id: int):
+    # Get user from session
+    from app.niceGUI_folder.session_manager import SessionManager
+    session_id = request.cookies.get("session_id")
+    current_user = None
+    if session_id:
+        current_user = SessionManager.get_current_user(session_id)
+    
+    get_header('Cat Profile', request)
     
     # Get cat information with parents
     cat_info = await AsyncOrm.get_cat_with_parents(cat_id)

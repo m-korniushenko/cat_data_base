@@ -8,9 +8,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from app.niceGUI_folder.header import get_header
-from app.niceGUI_folder.auth_middleware import require_auth
 from nicegui import ui
 from app.database_folder.orm import AsyncOrm
+from fastapi import Request
 
 
 columns = [
@@ -77,9 +77,8 @@ def owner_to_row(o):
 
 
 @ui.page('/owners')
-@require_auth(required_permission=1)
-async def owners_page_render(current_user=None, session_id=None):
-    get_header('👤 Owners')
+async def owners_page_render(request: Request):
+    get_header('👤 Owners', request)
 
     # Pagination settings
     PAGE_SIZE = 100

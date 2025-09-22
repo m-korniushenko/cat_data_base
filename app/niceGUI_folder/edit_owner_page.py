@@ -4,11 +4,12 @@ Edit owner page for editing owner information
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.owner_service import OwnerService
+from fastapi import Request
 
 
-async def edit_owner_page_render(owner_id: int):
+async def edit_owner_page_render(request: Request, owner_id: int):
     """Render the edit owner page"""
-    get_header('Edit Owner')
+    get_header('Edit Owner', request)
     
     # Load owner data
     owner_data = await OwnerService.get_owner_data(owner_id)

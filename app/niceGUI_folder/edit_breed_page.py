@@ -4,11 +4,12 @@ Edit breed page for editing breed information
 from nicegui import ui
 from app.niceGUI_folder.header import get_header
 from app.niceGUI_folder.breed_service import BreedService
+from fastapi import Request
 
 
-async def edit_breed_page_render(breed_id: int):
+async def edit_breed_page_render(request: Request, breed_id: int):
     """Render the edit breed page"""
-    get_header('Edit Breed')
+    get_header('Edit Breed', request)
     
     # Load breed data
     breed_data = await BreedService.get_breed_data(breed_id)
