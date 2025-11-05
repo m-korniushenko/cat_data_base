@@ -139,7 +139,7 @@ async def edit_cat_page(request: Request, cat_id: int):
     user = require_auth(request)
     if not user:
         return RedirectResponse(url='/login', status_code=303)
-    await edit_cat_page_render(cat_id, request)
+    await edit_cat_page_render(request, cat_id)
 
 
 @ui.page('/edit_owner/{owner_id}')
@@ -319,7 +319,7 @@ if __name__ in {"__main__", "__mp_main__"}:
             port=8443,
             title="Cat Database Management System",
             show=True,
-            reload=False,
+            reload=True,
             ssl_certfile="/root/ssl/cert.pem",
             ssl_keyfile="/root/ssl/key.pem",
         )

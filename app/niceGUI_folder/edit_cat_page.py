@@ -708,7 +708,7 @@ class EditCatPage:
             ui.notify(f"Error deleting cat: {str(e)}", type='error')
 
 
-async def edit_cat_page_render(request: Request):
+async def edit_cat_page_render(request: Request, cat_id: int):
     """Render edit cat page"""
     get_header('✏️ Edit Cat', request)
     page = EditCatPage(cat_id)
